@@ -1,15 +1,14 @@
 import express from 'express';
 import cors from 'cors';
+import packingListRouter from '@routes/api/v1/packingList';
 
 const app = express();
-const port = process.env.PORT || 3000;
+const port = process.env.PORT || 3001;
 
 app.use(cors());
 app.use(express.json());
 
-app.get('/', (req, res) => {
-  res.json({ message: 'Hello World!' });
-});
+app.use('/api/v1', packingListRouter);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);
