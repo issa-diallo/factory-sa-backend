@@ -1,0 +1,31 @@
+{
+  "name": "factory-backend",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "packageManager": "pnpm@10.12.4",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "express": "4.21.2",
+    "multer": "^2.0.1",
+    "xlsx": "^0.18.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "4.17.21",
+    "@types/jest": "^30.0.0",
+    "@types/multer": "^1.4.13",
+    "@types/node": "^24.0.7",
+    "jest": "^30.0.3",
+    "ts-jest": "^29.4.0",
+    "ts-node": "^10.9.2",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.8.3"
+  }
+}
