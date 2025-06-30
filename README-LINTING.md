@@ -14,6 +14,7 @@ This document explains the ESLint and Prettier configuration implemented for thi
 ## 🔍 ESLint vs Prettier Differences
 
 ### **ESLint** - Code Analyzer (Linter)
+
 - **Role**: Detects code errors, quality issues, and rule violations
 - **Focus**: Logic, best practices, potential errors, coding conventions
 - **Examples**:
@@ -24,6 +25,7 @@ This document explains the ESLint and Prettier configuration implemented for thi
   - Best practice violations
 
 ### **Prettier** - Code Formatter
+
 - **Role**: Automatically formats code for consistent presentation
 - **Focus**: Visual style, indentation, spacing, line length
 - **Examples**:
@@ -87,28 +89,31 @@ pnpm format:check
 ### Recommended Workflow
 
 1. **During development**:
+
    ```bash
    # Check for errors
    pnpm lint:check
-   
+
    # Auto-fix issues
    pnpm lint
    ```
 
 2. **Before committing**:
+
    ```bash
    # Format code
    pnpm format
-   
+
    # Verify no errors remain
    pnpm lint:check
    ```
 
 3. **In CI/CD pipeline**:
+
    ```bash
    # Check formatting
    pnpm format:check
-   
+
    # Check linting rules
    pnpm lint:check
    ```
@@ -116,21 +121,23 @@ pnpm format:check
 ### Examples of Detected Issues
 
 **ESLint will detect:**
+
 ```typescript
 // ❌ Unused variable
 const unusedVariable = 'hello';
 
 // ❌ Explicit any type
-function badFunction(param: any) { }
+function badFunction(param: any) {}
 
 // ❌ Using var
 var oldStyle = 'bad';
 ```
 
 **Prettier will format:**
+
 ```typescript
 // Before
-const obj={name:"John",age:30};
+const obj = { name: 'John', age: 30 };
 
 // After
 const obj = { name: 'John', age: 30 };
@@ -257,6 +264,7 @@ npx prettier --check src/index.ts --debug-check
 ### What to Commit
 
 **✅ Include in Git:**
+
 - `.eslintrc.json`
 - `.prettierrc`
 - `.eslintignore`
@@ -264,6 +272,7 @@ npx prettier --check src/index.ts --debug-check
 - `README-LINTING.md`
 
 **❌ Keep in .gitignore:**
+
 - `.vscode/` (personal editor settings)
 - `node_modules/`
 - `dist/` and `build/`
