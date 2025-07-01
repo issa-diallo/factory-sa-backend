@@ -1,3 +1,7 @@
 .vscode
 node_modules
 dist/
+/coverage
+# Ignore all JSON files in the fixtures tests directory
+tests/fixtures/*.json
+tests/schemas/*.prod.test.ts
