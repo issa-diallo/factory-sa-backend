@@ -16,6 +16,9 @@ module.exports = {
     '^@schemas/(.*)$': '<rootDir>/src/schemas/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
     '^@constants/(.*)$': '<rootDir>/src/constants/$1',
+    '^@admin/(.*)$': '<rootDir>/src/admin/$1',
+    '^@generated/prisma$': '<rootDir>/src/generated/prisma',
+    '^@generated/prisma/(.*)$': '<rootDir>/src/generated/prisma/$1',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

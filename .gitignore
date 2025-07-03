@@ -5,3 +5,5 @@ dist/
 # Ignore all JSON files in the fixtures tests directory
 tests/fixtures/*.json
 tests/schemas/*.prod.test.ts
+
+/src/generated/prisma
