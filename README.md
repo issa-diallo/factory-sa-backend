@@ -6,6 +6,7 @@ Backend for the Factory application, developed with Node.js, Express, and TypeSc
 
 - [Technologies](#-technologies)
 - [Installation](#-installation)
+- [Docker Installation](#-docker-installation)
 - [Available Scripts](#-available-scripts)
 - [Tests](#-tests)
 - [Project Structure](#-project-structure)
@@ -23,19 +24,93 @@ Backend for the Factory application, developed with Node.js, Express, and TypeSc
 
 ## 💻 Installation
 
-```bash
-# Install dependencies
-pnpm install
+There are two main ways to set up and run this project:
 
-# Start in development mode
-pnpm dev
+1.  **Manual Installation**: Follow the steps below to install dependencies and run the application directly on your machine.
+2.  **Docker Installation**: Use Docker Compose for a containerized setup (recommended for consistency and ease of deployment). Refer to the [Docker Installation](#-docker-installation) section.
 
-# Build the project
-pnpm build
+Choose the method that best suits your development environment.
 
-# Start in production
-pnpm start
-```
+To set up the project locally, follow these steps for manual installation:
+
+1.  **Clone the repository**:
+
+    ```bash
+    git clone git@github.com:issa-diallo/factory-sa-backend.git
+    ```
+
+2.  **Navigate to the project directory**:
+
+    ```bash
+    cd factory-sa-backend
+    ```
+
+3.  **Install dependencies**:
+    Make sure you have `pnpm` installed. If not, you can install it globally:
+
+    ```bash
+    npm install -g pnpm
+    ```
+
+    Then, install the project dependencies:
+
+    ```bash
+    pnpm install
+    ```
+
+4.  **Start in development mode**:
+
+    ```bash
+    pnpm dev
+    ```
+
+5.  **Build the project** (for production deployment):
+
+    ```bash
+    pnpm build
+    ```
+
+6.  **Start in production** (after building):
+    ```bash
+    pnpm start
+    ```
+
+## 🐳 Docker Installation
+
+To run the application using Docker Compose, make sure you have Docker Desktop (or Docker Engine) installed on your machine.
+
+1.  **Clone the repository** (if not already done):
+
+    ```bash
+    git clone git@github.com:issa-diallo/factory-sa-backend.git
+    cd factory-sa-backend
+    ```
+
+2.  **Launch the application with Docker Compose**:
+    This command will build the Docker image (if it doesn't exist or if the `Dockerfile` has been modified) and start the container.
+
+    ```bash
+    docker compose up --build
+    ```
+
+    The application will be accessible at `http://localhost:3001`.
+
+3.  **Run in background (detached mode)**:
+    To run the application in the background and free up your terminal:
+
+    ```bash
+    docker compose up -d
+    ```
+
+4.  **Stop the application**:
+    To stop and remove the containers:
+    ```bash
+    docker compose down
+    ```
+    If you just want to stop the containers without removing them:
+    ```bash
+    docker compose stop
+    ```
 
 ## 📜 Available Scripts
 
@@ -54,7 +129,6 @@ pnpm start
 The project uses Jest for testing. Test files are organized into two categories:
 
 - Standard tests (`.test.ts`)
-- Production tests (`.prod.test.ts`)
 
 ### Test Commands
 
@@ -65,40 +139,8 @@ pnpm test
 # Run a specific production test
 pnpm test -t tests/schemas/packingListSchema.prod.test.ts
 
-# Run all production tests
+# Run all production tests in local
 pnpm test "tests/**/*.prod.test.ts"
-```
-
-## 📁 Project Structure
-
-```
-.
-├── src/
-│   ├── constants/     # Constants and configurations
-│   ├── controllers/   # Express controllers
-│   ├── routes/       # API routes
-│   │   └── api/      # Versioned API routes
-│   │       └── v1/   # API v1 routes
-│   ├── schemas/      # Zod validation schemas
-│   ├── services/     # Business logic
-│   ├── types/        # TypeScript types and interfaces
-│   └── utils/        # Utilities
-├── tests/
-│   ├── controllers/  # Controller tests
-│   ├── fixtures/     # Test data
-│   ├── schemas/      # Schema tests
-│   └── utils/        # Utility tests
-├── .eslintignore     # Files ignored by ESLint
-├── .eslintrc.json    # ESLint configuration
-├── .gitignore        # Files ignored by Git
-├── .prettierignore   # Files ignored by Prettier
-├── .prettierrc       # Prettier configuration
-├── jest.config.js    # Jest configuration
-├── package.json      # Project configuration
-├── pnpm-lock.yaml    # Dependency version lock
-├── README.md         # Main documentation
-├── README-LINTING.md # Linting documentation
-└── tsconfig.json     # TypeScript configuration
 ```
 
 ## 🔧 Linting and Formatting
