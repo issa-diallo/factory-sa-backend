@@ -10,6 +10,7 @@ Backend for the Factory application, developed with Node.js, Express, and TypeSc
 - [Available Scripts](#-available-scripts)
 - [Tests](#-tests)
 - [Project Structure](#-project-structure)
+- [Database (Prisma & PostgreSQL)](#-database-prisma--postgresql)
 - [Linting and Formatting](#-linting-and-formatting)
 
 ## 🚀 Technologies
@@ -142,6 +143,17 @@ pnpm test -t tests/schemas/packingListSchema.prod.test.ts
 # Run all production tests in local
 pnpm test "tests/**/*.prod.test.ts"
 ```
+
+## 🗄️ Database (Prisma & PostgreSQL)
+
+The project uses PostgreSQL as the database and Prisma as the ORM (Object-Relational Mapping) tool. This combination provides:
+
+- Type-safe database queries with TypeScript
+- Simplified database schema management
+- Automatic migrations
+- Efficient data validation
+
+For more details on the database setup and usage, see [README-PRISMA.md](README-PRISMA.md).
 
 ## 🔧 Linting and Formatting
 
