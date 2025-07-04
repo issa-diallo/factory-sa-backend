@@ -15,7 +15,7 @@ async function buildSchema() {
   // Read configuration files
   const configFiles = fs
     .readdirSync(configDir)
-    .filter(file => file.endsWith('.config'))
+    .filter(file => file.endsWith('.config.prisma'))
     .sort((a, b) => {
       // Place datasource.config first, then generator.config
       if (a.includes('datasource')) return -1;
@@ -26,7 +26,7 @@ async function buildSchema() {
   // Read model files
   const modelFiles = fs
     .readdirSync(modelsDir)
-    .filter(file => file.endsWith('.model'));
+    .filter(file => file.endsWith('.model.prisma'));
 
   // Concatenate file contents
   let schemaContent = '';
