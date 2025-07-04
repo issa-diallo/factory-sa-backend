@@ -1,38 +1,38 @@
-# Base de données avec Prisma et PostgreSQL
+# Database with Prisma and PostgreSQL
 
-Ce document explique comment la base de données PostgreSQL et l'ORM Prisma sont utilisés dans ce projet.
+This document explains how the PostgreSQL database and Prisma ORM are used in this project.
 
-## Présentation
+## Overview
 
-Notre application utilise :
+Our application uses:
 
-- **PostgreSQL** comme système de gestion de base de données relationnelle
-- **Prisma ORM** comme couche d'abstraction pour interagir avec la base de données
-- **Docker** pour faciliter le déploiement et l'isolation de la base de données
+- **PostgreSQL** as a relational database management system
+- **Prisma ORM** as an abstraction layer to interact with the database
+- **Docker** to facilitate deployment and database isolation
 
-## Pourquoi PostgreSQL et Prisma ?
+## Why PostgreSQL and Prisma?
 
-**PostgreSQL** est un système de gestion de base de données relationnel puissant, open-source et fiable. Il offre d'excellentes performances, une grande conformité SQL et de nombreuses fonctionnalités avancées.
+**PostgreSQL** is a powerful, open-source, and reliable relational database management system. It offers excellent performance, high SQL compliance, and numerous advanced features.
 
-**Prisma ORM** simplifie l'interaction avec la base de données en offrant :
+**Prisma ORM** simplifies database interaction by providing:
 
-- Une API type-safe pour TypeScript
-- Un système de migration intégré
-- Une validation automatique des données
-- Une génération de requêtes SQL optimisées
+- A type-safe API for TypeScript
+- An integrated migration system
+- Automatic data validation
+- Generation of optimized SQL queries
 
 ## Configuration
 
-La base de données est configurée pour fonctionner automatiquement avec l'application. Les paramètres de connexion sont définis dans le fichier `.env` et le service PostgreSQL est configuré dans `docker-compose.yml`. Le client Prisma est initialisé dans `src/database/client.ts`.
+The database is configured to work automatically with the application. Connection parameters are defined in the `.env` file and the PostgreSQL service is configured in `docker-compose.yml`. The Prisma client is initialized in `src/database/client.ts`.
 
-## Commandes utiles
+## Useful Commands
 
-- **Démarrer l'application avec la base de données** : `docker compose up`
-- **Générer le client Prisma** : `pnpm prisma generate`
-- **Créer une migration** : `pnpm prisma migrate dev --name nom_de_la_migration`
-- **Appliquer les migrations** : `pnpm prisma migrate deploy`
-- **Visualiser la base de données** : `pnpm prisma studio`
+- **Start the application with the database**: `docker compose up`
+- **Generate the Prisma client**: `pnpm prisma generate`
+- **Create a migration**: `pnpm prisma migrate dev --name migration_name`
+- **Apply migrations**: `pnpm prisma migrate deploy`
+- **Visualize the database**: `pnpm prisma studio`
 
 ## Client
 
-3. Utilisez le client Prisma dans votre code via `import { prisma } from '../database/client'`
+3. Use the Prisma client in your code via `import { prisma } from '../database/client'`
