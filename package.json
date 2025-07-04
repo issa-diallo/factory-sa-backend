@@ -7,6 +7,8 @@
     "dev": "ts-node-dev --respawn --transpile-only --prefer-ts-exts --require tsconfig-paths/register src/config/server.bootstrap.ts",
     "start": "node dist/config/server.bootstrap.js",
     "build": "prisma generate && tsc",
+    "prisma:build": "ts-node prisma/build-schema.ts",
+    "prisma:generate": "pnpm run prisma:build && prisma generate",
     "build:watch": "tsc --watch",
     "test": "jest",
     "test:watch": "jest --watch",
