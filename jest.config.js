@@ -16,6 +16,7 @@ module.exports = {
     '^@schemas/(.*)$': '<rootDir>/src/schemas/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
     '^@constants/(.*)$': '<rootDir>/src/constants/$1',
+    '^@generated/(.*)$': '<rootDir>/src/generated/$1',
   },
   collectCoverageFrom: [
     'src/**/*.ts',

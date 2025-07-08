@@ -23,7 +23,22 @@ Our application uses:
 
 ## Configuration
 
-The database is configured to work automatically with the application. Connection parameters are defined in the `.env` file and the PostgreSQL service is configured in `docker-compose.yml`. The Prisma client is initialized in `src/database/client.ts`.
+The database is configured to work automatically with the application. Connection parameters are defined in the `.env` file and the PostgreSQL service is configured in `docker-compose.yml`. The Prisma client is initialized in `src/database/prismaClient.ts`.
+
+## Database Seeding
+
+The project includes a seed script (`prisma/seed.ts`) that initializes the database with essential data:
+
+- Default user roles (ADMIN, MANAGER, USER)
+- Basic permissions
+- Test company and domain
+- Admin user
+
+To run the seed script, use the command:
+
+```bash
+npx prisma db seed
+```
 
 ## Useful Commands
 
@@ -31,8 +46,9 @@ The database is configured to work automatically with the application. Connectio
 - **Generate the Prisma client**: `pnpm prisma generate`
 - **Create a migration**: `pnpm prisma migrate dev --name migration_name`
 - **Apply migrations**: `pnpm prisma migrate deploy`
+- **Seed the database**: `pnpm db:seed`
 - **Visualize the database**: `pnpm prisma studio`
 
 ## Client
 
-3. Use the Prisma client in your code via `import { prisma } from '../database/client'`
+3. Use the Prisma client in your code via `import { prisma } from '../database/prismaClient'`

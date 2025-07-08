@@ -22,7 +22,8 @@
       "@middleware/*": ["middleware/*"],
       "@schemas/*": ["schemas/*"],
       "@services/*": ["services/*"],
-      "@constants/*": ["constants/*"]
+      "@constants/*": ["constants/*"],
+      "@generated/*": ["generated/*"]
     }
   },
   "include": ["src/**/*"],

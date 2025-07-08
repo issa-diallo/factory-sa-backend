@@ -113,6 +113,33 @@ To run the application using Docker Compose, make sure you have Docker Desktop (
     docker compose stop
     ```
 
+## 🛠️ Development Configuration
+
+To set up your development environment with Docker Compose:
+
+1.  **Copy the override example file**:
+    This file contains development-specific configurations that override default settings.
+
+    ```bash
+    cp docker-compose.override.yml.example docker-compose.override.yml
+    ```
+
+2.  **Launch the application in development mode**:
+    Docker Compose will automatically detect the `docker-compose.override.yml` file and apply development configurations.
+
+    ```bash
+    docker-compose up
+    ```
+
+    The application will be accessible at `http://localhost:3001` and code changes will be hot-reloaded.
+
+3.  **For Production**:
+    If you wish to run the application in production mode (e.g., for a local test deployment), ensure that the `docker-compose.override.yml` file is not present or rename it. Then, use the standard command:
+
+    ```bash
+    docker-compose up
+    ```
+
 ## 📜 Available Scripts
 
 - `pnpm dev`: Start the server in development mode with hot-reload

@@ -7,3 +7,4 @@ tests/fixtures/*.json
 tests/schemas/*.prod.test.ts
 
 /src/generated/prisma
+docker-compose.override.yml
