@@ -1,11 +1,11 @@
 import {
+  createError,
+  createSuccess,
   ProcessedItem,
   ProcessingResult,
   Result,
-  createSuccess,
-  createError,
-} from '@interfaces/index';
-import { extractCtnBlocksFromRow } from '@utils/extractCtnBlocksFromRow';
+} from '../types';
+import { extractCtnBlocksFromRow } from '../utils/extractCtnBlocksFromRow';
 
 /**
  * Processes packing list data rows and extracts ProcessedItems.

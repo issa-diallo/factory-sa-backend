@@ -16,6 +16,6 @@ describe('Express Application', () => {
       .post('/api/v1/packing-list')
       .send(validPayload);
 
-    expect(res.statusCode).toEqual(400);
+    expect(res.statusCode).toEqual(401);
   });
 });

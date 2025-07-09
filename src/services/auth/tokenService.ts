@@ -1,7 +1,7 @@
 import jwt from 'jsonwebtoken';
+import { ITokenService } from './interfaces';
 import { PrismaClient } from '../../generated/prisma';
 import { TokenPayload } from '../../types/auth';
-import { ITokenService } from './interfaces';
 
 export class TokenService implements ITokenService {
   private readonly JWT_SECRET: string;

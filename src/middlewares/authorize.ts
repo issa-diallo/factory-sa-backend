@@ -1,13 +1,18 @@
 import { Request, Response, NextFunction } from 'express';
 
-export const authorize = (requiredPermission: string) => {
+export const authorize = (requiredPermissions: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
-    if (!req.user) {
-      return res.status(401).json({ message: 'Authentification requise' });
+    // Ensure req.user is defined and has permissions
+    if (!req.user || !req.user.permissions) {
+      return res.status(401).json({ message: 'Authentication required' });
     }
 
-    if (!req.user.permissions.includes(requiredPermission)) {
-      return res.status(403).json({ message: 'Permission insuffisante' });
+    const hasPermission = requiredPermissions.some(
+      permission => req.user!.permissions.includes(permission) // Use non-null assertion as we've checked above
+    );
+
+    if (!hasPermission) {
+      return res.status(403).json({ message: 'Insufficient permission' });
     }
 
     next();

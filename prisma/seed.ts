@@ -84,89 +84,308 @@ async function main() {
     companyRead,
   });
 
+  // Add new permissions
+  const companyCreate = await prisma.permission.upsert({
+    where: { name: 'company:create' },
+    update: {},
+    create: {
+      name: 'company:create',
+      description: 'Allows creating companies',
+    },
+  });
+  const companyUpdate = await prisma.permission.upsert({
+    where: { name: 'company:update' },
+    update: {},
+    create: {
+      name: 'company:update',
+      description: 'Allows updating companies',
+    },
+  });
+  const companyDelete = await prisma.permission.upsert({
+    where: { name: 'company:delete' },
+    update: {},
+    create: {
+      name: 'company:delete',
+      description: 'Allows deleting companies',
+    },
+  });
+
+  const domainRead = await prisma.permission.upsert({
+    where: { name: 'domain:read' },
+    update: {},
+    create: {
+      name: 'domain:read',
+      description: 'Allows reading domains',
+    },
+  });
+  const domainCreate = await prisma.permission.upsert({
+    where: { name: 'domain:create' },
+    update: {},
+    create: {
+      name: 'domain:create',
+      description: 'Allows creating domains',
+    },
+  });
+  const domainUpdate = await prisma.permission.upsert({
+    where: { name: 'domain:update' },
+    update: {},
+    create: {
+      name: 'domain:update',
+      description: 'Allows updating domains',
+    },
+  });
+  const domainDelete = await prisma.permission.upsert({
+    where: { name: 'domain:delete' },
+    update: {},
+    create: {
+      name: 'domain:delete',
+      description: 'Allows deleting domains',
+    },
+  });
+
+  const permissionRead = await prisma.permission.upsert({
+    where: { name: 'permission:read' },
+    update: {},
+    create: {
+      name: 'permission:read',
+      description: 'Allows reading permissions',
+    },
+  });
+  const permissionCreate = await prisma.permission.upsert({
+    where: { name: 'permission:create' },
+    update: {},
+    create: {
+      name: 'permission:create',
+      description: 'Allows creating permissions',
+    },
+  });
+  const permissionUpdate = await prisma.permission.upsert({
+    where: { name: 'permission:update' },
+    update: {},
+    create: {
+      name: 'permission:update',
+      description: 'Allows updating permissions',
+    },
+  });
+  const permissionDelete = await prisma.permission.upsert({
+    where: { name: 'permission:delete' },
+    update: {},
+    create: {
+      name: 'permission:delete',
+      description: 'Allows deleting permissions',
+    },
+  });
+
+  const roleRead = await prisma.permission.upsert({
+    where: { name: 'role:read' },
+    update: {},
+    create: {
+      name: 'role:read',
+      description: 'Allows reading roles',
+    },
+  });
+  const roleCreate = await prisma.permission.upsert({
+    where: { name: 'role:create' },
+    update: {},
+    create: {
+      name: 'role:create',
+      description: 'Allows creating roles',
+    },
+  });
+  const roleUpdate = await prisma.permission.upsert({
+    where: { name: 'role:update' },
+    update: {},
+    create: {
+      name: 'role:update',
+      description: 'Allows updating roles',
+    },
+  });
+  const roleDelete = await prisma.permission.upsert({
+    where: { name: 'role:delete' },
+    update: {},
+    create: {
+      name: 'role:delete',
+      description: 'Allows deleting roles',
+    },
+  });
+
+  const userRead = await prisma.permission.upsert({
+    where: { name: 'user:read' },
+    update: {},
+    create: {
+      name: 'user:read',
+      description: 'Allows reading users',
+    },
+  });
+  const userCreate = await prisma.permission.upsert({
+    where: { name: 'user:create' },
+    update: {},
+    create: {
+      name: 'user:create',
+      description: 'Allows creating users',
+    },
+  });
+  const userUpdate = await prisma.permission.upsert({
+    where: { name: 'user:update' },
+    update: {},
+    create: {
+      name: 'user:update',
+      description: 'Allows updating users',
+    },
+  });
+  const userDelete = await prisma.permission.upsert({
+    where: { name: 'user:delete' },
+    update: {},
+    create: {
+      name: 'user:delete',
+      description: 'Allows deleting users',
+    },
+  });
+
+  const companyDomainCreate = await prisma.permission.upsert({
+    where: { name: 'companyDomain:create' },
+    update: {},
+    create: {
+      name: 'companyDomain:create',
+      description: 'Allows creating company-domain links',
+    },
+  });
+  const companyDomainDelete = await prisma.permission.upsert({
+    where: { name: 'companyDomain:delete' },
+    update: {},
+    create: {
+      name: 'companyDomain:delete',
+      description: 'Allows deleting company-domain links',
+    },
+  });
+
+  const rolePermissionCreate = await prisma.permission.upsert({
+    where: { name: 'rolePermission:create' },
+    update: {},
+    create: {
+      name: 'rolePermission:create',
+      description: 'Allows creating role-permission links',
+    },
+  });
+  const rolePermissionDelete = await prisma.permission.upsert({
+    where: { name: 'rolePermission:delete' },
+    update: {},
+    create: {
+      name: 'rolePermission:delete',
+      description: 'Allows deleting role-permission links',
+    },
+  });
+
+  const userRoleCreate = await prisma.permission.upsert({
+    where: { name: 'userRole:create' },
+    update: {},
+    create: {
+      name: 'userRole:create',
+      description: 'Allows creating user-role links',
+    },
+  });
+  const userRoleDelete = await prisma.permission.upsert({
+    where: { name: 'userRole:delete' },
+    update: {},
+    create: {
+      name: 'userRole:delete',
+      description: 'Allows deleting user-role links',
+    },
+  });
+
+  console.log('All permissions created or updated.');
+
   // Assign permissions to roles
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: adminRole.id,
-        permissionId: packingListRead.id,
-      },
-    },
-    update: {},
-    create: { roleId: adminRole.id, permissionId: packingListRead.id },
-  });
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: adminRole.id,
-        permissionId: packingListCreate.id,
-      },
-    },
-    update: {},
-    create: { roleId: adminRole.id, permissionId: packingListCreate.id },
-  });
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: adminRole.id,
-        permissionId: userManage.id,
-      },
-    },
-    update: {},
-    create: { roleId: adminRole.id, permissionId: userManage.id },
-  });
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: adminRole.id,
-        permissionId: companyRead.id,
-      },
-    },
-    update: {},
-    create: { roleId: adminRole.id, permissionId: companyRead.id },
-  });
+  // ADMIN role gets all permissions
+  const allPermissions = [
+    packingListRead,
+    packingListCreate,
+    userManage,
+    companyRead,
+    companyCreate,
+    companyUpdate,
+    companyDelete,
+    domainRead,
+    domainCreate,
+    domainUpdate,
+    domainDelete,
+    permissionRead,
+    permissionCreate,
+    permissionUpdate,
+    permissionDelete,
+    roleRead,
+    roleCreate,
+    roleUpdate,
+    roleDelete,
+    userRead,
+    userCreate,
+    userUpdate,
+    userDelete,
+    companyDomainCreate,
+    companyDomainDelete,
+    rolePermissionCreate,
+    rolePermissionDelete,
+    userRoleCreate,
+    userRoleDelete,
+  ];
 
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: managerRole.id,
-        permissionId: packingListRead.id,
+  for (const perm of allPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: adminRole.id,
+          permissionId: perm.id,
+        },
       },
-    },
-    update: {},
-    create: { roleId: managerRole.id, permissionId: packingListRead.id },
-  });
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: managerRole.id,
-        permissionId: packingListCreate.id,
-      },
-    },
-    update: {},
-    create: { roleId: managerRole.id, permissionId: packingListCreate.id },
-  });
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: managerRole.id,
-        permissionId: userManage.id,
-      },
-    },
-    update: {},
-    create: { roleId: managerRole.id, permissionId: userManage.id },
-  });
+      update: {},
+      create: { roleId: adminRole.id, permissionId: perm.id },
+    });
+  }
 
-  await prisma.rolePermission.upsert({
-    where: {
-      roleId_permissionId: {
-        roleId: userRole.id,
-        permissionId: packingListRead.id,
+  // MANAGER role gets specific permissions
+  const managerPermissions = [
+    packingListRead,
+    packingListCreate,
+    userManage, // Keep userManage for now, can be refined later
+    companyRead,
+    companyCreate,
+    companyUpdate,
+    domainRead,
+    userRead,
+    userCreate,
+    userUpdate,
+    userRoleCreate,
+    userRoleDelete,
+  ];
+
+  for (const perm of managerPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: managerRole.id,
+          permissionId: perm.id,
+        },
       },
-    },
-    update: {},
-    create: { roleId: userRole.id, permissionId: packingListRead.id },
-  });
+      update: {},
+      create: { roleId: managerRole.id, permissionId: perm.id },
+    });
+  }
+
+  // USER role gets basic read permissions
+  const userPermissions = [packingListRead, companyRead, domainRead, userRead];
+
+  for (const perm of userPermissions) {
+    await prisma.rolePermission.upsert({
+      where: {
+        roleId_permissionId: {
+          roleId: userRole.id,
+          permissionId: perm.id,
+        },
+      },
+      update: {},
+      create: { roleId: userRole.id, permissionId: perm.id },
+    });
+  }
 
   console.log('Permissions assigned to roles.');
 

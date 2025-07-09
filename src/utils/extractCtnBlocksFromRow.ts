@@ -1,15 +1,10 @@
-import {
-  ProcessedItem,
-  Result,
-  createSuccess,
-  createError,
-} from '@interfaces/index';
-import { expandCtnRange } from '@utils/expandCtnRange';
+import { ProcessedItem, Result, createSuccess, createError } from '../types';
+import { expandCtnRange } from './expandCtnRange';
 import {
   RowDataSchema,
   BaseItemSchema,
   ProcessedItemArraySchema,
-} from '@schemas/utilsSchemas';
+} from '../schemas/utilsSchemas';
 
 type BaseItem = Pick<ProcessedItem, 'description' | 'model' | 'origin'>;
 

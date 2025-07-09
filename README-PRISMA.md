@@ -25,6 +25,74 @@ Our application uses:
 
 The database is configured to work automatically with the application. Connection parameters are defined in the `.env` file and the PostgreSQL service is configured in `docker-compose.yml`. The Prisma client is initialized in `src/database/prismaClient.ts`.
 
+### Environment Variables
+
+The `.env` file contains the database connection configuration:
+
+- `DATABASE_URL`: PostgreSQL database connection URL
+
+## Installation and Configuration
+
+### 1. Manual Installation (on your machine)
+
+If you run the application directly on your machine (without Docker):
+
+1. Ensure PostgreSQL is installed and running on your machine.
+2. Temporarily modify `DATABASE_URL` in `.env` to use `localhost` instead of `db`:
+   ```
+   DATABASE_URL="postgresql://user:password@localhost:5432/mydatabase?schema=public"
+   ```
+3. Execute Prisma commands directly:
+
+   ```bash
+   # Generate Prisma client
+   pnpm prisma:generate
+
+   # Create a migration
+   pnpm prisma migrate dev --name migration_name
+
+   # Apply migrations
+   pnpm prisma migrate deploy
+
+   # Seed the database
+   pnpm db:seed
+
+   # Launch Prisma Studio
+   pnpm prisma studio
+   ```
+
+### 2. Docker Installation (recommended)
+
+If you use Docker (recommended method):
+
+1. Start Docker containers:
+
+   ```bash
+   docker compose up -d
+   ```
+
+2. Execute Prisma commands within the Docker container:
+
+   ```bash
+   # Generate Prisma client
+   docker exec factory-backend-backend-1 pnpm prisma:generate
+
+   # Create a migration
+   docker exec factory-backend-backend-1 pnpm prisma migrate dev --name migration_name
+
+   # Apply migrations
+   docker exec factory-backend-backend-1 pnpm prisma migrate deploy
+
+   # Seed the database
+   docker exec factory-backend-backend-1 pnpm db:seed
+   ```
+
+3. For Prisma Studio, use the configured script that exposes port 5555:
+   ```bash
+   pnpm prisma:studio:docker
+   ```
+   Prisma Studio will be accessible at http://localhost:5555 in your browser.
+
 ## Database Seeding
 
 The project includes a seed script (`prisma/seed.ts`) that initializes the database with essential data:
@@ -34,21 +102,29 @@ The project includes a seed script (`prisma/seed.ts`) that initializes the datab
 - Test company and domain
 - Admin user
 
-To run the seed script, use the command:
-
-```bash
-npx prisma db seed
-```
-
 ## Useful Commands
 
-- **Start the application with the database**: `docker compose up`
-- **Generate the Prisma client**: `pnpm prisma generate`
+### With Docker (recommended)
+
+- **Start the application with the database**: `docker compose up -d`
+- **Generate Prisma client**: `docker exec factory-backend-backend-1 pnpm prisma:generate`
+- **Create a migration**: `docker exec factory-backend-backend-1 pnpm prisma migrate dev --name migration_name`
+- **Apply migrations**: `docker exec factory-backend-backend-1 pnpm prisma migrate deploy`
+- **Seed the database**: `docker exec factory-backend-backend-1 pnpm db:seed`
+- **Visualize the database**: `pnpm prisma:studio:docker`
+
+### Without Docker (local installation)
+
+- **Generate Prisma client**: `pnpm prisma:generate`
 - **Create a migration**: `pnpm prisma migrate dev --name migration_name`
 - **Apply migrations**: `pnpm prisma migrate deploy`
 - **Seed the database**: `pnpm db:seed`
 - **Visualize the database**: `pnpm prisma studio`
 
-## Client
+## Using the Prisma Client
 
-3. Use the Prisma client in your code via `import { prisma } from '../database/prismaClient'`
+Import the Prisma client into your code via:
+
+```typescript
+import { prisma } from '../database/prismaClient';
+```

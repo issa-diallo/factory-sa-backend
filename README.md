@@ -169,6 +169,14 @@ pnpm test -t tests/schemas/packingListSchema.prod.test.ts
 
 # Run all production tests in local
 pnpm test "tests/**/*.prod.test.ts"
+
+# --- Docker Test Commands ---
+
+# Run all tests inside the backend container
+docker compose exec backend pnpm test
+
+# Run a specific test file inside the backend container
+docker compose exec backend pnpm test tests/controllers/userManagementController.test.ts
 ```
 
 ## 🗄️ Database (Prisma & PostgreSQL)

@@ -1,9 +1,9 @@
-import { RANGE_SEPARATORS } from '@constants/index';
-import { Result, createSuccess, createError } from '@interfaces/index';
+import { RANGE_SEPARATORS } from '../constants';
+import { Result, createSuccess, createError } from '../types/result';
 import {
   CtnRangeInputSchema,
   CtnRangeOutputSchema,
-} from '@schemas/utilsSchemas';
+} from '../schemas/utilsSchemas';
 
 /**
  * Receives a string of type "265-->267" or "300-303 or 150".

@@ -1,21 +1,8 @@
 import { Request, Response, NextFunction } from 'express';
-import { TokenService } from '../services/auth/tokenService';
 import { prisma } from '../database/prismaClient';
+import { TokenService } from '../services/auth/tokenService';
 
 const tokenService = new TokenService(prisma);
-
-import 'express';
-
-declare module 'express' {
-  export interface Request {
-    user?: {
-      id: string;
-      companyId: string;
-      roleId: string;
-      permissions: string[];
-    };
-  }
-}
 
 export const authenticate = async (
   req: Request,
@@ -26,7 +13,7 @@ export const authenticate = async (
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      return res.status(401).json({ message: 'Authentification requise' });
+      return res.status(401).json({ message: 'Authentication required' });
     }
 
     const token = authHeader.split(' ')[1];
@@ -36,13 +23,13 @@ export const authenticate = async (
     });
 
     if (!session || new Date() > session.expiresAt) {
-      return res.status(401).json({ message: 'Session expirée ou invalide' });
+      return res.status(401).json({ message: 'Session expired or invalid' });
     }
 
     const decoded = tokenService.verifyToken(token);
 
     req.user = {
-      id: decoded.userId,
+      userId: decoded.userId,
       companyId: decoded.companyId,
       roleId: decoded.roleId,
       permissions: decoded.permissions,
@@ -50,6 +37,6 @@ export const authenticate = async (
 
     next();
   } catch {
-    return res.status(401).json({ message: 'Token invalide' });
+    return res.status(401).json({ message: 'Invalid token' });
   }
 };

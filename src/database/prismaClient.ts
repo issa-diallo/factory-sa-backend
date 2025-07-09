@@ -4,7 +4,7 @@
  * and used throughout the application.
  */
 
-import { PrismaClient } from '@generated/prisma';
+import { PrismaClient } from '../generated/prisma';
 
 // Create a Prisma client instance
 // Configure logging based on the environment

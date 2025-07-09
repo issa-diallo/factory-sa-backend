@@ -40,6 +40,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check for outdated dependencies
+        run: |
+          pnpm outdated --json > outdated.json || true
+          if [ -s outdated.json ]; then
+            echo "Some dependencies are outdated. Please update them before merging."
+            cat outdated.json
+            exit 1
+          fi
+
       - name: ESLint check
         run: pnpm lint:check
 

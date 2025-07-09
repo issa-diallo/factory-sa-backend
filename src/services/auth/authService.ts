@@ -1,17 +1,18 @@
 import { Request } from 'express';
-import { PrismaClient } from '../../generated/prisma';
-import { LoginResponse } from '../../types/auth';
-import { getClientIp } from '../../utils/getClientIp';
 import { IPasswordService, ITokenService } from './interfaces';
+import { IAuthService } from './interfaces';
 import {
   CompanyDomain,
   Domain,
+  PrismaClient,
   RolePermission,
   User,
   UserRole,
 } from '../../generated/prisma';
+import { LoginResponse } from '../../types/auth';
+import { getClientIp } from '../../utils/getClientIp';
 
-export class AuthService {
+export class AuthService implements IAuthService {
   private prisma: PrismaClient;
   private passwordService: IPasswordService;
   private tokenService: ITokenService;
