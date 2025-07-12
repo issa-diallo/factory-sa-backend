@@ -24,8 +24,8 @@ export class UserManagementController {
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({
-          message: error.errors[0].message,
-          errors: error.errors,
+          message: error.issues[0].message,
+          errors: error.issues,
         });
       }
       const appError = error as Error;
@@ -74,8 +74,8 @@ export class UserManagementController {
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({
-          message: error.errors[0].message,
-          errors: error.errors,
+          message: error.issues[0].message,
+          errors: error.issues,
         });
       }
       const appError = error as Error;
@@ -108,8 +108,8 @@ export class UserManagementController {
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({
-          message: error.errors[0].message,
-          errors: error.errors,
+          message: error.issues[0].message,
+          errors: error.issues,
         });
       }
       const appError = error as Error;

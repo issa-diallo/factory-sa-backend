@@ -21,7 +21,7 @@ export class AuthController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
-          errors: error.errors,
+          errors: error.issues,
         });
       }
       const authError = error as Error;

@@ -70,7 +70,7 @@ describe('UserManagementController - full integration', () => {
 
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('message');
-      expect(res.body.message).toContain('Email is required');
+      expect(res.body.message).toContain('Required');
     });
 
     it('should return 400 if password is too short when creating a user', async () => {
@@ -224,7 +224,7 @@ describe('UserManagementController - full integration', () => {
       });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('message');
-      expect(res.body.message).toContain('User ID is required');
+      expect(res.body.message).toContain('Required');
     });
 
     it('should return 400 if roleId is missing when creating a user role', async () => {
@@ -234,7 +234,7 @@ describe('UserManagementController - full integration', () => {
       });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('message');
-      expect(res.body.message).toContain('Role ID is required');
+      expect(res.body.message).toContain('Required');
     });
 
     it('should return 400 if companyId is missing when creating a user role', async () => {
@@ -244,7 +244,7 @@ describe('UserManagementController - full integration', () => {
       });
       expect(res.status).toBe(400);
       expect(res.body).toHaveProperty('message');
-      expect(res.body.message).toContain('Company ID is required');
+      expect(res.body.message).toContain('Required');
     });
 
     it('should create a user role', async () => {

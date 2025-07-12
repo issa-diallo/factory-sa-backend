@@ -18,7 +18,7 @@ export function expandCtnRange(ctnRaw: string): Result<number[]> {
   const inputValidation = CtnRangeInputSchema.safeParse(ctnRaw);
   if (!inputValidation.success) {
     return createError(
-      inputValidation.error.errors[0]?.message || 'Invalid input',
+      inputValidation.error.issues[0]?.message || 'Invalid input',
       'INVALID_INPUT'
     );
   }

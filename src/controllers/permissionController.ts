@@ -23,7 +23,7 @@ export class PermissionController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
-          errors: error.errors,
+          errors: error.issues,
         });
       }
       const appError = error as Error;
@@ -85,7 +85,7 @@ export class PermissionController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
-          errors: error.errors,
+          errors: error.issues,
         });
       }
       const appError = error as Error;
@@ -125,7 +125,7 @@ export class PermissionController {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
-          errors: error.errors,
+          errors: error.issues,
         });
       }
       const appError = error as Error;

@@ -1,9 +1,7 @@
 import { z } from 'zod';
 
 export const createUserSchema = z.object({
-  email: z
-    .string({ required_error: 'Email is required' })
-    .email('Invalid email'),
+  email: z.string().min(1, 'Email is required').email('Invalid email'),
   password: z.string().min(8, 'Password must be at least 8 characters long'),
   firstName: z.string().optional(),
   lastName: z.string().optional(),
@@ -27,12 +25,15 @@ export const updateUserSchema = z
 
 export const createUserRoleSchema = z.object({
   userId: z
-    .string({ required_error: 'User ID is required' })
+    .string()
+    .min(1, 'User ID is required')
     .uuid('User ID must be a valid UUID'),
   companyId: z
-    .string({ required_error: 'Company ID is required' })
+    .string()
+    .min(1, 'Company ID is required')
     .uuid('Company ID must be a valid UUID'),
   roleId: z
-    .string({ required_error: 'Role ID is required' })
+    .string()
+    .min(1, 'Role ID is required')
     .uuid('Role ID must be a valid UUID'),
 });
