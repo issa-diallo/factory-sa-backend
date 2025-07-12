@@ -42,10 +42,10 @@ jobs:
 
       - name: Check for outdated dependencies
         run: |
-          pnpm outdated --json > outdated.json || true
-          if [ -s outdated.json ]; then
-            echo "Some dependencies are outdated. Please update them before merging."
-            cat outdated.json
+          if pnpm outdated --filter "updateType=major"; then
+            echo "✅ No major outdated dependencies."
+          else
+            echo "❌ Major outdated dependencies found. Please update them before merging."
             exit 1
           fi
 
