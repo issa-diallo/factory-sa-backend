@@ -23,8 +23,34 @@ export class UserManagementController {
       return res.status(201).json(user);
     } catch (error) {
       if (error instanceof ZodError) {
+        const errorMessage = error.issues[0].message;
+        if (
+          error.issues[0].code === 'invalid_type' &&
+          error.issues[0].path.length > 0
+        ) {
+          // If it's an invalid_type error for a specific path, try to get the min(1) message
+          const fieldName = error.issues[0].path[0];
+          if (fieldName === 'email') {
+            return res
+              .status(400)
+              .json({ message: 'Email is required', errors: error.issues });
+          } else if (fieldName === 'userId') {
+            return res
+              .status(400)
+              .json({ message: 'User ID is required', errors: error.issues });
+          } else if (fieldName === 'companyId') {
+            return res.status(400).json({
+              message: 'Company ID is required',
+              errors: error.issues,
+            });
+          } else if (fieldName === 'roleId') {
+            return res
+              .status(400)
+              .json({ message: 'Role ID is required', errors: error.issues });
+          }
+        }
         return res.status(400).json({
-          message: error.issues[0].message,
+          message: errorMessage,
           errors: error.issues,
         });
       }
@@ -73,8 +99,20 @@ export class UserManagementController {
       return res.status(200).json(updatedUser);
     } catch (error) {
       if (error instanceof ZodError) {
+        const errorMessage = error.issues[0].message;
+        if (
+          error.issues[0].code === 'invalid_type' &&
+          error.issues[0].path.length > 0
+        ) {
+          const fieldName = error.issues[0].path[0];
+          if (fieldName === 'email') {
+            return res
+              .status(400)
+              .json({ message: 'Email is required', errors: error.issues });
+          }
+        }
         return res.status(400).json({
-          message: error.issues[0].message,
+          message: errorMessage,
           errors: error.issues,
         });
       }
@@ -107,8 +145,29 @@ export class UserManagementController {
       return res.status(201).json(userRole);
     } catch (error) {
       if (error instanceof ZodError) {
+        const errorMessage = error.issues[0].message;
+        if (
+          error.issues[0].code === 'invalid_type' &&
+          error.issues[0].path.length > 0
+        ) {
+          const fieldName = error.issues[0].path[0];
+          if (fieldName === 'userId') {
+            return res
+              .status(400)
+              .json({ message: 'User ID is required', errors: error.issues });
+          } else if (fieldName === 'companyId') {
+            return res.status(400).json({
+              message: 'Company ID is required',
+              errors: error.issues,
+            });
+          } else if (fieldName === 'roleId') {
+            return res
+              .status(400)
+              .json({ message: 'Role ID is required', errors: error.issues });
+          }
+        }
         return res.status(400).json({
-          message: error.issues[0].message,
+          message: errorMessage,
           errors: error.issues,
         });
       }
