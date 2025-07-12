@@ -12,13 +12,12 @@ generator client {
 
 model Company {
   id          String   @id @default(uuid())
-  name        String
+  name        String   @unique
   description String?
   isActive    Boolean  @default(true)
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   companyDomains CompanyDomain[]
   userRoles      UserRole[]
 }
@@ -31,11 +30,9 @@ model CompanyDomain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   company Company @relation(fields: [companyId], references: [id])
   domain  Domain  @relation(fields: [domainId], references: [id])
 
-  // Contraintes
   @@unique([companyId, domainId])
 }
 
@@ -47,7 +44,6 @@ model Domain {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   companyDomains CompanyDomain[]
 }
 
@@ -59,7 +55,6 @@ model Permission {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   rolePermissions RolePermission[]
 }
 
@@ -71,7 +66,6 @@ model Role {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  // Relations
   rolePermissions RolePermission[]
   userRoles       UserRole[]
 }
@@ -84,11 +78,10 @@ model RolePermission {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  // Relations
   role       Role       @relation(fields: [roleId], references: [id])
   permission Permission @relation(fields: [permissionId], references: [id])
 
-  // Contraintes
+  // 
   @@unique([roleId, permissionId])
 }
 
@@ -102,7 +95,6 @@ model Session {
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
 
-  // Relations
   user User @relation(fields: [userId], references: [id])
 }
 
@@ -119,7 +111,6 @@ model User {
   createdAt    DateTime  @default(now())
   updatedAt    DateTime  @updatedAt
 
-  // Relations
   userRoles UserRole[]
   sessions  Session[]
 }
@@ -133,13 +124,9 @@ model UserRole {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  // Relations
   user    User    @relation(fields: [userId], references: [id])
   company Company @relation(fields: [companyId], references: [id])
   role    Role    @relation(fields: [roleId], references: [id])
 
-  // Contraintes
   @@unique([userId, companyId])
 }
-
-

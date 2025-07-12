@@ -1,4 +1,4 @@
-module.exports = {
+export default {
   preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/src', '<rootDir>/tests'],
@@ -12,11 +12,19 @@ module.exports = {
     '^@routes/(.*)$': '<rootDir>/src/routes/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
     '^@interfaces/(.*)$': '<rootDir>/src/types/$1',
-    '^@middleware/(.*)$': '<rootDir>/src/middleware/$1',
+    '^@middlewares/(.*)$': '<rootDir>/src/middlewares/$1',
     '^@schemas/(.*)$': '<rootDir>/src/schemas/$1',
     '^@services/(.*)$': '<rootDir>/src/services/$1',
     '^@constants/(.*)$': '<rootDir>/src/constants/$1',
+    '^@generated/(.*)$': '<rootDir>/src/generated/$1',
+    '^@config/(.*)$': '<rootDir>/src/config/$1',
+    '^@database/(.*)$': '<rootDir>/src/database/$1',
+    '^@prisma/(.*)$': '<rootDir>/prisma/$1',
   },
+  testPathIgnorePatterns: [
+    '/node_modules/',
+    '/tests/schemas/packingListSchema.prod.test.ts',
+  ],
   collectCoverageFrom: [
     'src/**/*.ts',
     '!src/**/*.d.ts',

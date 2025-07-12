@@ -1,15 +1,10 @@
-import {
-  ProcessedItem,
-  Result,
-  createSuccess,
-  createError,
-} from '@interfaces/index';
-import { expandCtnRange } from '@utils/expandCtnRange';
+import { ProcessedItem, Result, createSuccess, createError } from '../types';
+import { expandCtnRange } from './expandCtnRange';
 import {
   RowDataSchema,
   BaseItemSchema,
   ProcessedItemArraySchema,
-} from '@schemas/utilsSchemas';
+} from '../schemas/utilsSchemas';
 
 type BaseItem = Pick<ProcessedItem, 'description' | 'model' | 'origin'>;
 
@@ -28,7 +23,7 @@ export function extractCtnBlocksFromRow(
   const rowValidation = RowDataSchema.safeParse(row);
   if (!rowValidation.success) {
     return createError(
-      'Invalid row data: ' + rowValidation.error.errors[0]?.message,
+      'Invalid row data: ' + rowValidation.error.issues[0]?.message,
       'INVALID_ROW_DATA'
     );
   }
@@ -36,7 +31,7 @@ export function extractCtnBlocksFromRow(
   const baseValidation = BaseItemSchema.safeParse(base);
   if (!baseValidation.success) {
     return createError(
-      'Invalid base object: ' + baseValidation.error.errors[0]?.message,
+      'Invalid base object: ' + baseValidation.error.issues[0]?.message,
       'INVALID_BASE_ITEM'
     );
   }
@@ -137,7 +132,7 @@ export function extractCtnBlocksFromRow(
   if (!outputValidation.success) {
     return createError(
       'Error validating processed items: ' +
-        outputValidation.error.errors[0]?.message,
+        outputValidation.error.issues[0]?.message,
       'OUTPUT_VALIDATION_ERROR'
     );
   }

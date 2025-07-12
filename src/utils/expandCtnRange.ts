@@ -1,9 +1,9 @@
-import { RANGE_SEPARATORS } from '@constants/index';
-import { Result, createSuccess, createError } from '@interfaces/index';
+import { RANGE_SEPARATORS } from '../constants';
+import { Result, createSuccess, createError } from '../types/result';
 import {
   CtnRangeInputSchema,
   CtnRangeOutputSchema,
-} from '@schemas/utilsSchemas';
+} from '../schemas/utilsSchemas';
 
 /**
  * Receives a string of type "265-->267" or "300-303 or 150".
@@ -18,7 +18,7 @@ export function expandCtnRange(ctnRaw: string): Result<number[]> {
   const inputValidation = CtnRangeInputSchema.safeParse(ctnRaw);
   if (!inputValidation.success) {
     return createError(
-      inputValidation.error.errors[0]?.message || 'Invalid input',
+      inputValidation.error.issues[0]?.message || 'Invalid input',
       'INVALID_INPUT'
     );
   }

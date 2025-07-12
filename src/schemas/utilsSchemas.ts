@@ -25,11 +25,7 @@ export const BaseItemSchema = z.object({
 // Schema for row data
 export const RowDataSchema = z.record(
   z.string(),
-  z.union([z.string(), z.number()], {
-    errorMap: () => ({
-      message: 'Values must be strings or numbers',
-    }),
-  })
+  z.union([z.string(), z.number()])
 );
 
 // Schema for ProcessedItem

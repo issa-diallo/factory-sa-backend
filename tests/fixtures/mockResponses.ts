@@ -39,13 +39,14 @@ export const mockServiceResponses = {
 
   failure: {
     success: false as const,
-    error: 'Data processing failed: missing base data',
+    error:
+      'Failed to process data: Line 1: missing base data (description, model, origin)',
     code: 'PROCESSING_FAILED',
   },
 
   emptyInput: {
     success: false as const,
-    error: 'No data lines provided',
+    error: 'No data rows provided',
     code: 'EMPTY_INPUT',
   },
 

@@ -40,6 +40,15 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Check for outdated dependencies
+        run: |
+          if pnpm outdated --filter "updateType=major"; then
+            echo "✅ No major outdated dependencies."
+          else
+            echo "❌ Major outdated dependencies found. Please update them before merging."
+            exit 1
+          fi
+
       - name: ESLint check
         run: pnpm lint:check
 
