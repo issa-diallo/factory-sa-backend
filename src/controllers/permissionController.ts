@@ -2,7 +2,11 @@ import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { prisma } from '../database/prismaClient';
 import { PermissionService } from '../services/permission/permissionService';
-import { createPermissionSchema, createRolePermissionSchema, updatePermissionSchema } from '../schemas/permissionSchema';
+import {
+  createPermissionSchema,
+  createRolePermissionSchema,
+  updatePermissionSchema,
+} from '../schemas/permissionSchema';
 
 const permissionService = new PermissionService(prisma);
 

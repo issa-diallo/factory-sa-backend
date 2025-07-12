@@ -1,6 +1,9 @@
 import { ICompanyService } from './interfaces';
 import { Company, PrismaClient } from '../../generated/prisma';
-import { CreateCompanyRequest, UpdateCompanyRequest } from '../../types/company';
+import {
+  CreateCompanyRequest,
+  UpdateCompanyRequest,
+} from '../../types/company';
 
 export class CompanyService implements ICompanyService {
   private prisma: PrismaClient;

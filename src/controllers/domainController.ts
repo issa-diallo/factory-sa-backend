@@ -2,7 +2,11 @@ import { Request, Response } from 'express';
 import { ZodError } from 'zod';
 import { prisma } from '../database/prismaClient';
 import { DomainService } from '../services/domain/domainService';
-import { createCompanyDomainSchema, createDomainSchema, updateDomainSchema } from '../schemas/domainSchema';
+import {
+  createCompanyDomainSchema,
+  createDomainSchema,
+  updateDomainSchema,
+} from '../schemas/domainSchema';
 
 const domainService = new DomainService(prisma);
 

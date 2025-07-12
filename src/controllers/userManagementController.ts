@@ -3,7 +3,11 @@ import { ZodError } from 'zod';
 import { PasswordService } from '../services/auth/passwordService';
 import { prisma } from '../database/prismaClient';
 import { UserManagementService } from '../services/userManagement/userManagementService';
-import { createUserRoleSchema, createUserSchema, updateUserSchema } from '../schemas/userManagementSchema';
+import {
+  createUserRoleSchema,
+  createUserSchema,
+  updateUserSchema,
+} from '../schemas/userManagementSchema';
 
 const passwordService = new PasswordService();
 const userManagementService = new UserManagementService(
