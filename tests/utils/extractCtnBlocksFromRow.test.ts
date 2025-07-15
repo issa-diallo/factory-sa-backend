@@ -1,4 +1,5 @@
 import { extractCtnBlocksFromRow } from '../../src/utils/extractCtnBlocksFromRow';
+import { RANGE_SEPARATORS } from '../../src/constants';
 
 describe('extractCtnBlocksFromRow', () => {
   const validBase = {
@@ -222,7 +223,7 @@ describe('extractCtnBlocksFromRow', () => {
       if (!result.success) {
         expect(result.code).toBe('CTN_EXPANSION_ERROR');
         expect(result.error).toContain(
-          'Error expanding CTN CTN: Invalid CTN format - only numbers, spaces, and separators (-,>,→,–,to) are allowed'
+          `Error expanding CTN CTN: Invalid CTN format - only numbers, spaces, and separators (${RANGE_SEPARATORS.join(', ')}) are allowed`
         );
       }
     });

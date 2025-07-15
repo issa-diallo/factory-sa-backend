@@ -1,1 +1,1 @@
-export const RANGE_SEPARATORS = ['-->', '–>', '->', '→', 'to', '–', '-'];
+export const RANGE_SEPARATORS = ['-->', '–>', '->', '→', 'to', 'TO', '–', '-'];
