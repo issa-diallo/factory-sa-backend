@@ -1,16 +1,15 @@
 import { ICompanyService } from './interfaces';
-import { Company, PrismaClient } from '../../generated/prisma';
+import { Company } from '../../generated/prisma';
 import {
   CreateCompanyRequest,
   UpdateCompanyRequest,
 } from '../../types/company';
+import { prisma } from '../../database/prismaClient';
 
 export class CompanyService implements ICompanyService {
-  private prisma: PrismaClient;
+  constructor() {}
 
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
-  }
+  private prisma = prisma;
 
   async createCompany(data: CreateCompanyRequest): Promise<Company> {
     return this.prisma.company.create({

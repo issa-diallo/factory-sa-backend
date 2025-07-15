@@ -1,13 +1,12 @@
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
-import { prisma } from '../database/prismaClient';
 import { CompanyService } from '../services/company/companyService';
 import {
   createCompanySchema,
   updateCompanySchema,
 } from '../schemas/companySchema';
 
-const companyService = new CompanyService(prisma);
+const companyService = new CompanyService();
 
 export class CompanyController {
   static async createCompany(req: Request, res: Response): Promise<Response> {
@@ -22,8 +21,7 @@ export class CompanyController {
           errors: error.issues,
         });
       }
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return res.status(500).json({ message: (error as Error).message });
     }
   }
 
@@ -38,8 +36,7 @@ export class CompanyController {
 
       return res.status(200).json(company);
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return res.status(500).json({ message: (error as Error).message });
     }
   }
 
@@ -48,8 +45,7 @@ export class CompanyController {
       const companies = await companyService.getAllCompanies();
       return res.status(200).json(companies);
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return res.status(500).json({ message: (error as Error).message });
     }
   }
 
@@ -58,13 +54,13 @@ export class CompanyController {
       const { id } = req.params;
       const data = updateCompanySchema.parse(req.body);
 
-      const existingCompany = await companyService.getCompanyById(id);
-      if (!existingCompany) {
+      const existing = await companyService.getCompanyById(id);
+      if (!existing) {
         return res.status(404).json({ message: 'Company not found' });
       }
 
-      const updatedCompany = await companyService.updateCompany(id, data);
-      return res.status(200).json(updatedCompany);
+      const updated = await companyService.updateCompany(id, data);
+      return res.status(200).json(updated);
     } catch (error) {
       if (error instanceof ZodError) {
         return res.status(400).json({
@@ -72,25 +68,22 @@ export class CompanyController {
           errors: error.issues,
         });
       }
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return res.status(500).json({ message: (error as Error).message });
     }
   }
 
   static async deleteCompany(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-
-      const existingCompany = await companyService.getCompanyById(id);
-      if (!existingCompany) {
+      const existing = await companyService.getCompanyById(id);
+      if (!existing) {
         return res.status(404).json({ message: 'Company not found' });
       }
 
       await companyService.deleteCompany(id);
       return res.status(204).send();
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return res.status(500).json({ message: (error as Error).message });
     }
   }
 }
