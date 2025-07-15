@@ -71,7 +71,7 @@ describe('CompanyController (static)', () => {
       );
     });
 
-    it('should return 500 for internal server error', async () => {
+    it('should return 409 if company name already exists', async () => {
       const req = {
         body: {
           name: 'Company',
@@ -81,10 +81,10 @@ describe('CompanyController (static)', () => {
       } as unknown as Request;
       const res = createMockResponse();
 
-      // Provoquer une erreur de base de données (violation de contrainte d'unicité)
+      // Créer une compagnie avec le même nom pour provoquer l'erreur
       await prisma.company.create({
         data: {
-          name: req.body.name, // Créer une compagnie avec le même nom
+          name: req.body.name,
           description: 'Existing Desc',
           isActive: true,
         },
@@ -95,9 +95,7 @@ describe('CompanyController (static)', () => {
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: expect.stringContaining(
-            'Unique constraint failed on the fields: (`name`)'
-          ),
+          message: 'Company with this name already exists.',
         })
       );
     });
