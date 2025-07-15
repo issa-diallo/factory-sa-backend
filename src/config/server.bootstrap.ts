@@ -1,11 +1,12 @@
-import { startServer } from '../server';
-import { serverConfig } from './server.config';
 import { prisma } from '../database/prismaClient';
+import { startServer } from '../server';
+import { getServerConfig } from './server.config';
 
 export function startApplication() {
   const server = startServer();
   server.on('listening', () => {
-    console.log(`Server running on port ${serverConfig.port}`);
+    const config = getServerConfig();
+    console.log(`Server running on port ${config.port}`);
     console.log('Database connection established');
   });
 

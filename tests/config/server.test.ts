@@ -1,16 +1,13 @@
-const loadConfig = async () => {
-  jest.resetModules();
-  return import('../../src/config/server.config');
-};
-
 import { Server } from 'http';
 import { startServer } from '../../src/server';
+import { getServerConfig } from '../../src/config/server.config';
 
 describe('Server Configuration and Bootstrap', () => {
   describe('serverConfig', () => {
     const originalEnv = process.env;
 
     beforeEach(() => {
+      jest.resetModules(); // Reset modules to ensure fresh import of server.config
       process.env = { ...originalEnv };
     });
 
@@ -18,52 +15,83 @@ describe('Server Configuration and Bootstrap', () => {
       process.env = originalEnv;
     });
 
-    it('should use the default port 3001', async () => {
+    it('should use the default port 3001', () => {
       delete process.env.PORT;
-      const { serverConfig } = await loadConfig();
-      expect(serverConfig.port).toBe(3001);
+      const { port } = getServerConfig();
+      expect(port).toBe(3001);
     });
 
-    it('should use the port from process.env.PORT', async () => {
+    it('should use the port from process.env.PORT', () => {
       process.env.PORT = '4000';
-      const { serverConfig } = await loadConfig();
-      expect(serverConfig.port).toBe('4000');
+      const { port } = getServerConfig();
+      expect(port).toBe('4000');
     });
   });
 
   // Tests for src/server.ts
   describe('startServer', () => {
-    let serverInstance: Server;
+    let serverInstance: Server | undefined;
+    const TEST_PORT = '3002';
 
-    afterEach(() => {
+    beforeEach(() => {
+      serverInstance = undefined;
+      process.env.PORT = TEST_PORT; // Set test port for each test
+    });
+
+    afterEach(done => {
       if (serverInstance) {
-        serverInstance.close();
+        serverInstance.close(() => {
+          done();
+        });
+      } else {
+        done();
       }
     });
 
     it('should start the server and return a server instance', done => {
-      serverInstance = startServer();
-      serverInstance.on('listening', () => {
-        expect(serverInstance).toBeDefined();
-        expect(serverInstance.listening).toBe(true);
+      const currentServerInstance = startServer();
+      currentServerInstance.on('listening', () => {
+        expect(currentServerInstance).toBeDefined();
+        expect(currentServerInstance.listening).toBe(true);
         done();
       });
+      currentServerInstance.on('error', done); // Handle potential errors during server start
+      serverInstance = currentServerInstance; // Assign to global for afterEach
     });
 
     it('should handle EADDRINUSE error if port is already in use', done => {
       const firstServer = startServer();
       firstServer.on('listening', () => {
+        // Attempt to start another server on the same port
         const secondServer = startServer();
         // eslint-disable-next-line @typescript-eslint/no-explicit-any
         secondServer.on('error', (err: any) => {
           expect(err.code).toBe('EADDRINUSE');
           firstServer.close(() => {
-            secondServer.close(() => {
+            // Ensure both servers are closed
+            if (secondServer) {
+              secondServer.close(() => {
+                done();
+              });
+            } else {
               done();
+            }
+          });
+        });
+        secondServer.on('listening', () => {
+          // This case should not happen if EADDRINUSE is correctly handled
+          firstServer.close(() => {
+            secondServer.close(() => {
+              done(
+                new Error(
+                  'Second server should not have started on the same port.'
+                )
+              );
             });
           });
         });
       });
+      firstServer.on('error', done); // Handle potential errors during first server start
     });
   });
 });

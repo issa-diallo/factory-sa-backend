@@ -1,4 +1,10 @@
 import { z } from 'zod';
+import { RANGE_SEPARATORS } from '../constants';
+
+const escapedSeparators = RANGE_SEPARATORS.map(s =>
+  s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+).join('|');
+const ctnRangeRegex = new RegExp(`^(?:\\d|\\s|${escapedSeparators})+$`);
 
 // Schema for the input of expandCtnRange
 export const CtnRangeInputSchema = z
@@ -6,8 +12,8 @@ export const CtnRangeInputSchema = z
   .min(1, 'CTN value cannot be empty')
   .trim()
   .refine(
-    val => /^[\d\s\->→–to]+$/.test(val),
-    'Invalid CTN format - only numbers, spaces, and separators (-,>,→,–,to) are allowed'
+    val => ctnRangeRegex.test(val),
+    `Invalid CTN format - only numbers, spaces, and separators (${RANGE_SEPARATORS.join(', ')}) are allowed`
   );
 
 // Schema for the output of expandCtnRange
@@ -25,11 +31,7 @@ export const BaseItemSchema = z.object({
 // Schema for row data
 export const RowDataSchema = z.record(
   z.string(),
-  z.union([z.string(), z.number()], {
-    errorMap: () => ({
-      message: 'Values must be strings or numbers',
-    }),
-  })
+  z.union([z.string(), z.number()])
 );
 
 // Schema for ProcessedItem
