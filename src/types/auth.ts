@@ -22,11 +22,9 @@ export interface TokenPayload {
   permissions: string[];
 }
 
-// Type pour les erreurs d'authentification personnalisées
 export interface AppError extends Error {
   name: string;
   message: string;
 }
 
-// Type union pour toutes les erreurs possibles dans le contrôleur d'authentification
 export type AuthError = AppError | ZodError;

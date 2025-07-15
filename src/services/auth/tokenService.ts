@@ -2,10 +2,14 @@ import jwt from 'jsonwebtoken';
 import { ITokenService } from './interfaces';
 import { PrismaClient } from '../../generated/prisma';
 import { TokenPayload } from '../../types/auth';
+import {
+  TOKEN_EXPIRATION_DURATION_MS,
+  TOKEN_EXPIRATION_STRING,
+} from '../../constants';
 
 export class TokenService implements ITokenService {
   private readonly JWT_SECRET: string;
-  private readonly TOKEN_EXPIRATION = '24h';
+  private readonly TOKEN_EXPIRATION = TOKEN_EXPIRATION_STRING;
   private prisma: PrismaClient;
 
   constructor(prisma: PrismaClient) {
@@ -29,7 +33,7 @@ export class TokenService implements ITokenService {
       data: {
         userId: payload.userId,
         token,
-        expiresAt: new Date(Date.now() + 24 * 60 * 60 * 1000), // 24 heures
+        expiresAt: new Date(Date.now() + TOKEN_EXPIRATION_DURATION_MS),
         isActive: true,
       },
     });
@@ -41,11 +45,11 @@ export class TokenService implements ITokenService {
     try {
       const decoded = jwt.verify(token, this.JWT_SECRET) as TokenPayload;
       if (typeof decoded === 'string' || !decoded.userId) {
-        throw new Error('Token invalide ou expiré');
+        throw new Error('Invalid or expired token');
       }
       return decoded;
     } catch {
-      throw new Error('Token invalide ou expiré');
+      throw new Error('Invalid or expired token');
     }
   }
 

@@ -46,16 +46,13 @@ export class PackingListController {
       // Step 3: Process data with the service
       const processResult = await packingListService.processData(cleanedData);
 
-      // Vérifier si le résultat du traitement est une erreur
       if (!processResult.success) {
-        // Si le traitement échoue, renvoyer une erreur avec les détails
         return res.status(400).json({
           error: processResult.error,
           code: processResult.code,
         });
       }
 
-      // Step 4: Return the response with the processed data
       return res.status(200).json({
         success: true,
         data: processResult.data.data,
@@ -66,7 +63,6 @@ export class PackingListController {
         },
       });
     } catch (error) {
-      // Handle unexpected errors
       console.error('Error processing packing list:', error);
 
       return res.status(500).json({

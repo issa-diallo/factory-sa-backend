@@ -14,19 +14,19 @@ export interface ITokenService {
 
 export interface IAuthService {
   /**
-   * Authentifie un utilisateur avec son email et mot de passe
+   * Authenticates a user using their email and password
    *
-   * @param email - Email de l'utilisateur
-   * @param password - Mot de passe de l'utilisateur
-   * @param req - Requête Express pour obtenir des informations comme l'IP
-   * @returns Informations de connexion avec token JWT et données utilisateur
+   * @param email - The user's email
+   * @param password - The user's password
+   * @param req - Express request to obtain information such as the IP
+   * @returns Login information including JWT token and user data
    */
   login(email: string, password: string, req: Request): Promise<LoginResponse>;
 
   /**
-   * Déconnecte un utilisateur en invalidant son token
+   * Logs out a user by invalidating their token
    *
-   * @param token - Token JWT à invalider
+   * @param token - JWT token to invalidate
    */
   logout(token: string): Promise<void>;
 }

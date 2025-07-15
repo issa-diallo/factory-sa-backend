@@ -10,14 +10,14 @@ export class PasswordService implements IPasswordService {
   }
 
   /**
-   * Hache un mot de passe en clair
+   * Hashes a plain password
    */
   async hash(plainPassword: string): Promise<string> {
     return bcrypt.hash(plainPassword, this.SALT_ROUNDS);
   }
 
   /**
-   * Vérifie si un mot de passe en clair correspond à un hachage
+   * Verifies if a plain password matches a hash
    */
   async verify(
     plainPassword: string,

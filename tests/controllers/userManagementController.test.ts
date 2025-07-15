@@ -22,12 +22,12 @@ describe('UserManagementController - full integration', () => {
     await prisma.userRole.deleteMany();
     await prisma.rolePermission.deleteMany();
     await prisma.companyDomain.deleteMany();
-    await prisma.session.deleteMany(); // Add Session deletion
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();
     await prisma.company.deleteMany();
     await prisma.domain.deleteMany();
-    await prisma.permission.deleteMany(); // Add Permission deletion
+    await prisma.permission.deleteMany();
   });
 
   afterAll(async () => {
@@ -35,12 +35,12 @@ describe('UserManagementController - full integration', () => {
     await prisma.userRole.deleteMany();
     await prisma.rolePermission.deleteMany();
     await prisma.companyDomain.deleteMany();
-    await prisma.session.deleteMany(); // Add Session deletion
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();
     await prisma.company.deleteMany();
     await prisma.domain.deleteMany();
-    await prisma.permission.deleteMany(); // Add Permission deletion
+    await prisma.permission.deleteMany();
     await prisma.$disconnect();
   });
 

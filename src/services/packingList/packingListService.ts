@@ -11,13 +11,6 @@ import { extractCtnBlocksFromRow } from '../../utils/extractCtnBlocksFromRow';
 import { IPackingListService } from './interfaces';
 
 export class PackingListService implements IPackingListService {
-  // L'instance de Prisma est maintenant importée directement
-  // private prisma: PrismaClient; // Plus besoin de cette ligne
-
-  constructor() {
-    // this.prisma = prisma; // Plus besoin de cette ligne
-  }
-
   /**
    * Processes packing list data rows and extracts ProcessedItems.
    *
@@ -50,7 +43,6 @@ export class PackingListService implements IPackingListService {
         origin: String(row['ORIGIN'] || ''),
       };
 
-      // Validate base data
       if (
         !base.description.trim() ||
         !base.model.trim() ||
@@ -91,7 +83,6 @@ export class PackingListService implements IPackingListService {
       }
     }
 
-    // Si toutes les lignes ont des erreurs, retourner une erreur
     if (errors.length === rows.length) {
       return createError(
         `Failed to process data: ${errors[0]}`,
@@ -99,14 +90,11 @@ export class PackingListService implements IPackingListService {
       );
     }
 
-    // If we have some results but also some errors, we can still return success with a warning
     if (result.length > 0) {
       if (errors.length > 0) {
-        // Log errors but still return success since we have some valid data
         console.warn('Errors while processing some rows:', errors);
       }
 
-      // Calculate summary
       const totalPcs = result.reduce((sum, item) => sum + item.qty, 0);
 
       return createSuccess({
@@ -118,7 +106,6 @@ export class PackingListService implements IPackingListService {
       });
     }
 
-    // If no results and we have errors, return the first error
     if (errors.length > 0) {
       return createError(
         `Failed to process data: ${errors[0]}`,
@@ -126,7 +113,6 @@ export class PackingListService implements IPackingListService {
       );
     }
 
-    // No results and no errors means empty valid input
     return createError(
       'No valid data found in the provided rows',
       'NO_VALID_DATA'
