@@ -20,8 +20,8 @@ describe('UserManagementController - full integration', () => {
   beforeEach(async () => {
     // Delete in order of dependency to avoid foreign key constraint errors
     await prisma.userRole.deleteMany();
-    await prisma.rolePermission.deleteMany();
     await prisma.companyDomain.deleteMany();
+    await prisma.rolePermission.deleteMany();
     await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();
@@ -33,8 +33,8 @@ describe('UserManagementController - full integration', () => {
   afterAll(async () => {
     // Delete in order of dependency to avoid foreign key constraint errors
     await prisma.userRole.deleteMany();
-    await prisma.rolePermission.deleteMany();
     await prisma.companyDomain.deleteMany();
+    await prisma.rolePermission.deleteMany();
     await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();

@@ -12,7 +12,7 @@
     "prisma:studio:docker": "docker exec factory-backend-backend-1 pnpm prisma studio --port 5555 --hostname 0.0.0.0",
     "db:seed": "prisma db seed",
     "build:watch": "tsc --watch",
-    "test": "NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest",
+    "test": "prisma migrate reset --force --skip-seed && NODE_ENV=test NODE_OPTIONS='--experimental-vm-modules' jest",
     "test:watch": "NODE_ENV=test jest --watch",
     "test:coverage": "NODE_ENV=test jest --coverage",
     "lint": "eslint . --ext .ts,.js --fix",
