@@ -47,11 +47,24 @@ describe('TokenService', () => {
   });
 
   describe('constructor', () => {
-    it('should throw an error if JWT_SECRET is not defined', () => {
+    it('should throw an error if JWT_SECRET is not defined', async () => {
+      const originalJwtSecret = process.env.JWT_SECRET;
+      const originalJwtSecretDev = process.env.JWT_SECRET_DEVELOPPEMENT;
+
       delete process.env.JWT_SECRET;
-      expect(() => new TokenService(prisma)).toThrow(
+      delete process.env.JWT_SECRET_DEVELOPPEMENT;
+
+      jest.resetModules();
+      const { TokenService: NewTokenService } = await import(
+        '../../../src/services/auth/tokenService'
+      );
+
+      expect(() => new NewTokenService(prisma)).toThrow(
         'JWT_SECRET or JWT_SECRET_DEVELOPPEMENT is not defined in environment variables'
       );
+
+      process.env.JWT_SECRET = originalJwtSecret;
+      process.env.JWT_SECRET_DEVELOPPEMENT = originalJwtSecretDev;
     });
   });
 
