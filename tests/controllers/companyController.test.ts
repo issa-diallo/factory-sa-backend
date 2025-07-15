@@ -18,12 +18,13 @@ describe('CompanyController (static)', () => {
 
     await prisma.userRole.deleteMany();
     await prisma.companyDomain.deleteMany();
-    await prisma.company.deleteMany();
+    await prisma.rolePermission.deleteMany();
+    await prisma.session.deleteMany();
     await prisma.user.deleteMany();
     await prisma.role.deleteMany();
-    await prisma.permission.deleteMany();
+    await prisma.company.deleteMany();
     await prisma.domain.deleteMany();
-    await prisma.session.deleteMany();
+    await prisma.permission.deleteMany();
   });
 
   afterAll(async () => {
@@ -98,22 +99,20 @@ describe('CompanyController (static)', () => {
 
   describe('getCompanyById', () => {
     it('should return 200 and company if found', async () => {
-      const req = { params: { id: '1' } } as unknown as Request;
       const res = createMockResponse();
-      await prisma.company.create({
+      const company = await prisma.company.create({
         data: {
-          id: '1',
           name: 'Test Company',
           description: 'Test Description',
           isActive: true,
         },
       });
-
+      const req = { params: { id: company.id } } as unknown as Request;
       await CompanyController.getCompanyById(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ id: '1' })
+        expect.objectContaining({ id: company.id })
       );
     });
 
@@ -132,25 +131,33 @@ describe('CompanyController (static)', () => {
     it('should return all companies', async () => {
       const req = {} as Request;
       const res = createMockResponse();
-      const companies = [
+      const companiesData = [
         {
-          id: '1',
-          name: 'Test',
-          description: 'Test Description',
+          name: 'Test Company 1',
+          description: 'Desc 1',
           isActive: true,
-          createdAt: new Date(),
-          updatedAt: new Date(),
+        },
+        {
+          name: 'Test Company 2',
+          description: 'Desc 2',
+          isActive: false,
         },
       ];
 
       await prisma.company.createMany({
-        data: companies,
+        data: companiesData,
       });
 
       await CompanyController.getAllCompanies(req, res);
 
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(companies);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.arrayContaining([
+          expect.objectContaining({ name: 'Test Company 1' }),
+          expect.objectContaining({ name: 'Test Company 2' }),
+        ])
+      );
+      expect((res.json as jest.Mock).mock.calls[0][0].length).toBe(2);
     });
 
     it('should return empty array and 200 status if no companies', async () => {
@@ -166,19 +173,18 @@ describe('CompanyController (static)', () => {
 
   describe('updateCompany', () => {
     it('should update and return 200', async () => {
-      const req = {
-        params: { id: '1' },
-        body: { name: 'Updated' },
-      } as unknown as Request;
       const res = createMockResponse();
-      await prisma.company.create({
+      const company = await prisma.company.create({
         data: {
-          id: '1',
           name: 'Old Company',
           description: 'Old Description',
           isActive: true,
         },
       });
+      const req = {
+        params: { id: company.id },
+        body: { name: 'Updated' },
+      } as unknown as Request;
 
       await CompanyController.updateCompany(req, res);
 
@@ -203,16 +209,15 @@ describe('CompanyController (static)', () => {
 
   describe('deleteCompany', () => {
     it('should delete and return 204', async () => {
-      const req = { params: { id: '1' } } as unknown as Request;
       const res = createMockResponse();
-      await prisma.company.create({
+      const company = await prisma.company.create({
         data: {
-          id: '1',
           name: 'Test Company',
           description: 'Test Description',
           isActive: true,
         },
       });
+      const req = { params: { id: company.id } } as unknown as Request;
 
       await CompanyController.deleteCompany(req, res);
 

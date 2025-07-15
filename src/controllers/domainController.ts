@@ -77,14 +77,25 @@ export class DomainController {
 
       const updatedDomain = await domainService.updateDomain(id, data);
       return res.status(200).json(updatedDomain);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
           errors: error.issues,
         });
       }
-      const appError = error as Error;
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return res
+          .status(409)
+          .json({ message: 'Domain with this name already exists.' });
+      }
+      const appError =
+        error instanceof Error ? error : new Error('An unknown error occurred');
       return res.status(500).json({ message: appError.message });
     }
   }

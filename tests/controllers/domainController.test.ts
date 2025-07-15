@@ -14,12 +14,27 @@ function createMockResponse(): Response {
 describe('DomainController (static)', () => {
   beforeEach(async () => {
     jest.clearAllMocks();
+    await prisma.userRole.deleteMany();
     await prisma.companyDomain.deleteMany();
-    await prisma.domain.deleteMany();
+    await prisma.rolePermission.deleteMany();
+    await prisma.session.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.role.deleteMany();
     await prisma.company.deleteMany();
+    await prisma.domain.deleteMany();
+    await prisma.permission.deleteMany();
   });
 
   afterAll(async () => {
+    await prisma.userRole.deleteMany();
+    await prisma.companyDomain.deleteMany();
+    await prisma.rolePermission.deleteMany();
+    await prisma.session.deleteMany();
+    await prisma.user.deleteMany();
+    await prisma.role.deleteMany();
+    await prisma.company.deleteMany();
+    await prisma.domain.deleteMany();
+    await prisma.permission.deleteMany();
     await prisma.$disconnect();
   });
 
