@@ -41,12 +41,22 @@ export class TokenService implements ITokenService {
     return token;
   }
 
-  verifyToken(token: string): TokenPayload {
+  async verifyToken(token: string): Promise<TokenPayload> {
     try {
       const decoded = jwt.verify(token, this.JWT_SECRET) as TokenPayload;
+
       if (typeof decoded === 'string' || !decoded.userId) {
         throw new Error('Invalid or expired token');
       }
+
+      const session = await this.prisma.session.findUnique({
+        where: { token },
+      });
+
+      if (!session || !session.isActive) {
+        throw new Error('Invalid or expired token');
+      }
+
       return decoded;
     } catch {
       throw new Error('Invalid or expired token');
@@ -54,6 +64,14 @@ export class TokenService implements ITokenService {
   }
 
   async invalidateToken(token: string): Promise<void> {
+    const existingSession = await this.prisma.session.findUnique({
+      where: { token },
+    });
+
+    if (!existingSession) {
+      throw new Error('Invalid token');
+    }
+
     await this.prisma.session.update({
       where: { token },
       data: { isActive: false },

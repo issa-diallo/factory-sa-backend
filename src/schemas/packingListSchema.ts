@@ -20,7 +20,7 @@ const packingListRowSchema = z
       .number()
       .nullish()
       .transform(val => (val === undefined ? null : val)),
-    ORIGIN: z.string(),
+    ORIGIN: z.string().optional(),
     EAN: z.number().optional(),
     PAL: z.number().optional(),
     CTN: z.union([z.string(), z.number()]),

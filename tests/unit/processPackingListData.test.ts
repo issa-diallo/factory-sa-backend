@@ -1,5 +1,9 @@
 import { PackingListService } from '../../src/services/packingList/packingListService';
-import { createSuccess, createError } from '../../src/types/result';
+import {
+  createSuccess,
+  createError,
+  isErrorResult,
+} from '../../src/types/result';
 import { extractCtnBlocksFromRow } from '../../src/utils/extractCtnBlocksFromRow';
 import { PackingListData } from '../../src/schemas/packingListSchema';
 
@@ -9,6 +13,9 @@ const mockExtractCtnBlocksFromRow =
   extractCtnBlocksFromRow as jest.MockedFunction<
     typeof extractCtnBlocksFromRow
   >;
+
+const MISSING_BASE_DATA_ERROR =
+  'Line 2: missing base data (description, model)';
 
 describe('PackingListService', () => {
   let service: PackingListService;
@@ -105,7 +112,7 @@ describe('PackingListService', () => {
     expect(result.success).toBe(true);
     expect(console.warn).toHaveBeenCalledWith(
       'Errors while processing some rows:',
-      ['Line 2: missing base data (description, model, origin)']
+      [MISSING_BASE_DATA_ERROR]
     );
     if (result.success) {
       expect(result.data?.data.length).toBe(2);
@@ -170,7 +177,7 @@ describe('PackingListService', () => {
     expect(result.success).toBe(true);
     expect(console.warn).toHaveBeenCalledWith(
       'Errors while processing some rows:',
-      ['Line 2: missing base data (description, model, origin)']
+      [MISSING_BASE_DATA_ERROR]
     );
     if (result.success) {
       expect(result.data?.data.length).toBe(2);
@@ -241,7 +248,7 @@ describe('PackingListService', () => {
   });
 
   // Test 6: extractCtnBlocksFromRow failure with INCOMPLETE_GROUP
-  test('should return an error if extractCtnBlocksFromRow fails with INCOMPLETE_GROUP', async () => {
+  test('should log an error if extractCtnBlocksFromRow fails with INCOMPLETE_GROUP', async () => {
     const rows: PackingListData = [
       {
         LINE: 1,
@@ -286,15 +293,18 @@ describe('PackingListService', () => {
       );
 
     const result = await service.processData(rows);
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.code).toBe('INCOMPLETE_GROUP');
-      expect(result.error).toBe('Line 2: Incomplete group error');
+    expect(result.success).toBe(true); // Should be true because first row is successful
+    if (result.success) {
+      expect(result.data.data.length).toBe(1); // Only the first row is processed
     }
+    expect(console.warn).toHaveBeenCalledWith(
+      'Errors while processing some rows:',
+      ['Line 2: Incomplete group error (code: INCOMPLETE_GROUP)']
+    );
   });
 
-  // Test 7: extractCtnBlocksFromRow failure with fallback QTY > 0
-  test('should use fallback quantity if extractCtnBlocksFromRow fails and QTY > 0', async () => {
+  // Test 7: extractCtnBlocksFromRow failure (no fallback anymore)
+  test('should log an error if extractCtnBlocksFromRow fails (no fallback anymore)', async () => {
     const rows: PackingListData = [
       {
         LINE: 1,
@@ -319,7 +329,7 @@ describe('PackingListService', () => {
         ORIGIN: 'Origin2',
         CTN: '11-20',
         QTY: 20,
-      }, // QTY > 0 for fallback
+      },
     ];
     mockExtractCtnBlocksFromRow
       .mockReturnValueOnce(
@@ -339,18 +349,12 @@ describe('PackingListService', () => {
     const result = await service.processData(rows);
     expect(result.success).toBe(true);
     if (result.success) {
-      expect(result.data.data.length).toBe(2);
-      expect(result.data.data[1]).toEqual({
-        description: 'Desc2',
-        model: 'Model2',
-        origin: 'Origin2',
-        ctn: 1,
-        qty: 20,
-        totalQty: 20,
-        pal: undefined,
-      });
+      expect(result.data.data.length).toBe(1); // Only the first row is processed
     }
-    expect(console.warn).not.toHaveBeenCalled();
+    expect(console.warn).toHaveBeenCalledWith(
+      'Errors while processing some rows:',
+      ['Line 2: Some other error (code: SOME_OTHER_ERROR)']
+    );
   });
 
   // Test 8: extractCtnBlocksFromRow failure without fallback QTY <= 0
@@ -517,7 +521,7 @@ describe('PackingListService', () => {
     }
     expect(console.warn).toHaveBeenCalledWith(
       'Errors while processing some rows:',
-      ['Line 2: missing base data (description, model, origin)']
+      [MISSING_BASE_DATA_ERROR]
     );
   });
 
@@ -534,7 +538,7 @@ describe('PackingListService', () => {
         'QTY ALLOC': 10,
         ORIGIN: 'Origin1',
         CTN: '1-10',
-        QTY: 0, // QTY à 0 pour éviter le fallback
+        QTY: 0,
       }, // Base error
       {
         LINE: 2,
@@ -659,19 +663,55 @@ describe('PackingListService', () => {
     }
   });
 
-  // Test 14: NO_VALID_DATA case (no results and no errors)
-  test('should return NO_VALID_DATA if no valid data is found and no errors are logged', async () => {
-    const noValidDataResult = createError(
-      'No valid data found in the provided rows',
-      'NO_VALID_DATA'
-    );
+  test('should return PROCESSING_FAILED if result is empty but some rows are not errors', async () => {
+    const rows: PackingListData = [
+      {
+        LINE: 1,
+        'SKU MIN': 'SKU1',
+        MAKE: 'Make1',
+        MODEL: 'Model1',
+        'DESCRIPTION MIN': 'Desc1',
+        'QTY REQ MATCH': 0,
+        'QTY ALLOC': 0,
+        ORIGIN: 'Origin1',
+        CTN: 'invalid',
+        QTY: 0, // Pas de fallback
+      },
+      {
+        LINE: 2,
+        'SKU MIN': 'SKU2',
+        MAKE: 'Make2',
+        MODEL: 'Model2',
+        'DESCRIPTION MIN': 'Desc2',
+        'QTY REQ MATCH': 20,
+        'QTY ALLOC': 20,
+        ORIGIN: 'Origin2',
+        CTN: 'invalid',
+        QTY: 0, // Pas de fallback non plus
+      },
+    ];
 
-    expect(noValidDataResult.success).toBe(false);
-    if (!noValidDataResult.success) {
-      expect(noValidDataResult.code).toBe('NO_VALID_DATA');
-      expect(noValidDataResult.error).toBe(
-        'No valid data found in the provided rows'
-      );
+    // simulate that both rows return error without fallback
+    mockExtractCtnBlocksFromRow
+      .mockReturnValueOnce({
+        success: false,
+        error: 'Invalid CTN',
+        code: 'CTN_ERROR',
+      })
+      .mockReturnValueOnce({
+        success: false,
+        error: '',
+        code: '',
+      });
+
+    const result = await service.processData(rows);
+
+    expect(result.success).toBe(false);
+    if (isErrorResult(result)) {
+      expect(result.code).toBe('PROCESSING_FAILED');
+      expect(result.error).toContain('Failed to process data');
+    } else {
+      fail('Expected error result');
     }
   });
 });

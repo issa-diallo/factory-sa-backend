@@ -5,7 +5,6 @@ describe('extractCtnBlocksFromRow', () => {
   const validBase = {
     description: 'Test Product',
     model: 'MODEL-123',
-    origin: 'China',
   };
 
   describe('Valid inputs', () => {

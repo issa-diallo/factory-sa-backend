@@ -8,7 +8,7 @@ export interface IPasswordService {
 
 export interface ITokenService {
   generateToken(payload: TokenPayload): Promise<string>;
-  verifyToken(token: string): TokenPayload;
+  verifyToken(token: string): Promise<TokenPayload>;
   invalidateToken(token: string): Promise<void>;
 }
 

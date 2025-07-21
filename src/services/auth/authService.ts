@@ -8,9 +8,17 @@ import {
   RolePermission,
   User,
   UserRole,
+  Role,
 } from '../../generated/prisma';
 import { LoginResponse } from '../../types/auth';
 import { getClientIp } from '../../utils/getClientIp';
+import {
+  NoRoleInCompanyError,
+  InvalidCredentialsError,
+  UserNotFoundError,
+  CompanyNotFoundError,
+  UserNotActiveError,
+} from '../../errors/AuthErrors';
 
 export class AuthService implements IAuthService {
   private prisma: PrismaClient;
@@ -35,10 +43,11 @@ export class AuthService implements IAuthService {
     const normalizedEmail = email.toLowerCase();
     const domain = normalizedEmail.split('@')[1];
 
-    const domainEntity = await this.getActiveDomain(domain);
-    const companyDomain = await this.getCompanyDomain(domainEntity.id);
     const user = await this.getActiveUserByEmail(normalizedEmail);
     await this.validatePassword(password, user.password);
+
+    const domainEntity = await this.getActiveDomain(domain);
+    const companyDomain = await this.getCompanyDomain(domainEntity.id);
     const { userRole, permissions } = await this.getUserRoleAndPermissions(
       user.id,
       companyDomain.companyId
@@ -71,12 +80,12 @@ export class AuthService implements IAuthService {
   private async getActiveDomain(domain: string): Promise<Domain> {
     const normalizedDomain = domain.toLowerCase();
 
-    const domainEntity = await this.prisma.domain.findFirst({
+    const domainEntity: Domain | null = await this.prisma.domain.findFirst({
       where: { name: normalizedDomain, isActive: true },
     });
 
     if (!domainEntity) {
-      throw new Error('Unauthorized or inactive domain');
+      throw new UserNotFoundError();
     }
 
     return domainEntity;
@@ -85,25 +94,30 @@ export class AuthService implements IAuthService {
   private async getCompanyDomain(
     domainId: string
   ): Promise<CompanyDomain & { company: { isActive: boolean } }> {
-    const companyDomain = await this.prisma.companyDomain.findFirst({
+    const companyDomain:
+      | (CompanyDomain & { company: { isActive: boolean } })
+      | null = await this.prisma.companyDomain.findFirst({
       where: { domainId },
       include: { company: true },
     });
 
     if (!companyDomain || !companyDomain.company.isActive) {
-      throw new Error('Domain not associated with an active company');
+      throw new CompanyNotFoundError();
     }
 
     return companyDomain;
   }
 
   private async getActiveUserByEmail(email: string): Promise<User> {
-    const user = await this.prisma.user.findUnique({
+    const user: User | null = await this.prisma.user.findUnique({
       where: { email },
     });
 
-    if (!user || !user.isActive) {
-      throw new Error('Invalid credentials or inactive user');
+    if (!user) {
+      throw new UserNotFoundError();
+    }
+    if (!user.isActive) {
+      throw new UserNotActiveError();
     }
 
     return user;
@@ -118,7 +132,7 @@ export class AuthService implements IAuthService {
       storedHash
     );
     if (!isValid) {
-      throw new Error('Invalid credentials');
+      throw new InvalidCredentialsError();
     }
   }
 
@@ -126,13 +140,14 @@ export class AuthService implements IAuthService {
     userId: string,
     companyId: string
   ): Promise<{ userRole: UserRole; permissions: string[] }> {
-    const userRole = await this.prisma.userRole.findFirst({
-      where: { userId, companyId },
-      include: { role: true },
-    });
+    const userRole: (UserRole & { role: Role }) | null =
+      await this.prisma.userRole.findFirst({
+        where: { userId, companyId },
+        include: { role: true },
+      });
 
     if (!userRole) {
-      throw new Error('User has no role in this company');
+      throw new NoRoleInCompanyError();
     }
 
     const rolePermissions: (RolePermission & {

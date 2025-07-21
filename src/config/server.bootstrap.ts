@@ -10,26 +10,22 @@ export function startApplication() {
     console.log('Database connection established');
   });
 
-  // Clean database connection shutdown handling
-  process.on('SIGINT', async () => {
+  const shutdown = async () => {
     console.log('Shutting down server...');
     await prisma.$disconnect();
     server.close(() => {
       console.log('Server closed');
       process.exit(0);
     });
-  });
+  };
 
-  process.on('SIGTERM', async () => {
-    console.log('Shutting down server...');
-    await prisma.$disconnect();
-    server.close(() => {
-      console.log('Server closed');
-      process.exit(0);
-    });
-  });
+  process.on('SIGINT', shutdown);
+  process.on('SIGTERM', shutdown);
 
   return server;
 }
 
-startApplication();
+// Do not execute in a test context
+if (process.env.NODE_ENV !== 'test') {
+  startApplication();
+}

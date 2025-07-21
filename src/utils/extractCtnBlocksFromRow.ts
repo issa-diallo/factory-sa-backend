@@ -6,7 +6,7 @@ import {
   ProcessedItemArraySchema,
 } from '../schemas/utilsSchemas';
 
-type BaseItem = Pick<ProcessedItem, 'description' | 'model' | 'origin'>;
+type BaseItem = Pick<ProcessedItem, 'description' | 'model'>;
 
 /**
  * Extracts CTN blocks from a row of data and creates ProcessedItem array.

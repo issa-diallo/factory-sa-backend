@@ -7,8 +7,8 @@ export const authorize = (requiredPermissions: string[]) => {
       return res.status(401).json({ message: 'Authentication required' });
     }
 
-    const hasPermission = requiredPermissions.some(
-      permission => req.user!.permissions.includes(permission) // Use non-null assertion as we've checked above
+    const hasPermission = requiredPermissions.some(permission =>
+      req.user!.permissions.includes(permission)
     );
 
     if (!hasPermission) {

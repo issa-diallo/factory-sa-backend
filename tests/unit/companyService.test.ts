@@ -1,12 +1,13 @@
-import { CompanyService } from '../../../src/services/company/companyService';
+import { CompanyService } from '../../src/services/company/companyService';
 import {
   CreateCompanyRequest,
   UpdateCompanyRequest,
-} from '../../../src/types/company';
-import { prisma } from '../../../src/database/prismaClient';
+} from '../../src/types/company';
+import { prisma } from '../../src/database/prismaClient';
+import { CompanyAlreadyExistsError } from '../../src/errors/customErrors';
 
 // Mock the entire prismaClient module
-jest.mock('../../../src/database/prismaClient', () => ({
+jest.mock('../../src/database/prismaClient', () => ({
   prisma: {
     company: {
       create: jest.fn(),
@@ -38,7 +39,28 @@ describe('CompanyService', () => {
   });
 
   describe('createCompany', () => {
+    it('should throw CompanyAlreadyExistsError if company with same name exists', async () => {
+      const companyData: CreateCompanyRequest = {
+        name: 'Existing Company',
+        description: 'Description',
+        isActive: true,
+      };
+
+      mockPrisma.company.findUnique.mockResolvedValue({
+        id: 'existing-id',
+        ...companyData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      await expect(companyService.createCompany(companyData)).rejects.toThrow(
+        CompanyAlreadyExistsError
+      );
+      expect(mockPrisma.company.create).not.toHaveBeenCalled();
+    });
+
     it('should successfully create a new company', async () => {
+      mockPrisma.company.findUnique.mockResolvedValue(null);
       const companyData: CreateCompanyRequest = {
         name: 'Test Company',
         description: 'Description for test company',
@@ -65,6 +87,7 @@ describe('CompanyService', () => {
     });
 
     it('should create a new company with isActive defaulting to true if not provided', async () => {
+      mockPrisma.company.findUnique.mockResolvedValue(null);
       const companyData: CreateCompanyRequest = {
         name: 'Default Active Company',
         description: 'Description for default active company',
@@ -91,6 +114,7 @@ describe('CompanyService', () => {
     });
 
     it('should reject if creation fails', async () => {
+      mockPrisma.company.findUnique.mockResolvedValue(null);
       const companyData: CreateCompanyRequest = {
         name: 'Failing Company',
         description: 'This company will fail',
