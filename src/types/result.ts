@@ -19,3 +19,7 @@ export const createError = <T>(error: string, code: string): Result<T> => ({
   error,
   code,
 });
+
+export const isErrorResult = <T>(
+  result: Result<T>
+): result is { success: false; error: string; code: string } => !result.success;

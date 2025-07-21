@@ -23,34 +23,25 @@ export class UserManagementController {
       return res.status(201).json(user);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessage = error.issues[0].message;
-        if (
-          error.issues[0].code === 'invalid_type' &&
-          error.issues[0].path.length > 0
-        ) {
-          // If it's an invalid_type error for a specific path, try to get the min(1) message
-          const fieldName = error.issues[0].path[0];
-          if (fieldName === 'email') {
-            return res
-              .status(400)
-              .json({ message: 'Email is required', errors: error.issues });
-          } else if (fieldName === 'userId') {
-            return res
-              .status(400)
-              .json({ message: 'User ID is required', errors: error.issues });
-          } else if (fieldName === 'companyId') {
-            return res.status(400).json({
-              message: 'Company ID is required',
-              errors: error.issues,
-            });
-          } else if (fieldName === 'roleId') {
-            return res
-              .status(400)
-              .json({ message: 'Role ID is required', errors: error.issues });
-          }
-        }
+        const { issues } = error;
+        const [firstIssue] = issues;
+
+        const errorMessages: Record<string, string> = {
+          email: 'Email is required',
+          userId: 'User ID is required',
+          companyId: 'Company ID is required',
+          roleId: 'Role ID is required',
+        };
+
+        // Check for specific error messages and field names
+        const fieldName = firstIssue.path[0] as string; // Cast to string
+        const message =
+          firstIssue.code === 'invalid_type' && fieldName in errorMessages
+            ? errorMessages[fieldName]
+            : firstIssue.message;
+
         return res.status(400).json({
-          message: errorMessage,
+          message: message,
           errors: error.issues,
         });
       }
@@ -99,23 +90,44 @@ export class UserManagementController {
       return res.status(200).json(updatedUser);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessage = error.issues[0].message;
-        if (
-          error.issues[0].code === 'invalid_type' &&
-          error.issues[0].path.length > 0
-        ) {
-          const fieldName = error.issues[0].path[0];
-          if (fieldName === 'email') {
-            return res
-              .status(400)
-              .json({ message: 'Email is required', errors: error.issues });
-          }
-        }
+        const { issues } = error;
+        const [firstIssue] = issues;
+
+        const errorMessages: Record<string, string> = {
+          email: 'Email is required',
+          userId: 'User ID is required',
+          companyId: 'Company ID is required',
+          roleId: 'Role ID is required',
+        };
+
+        const fieldName = firstIssue.path[0] as string;
+        const message =
+          firstIssue.code === 'invalid_type' && fieldName in errorMessages
+            ? errorMessages[fieldName]
+            : firstIssue.message;
+
         return res.status(400).json({
-          message: errorMessage,
+          message: message,
           errors: error.issues,
         });
       }
+      const appError = error as Error;
+      return res.status(500).json({ message: appError.message });
+    }
+  }
+
+  static async getUserRoles(req: Request, res: Response): Promise<Response> {
+    try {
+      const { id } = req.params;
+      const user = await userManagementService.getUserById(id);
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const roles = await userManagementService.getUserRolesByUserId(id);
+      return res.status(200).json(roles);
+    } catch (error) {
       const appError = error as Error;
       return res.status(500).json({ message: appError.message });
     }
@@ -145,29 +157,24 @@ export class UserManagementController {
       return res.status(201).json(userRole);
     } catch (error) {
       if (error instanceof ZodError) {
-        const errorMessage = error.issues[0].message;
-        if (
-          error.issues[0].code === 'invalid_type' &&
-          error.issues[0].path.length > 0
-        ) {
-          const fieldName = error.issues[0].path[0];
-          if (fieldName === 'userId') {
-            return res
-              .status(400)
-              .json({ message: 'User ID is required', errors: error.issues });
-          } else if (fieldName === 'companyId') {
-            return res.status(400).json({
-              message: 'Company ID is required',
-              errors: error.issues,
-            });
-          } else if (fieldName === 'roleId') {
-            return res
-              .status(400)
-              .json({ message: 'Role ID is required', errors: error.issues });
-          }
-        }
+        const { issues } = error;
+        const [firstIssue] = issues;
+
+        const errorMessages: Record<string, string> = {
+          email: 'Email is required',
+          userId: 'User ID is required',
+          companyId: 'Company ID is required',
+          roleId: 'Role ID is required',
+        };
+
+        const fieldName = firstIssue.path[0] as string;
+        const message =
+          firstIssue.code === 'invalid_type' && fieldName in errorMessages
+            ? errorMessages[fieldName]
+            : firstIssue.message;
+
         return res.status(400).json({
-          message: errorMessage,
+          message: message,
           errors: error.issues,
         });
       }

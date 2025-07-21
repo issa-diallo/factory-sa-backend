@@ -18,6 +18,12 @@ router.get(
   UserManagementController.getAllUsers
 );
 router.get(
+  '/:id/roles',
+  authenticate,
+  authorize(['user:read']),
+  UserManagementController.getUserRoles
+);
+router.get(
   '/:id',
   authenticate,
   authorize(['user:read']),
@@ -42,6 +48,7 @@ router.post(
   authorize(['userRole:create']),
   UserManagementController.createUserRole
 );
+
 router.delete(
   '/user-role/:id',
   authenticate,

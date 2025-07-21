@@ -3,7 +3,7 @@ import { TokenPayload } from './auth'; // Assuming TokenPayload is defined in au
 declare global {
   namespace Express {
     interface Request {
-      user?: TokenPayload;
+      user?: TokenPayload; // Make user property optional again
     }
   }
 }

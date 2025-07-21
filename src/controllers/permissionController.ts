@@ -19,14 +19,25 @@ export class PermissionController {
       const data = createPermissionSchema.parse(req.body);
       const permission = await permissionService.createPermission(data);
       return res.status(201).json(permission);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
           errors: error.issues,
         });
       }
-      const appError = error as Error;
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return res
+          .status(409)
+          .json({ message: 'Permission with this name already exists.' });
+      }
+      const appError =
+        error instanceof Error ? error : new Error('An unknown error occurred');
       return res.status(500).json({ message: appError.message });
     }
   }
@@ -121,14 +132,25 @@ export class PermissionController {
       const data = createRolePermissionSchema.parse(req.body);
       const rolePermission = await permissionService.createRolePermission(data);
       return res.status(201).json(rolePermission);
-    } catch (error) {
+    } catch (error: unknown) {
       if (error instanceof ZodError) {
         return res.status(400).json({
           message: 'Invalid validation data',
           errors: error.issues,
         });
       }
-      const appError = error as Error;
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2002'
+      ) {
+        return res
+          .status(409)
+          .json({ message: 'Role permission already exists.' });
+      }
+      const appError =
+        error instanceof Error ? error : new Error('An unknown error occurred');
       return res.status(500).json({ message: appError.message });
     }
   }

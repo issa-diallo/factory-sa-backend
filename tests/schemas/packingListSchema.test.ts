@@ -87,6 +87,23 @@ describe('PackingList Schema Validation', () => {
       expect(result.success).toBe(true);
     });
 
+    it('should handle data without optional ORIGIN field', () => {
+      const dataWithoutOrigin = [
+        {
+          ...validData[0],
+          ORIGIN: undefined,
+        },
+      ];
+      delete dataWithoutOrigin[0].ORIGIN;
+
+      const result = validatePackingListData(dataWithoutOrigin);
+
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data[0].ORIGIN).toBeUndefined();
+      }
+    });
+
     it('should handle data without QTY ALLOC field in various ways', () => {
       // Test with undefined
       const dataWithUndefined = [

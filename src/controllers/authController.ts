@@ -36,11 +36,17 @@ export class AuthController {
         return res.status(400).json({ message: 'Missing token' });
       }
       const token = authHeader.split(' ')[1];
-      await authService.logout(token);
-      return res.status(200).json({ message: 'Logout successful' });
+      try {
+        await authService.logout(token);
+        return res.status(200).json({ message: 'Logout successful' });
+      } catch (error: unknown) {
+        if ((error as Error).message === 'Invalid token') {
+          return res.status(401).json({ message: 'Invalid token' });
+        }
+        throw error;
+      }
     } catch (error: unknown) {
-      const authError = error as Error;
-      return res.status(500).json({ message: authError.message });
+      return res.status(500).json({ message: (error as Error).message });
     }
   }
 }

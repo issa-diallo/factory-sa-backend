@@ -135,6 +135,10 @@ export class UserManagementService implements IUserManagementService {
   async getUserRolesByUserId(userId: string): Promise<UserRole[]> {
     return this.prisma.userRole.findMany({
       where: { userId },
+      include: {
+        role: true,
+        company: true,
+      },
     });
   }
 

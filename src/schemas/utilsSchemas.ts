@@ -25,7 +25,6 @@ export const CtnRangeOutputSchema = z.array(
 export const BaseItemSchema = z.object({
   description: z.string().min(1, 'Description cannot be empty'),
   model: z.string().min(1, 'Model cannot be empty'),
-  origin: z.string().min(1, 'Origin cannot be empty'),
 });
 
 // Schema for row data
@@ -38,7 +37,7 @@ export const RowDataSchema = z.record(
 export const ProcessedItemSchema = z.object({
   description: z.string(),
   model: z.string(),
-  origin: z.string(),
+  origin: z.string().optional(),
   ctn: z.number().int().positive(),
   qty: z.number().int().positive(),
   totalQty: z.number().int().positive(),
