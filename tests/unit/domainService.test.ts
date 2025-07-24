@@ -154,16 +154,16 @@ describe('DomainService', () => {
       expect(result).toEqual(domain);
     });
 
-    it('should return null if no domain is found by ID', async () => {
+    it('should throw DomainNotFoundError if no domain is found by ID', async () => {
       const domainId = 'nonexistent';
       mockPrisma.domain.findUnique.mockResolvedValue(null);
 
-      const result = await domainService.getDomainById(domainId);
-
+      await expect(domainService.getDomainById(domainId)).rejects.toThrow(
+        `Domain with ID ${domainId} not found.`
+      );
       expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
         where: { id: domainId },
       });
-      expect(result).toBeNull();
     });
 
     it('should reject if fetching by ID fails', async () => {
@@ -408,16 +408,16 @@ describe('DomainService', () => {
       expect(result).toEqual(companyDomain);
     });
 
-    it('should return null if no company domain is found by ID', async () => {
+    it('should throw CompanyDomainNotFoundError if no company domain is found by ID', async () => {
       const companyDomainId = 'nonexistent';
       mockPrisma.companyDomain.findUnique.mockResolvedValue(null);
 
-      const result = await domainService.getCompanyDomainById(companyDomainId);
-
+      await expect(
+        domainService.getCompanyDomainById(companyDomainId)
+      ).rejects.toThrow(`Company domain with ID ${companyDomainId} not found.`);
       expect(mockPrisma.companyDomain.findUnique).toHaveBeenCalledWith({
         where: { id: companyDomainId },
       });
-      expect(result).toBeNull();
     });
 
     it('should reject if fetching by ID fails', async () => {

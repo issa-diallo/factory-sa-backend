@@ -5,6 +5,10 @@ import {
   CreateCompanyDomainRequest,
 } from '../../types/domain';
 import { IDomainService } from './interfaces';
+import {
+  DomainNotFoundError,
+  CompanyDomainNotFoundError,
+} from '../../errors/customErrors';
 
 export class DomainService implements IDomainService {
   private prisma: PrismaClient;
@@ -22,10 +26,14 @@ export class DomainService implements IDomainService {
     });
   }
 
-  async getDomainById(id: string): Promise<Domain | null> {
-    return this.prisma.domain.findUnique({
+  async getDomainById(id: string): Promise<Domain> {
+    const domain = await this.prisma.domain.findUnique({
       where: { id },
     });
+    if (!domain) {
+      throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
+    }
+    return domain;
   }
 
   async getDomainByName(name: string): Promise<Domain | null> {
@@ -39,16 +47,40 @@ export class DomainService implements IDomainService {
   }
 
   async updateDomain(id: string, data: UpdateDomainRequest): Promise<Domain> {
-    return this.prisma.domain.update({
-      where: { id },
-      data,
-    });
+    try {
+      return await this.prisma.domain.update({
+        where: { id },
+        data,
+      });
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2025'
+      ) {
+        throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
+      }
+      throw error;
+    }
   }
 
   async deleteDomain(id: string): Promise<Domain> {
-    return this.prisma.domain.delete({
-      where: { id },
-    });
+    try {
+      return await this.prisma.domain.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2025'
+      ) {
+        throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
+      }
+      throw error;
+    }
   }
 
   async createCompanyDomain(
@@ -62,10 +94,16 @@ export class DomainService implements IDomainService {
     });
   }
 
-  async getCompanyDomainById(id: string): Promise<CompanyDomain | null> {
-    return this.prisma.companyDomain.findUnique({
+  async getCompanyDomainById(id: string): Promise<CompanyDomain> {
+    const companyDomain = await this.prisma.companyDomain.findUnique({
       where: { id },
     });
+    if (!companyDomain) {
+      throw new CompanyDomainNotFoundError(
+        `Company domain with ID ${id} not found.`
+      );
+    }
+    return companyDomain;
   }
 
   async getCompanyDomainsByCompanyId(
@@ -85,8 +123,22 @@ export class DomainService implements IDomainService {
   }
 
   async deleteCompanyDomain(id: string): Promise<CompanyDomain> {
-    return this.prisma.companyDomain.delete({
-      where: { id },
-    });
+    try {
+      return await this.prisma.companyDomain.delete({
+        where: { id },
+      });
+    } catch (error) {
+      if (
+        typeof error === 'object' &&
+        error !== null &&
+        'code' in error &&
+        error.code === 'P2025'
+      ) {
+        throw new CompanyDomainNotFoundError(
+          `Company domain with ID ${id} not found.`
+        );
+      }
+      throw error;
+    }
   }
 }

@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { DomainController } from '../../src/controllers/domainController';
 import { prisma } from '../../src/database/prismaClient';
+import {
+  DomainNotFoundError,
+  CompanyDomainNotFoundError,
+} from '../../src/errors/customErrors';
 
 function createMockResponse(): Response {
   const res = {
@@ -121,7 +125,11 @@ describe('DomainController (static)', () => {
       await DomainController.getDomainById(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Domain not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(
+          `Domain with ID non-existent-id not found.`
+        ).message,
+      });
     });
   });
 
@@ -186,7 +194,11 @@ describe('DomainController (static)', () => {
       await DomainController.updateDomain(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Domain not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(
+          `Domain with ID non-existent-id not found.`
+        ).message,
+      });
     });
 
     it('should return 400 for invalid validation data', async () => {
@@ -209,6 +221,29 @@ describe('DomainController (static)', () => {
           errors: expect.any(Array),
         })
       );
+    });
+    it('should return 409 if updated domain name already exists', async () => {
+      const domain1 = await prisma.domain.create({
+        data: { name: 'original.com' },
+      });
+
+      await prisma.domain.create({
+        data: { name: 'existing.com' },
+      });
+
+      const req = {
+        params: { id: domain1.id },
+        body: { name: 'existing.com' },
+      } as unknown as Request;
+
+      const res = createMockResponse();
+
+      await DomainController.updateDomain(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(409);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'Domain with this name already exists.',
+      });
     });
   });
 
@@ -239,7 +274,11 @@ describe('DomainController (static)', () => {
       await DomainController.deleteDomain(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Domain not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(
+          `Domain with ID non-existent-id not found.`
+        ).message,
+      });
     });
   });
 
@@ -314,8 +353,7 @@ describe('DomainController (static)', () => {
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message:
-            'Unique constraint failed on the fields: (`companyId`,`domainId`)',
+          message: 'Domain with this name already exists.', // mapDomainError transforms Prisma P2002 to DomainAlreadyExistsError
         })
       );
     });
@@ -368,7 +406,9 @@ describe('DomainController (static)', () => {
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'Company domain not found',
+        message: new CompanyDomainNotFoundError(
+          `Company domain with ID non-existent-id not found.`
+        ).message,
       });
     });
   });
@@ -422,10 +462,11 @@ describe('DomainController (static)', () => {
       spy.mockRestore();
     });
 
-    it('should return 500 if an unexpected error occurs during updateDomain', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+    it('should return 404 if an unexpected error occurs during updateDomain (P2025)', async () => {
+      const spy = jest.spyOn(prisma.domain, 'update').mockRejectedValueOnce({
+        code: 'P2025',
+        meta: { cause: 'Record not found' },
+      });
 
       const req = {
         params: { id: 'some-id' },
@@ -435,24 +476,31 @@ describe('DomainController (static)', () => {
 
       await DomainController.updateDomain(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(`Domain with ID some-id not found.`)
+          .message,
+      });
 
       spy.mockRestore();
     });
 
-    it('should return 500 if an unexpected error occurs during deleteDomain', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+    it('should return 404 if an unexpected error occurs during deleteDomain (P2025)', async () => {
+      const spy = jest.spyOn(prisma.domain, 'delete').mockRejectedValueOnce({
+        code: 'P2025',
+        meta: { cause: 'Record not found' },
+      });
 
       const req = { params: { id: 'some-id' } } as unknown as Request;
       const res = createMockResponse();
 
       await DomainController.deleteDomain(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(`Domain with ID some-id not found.`)
+          .message,
+      });
 
       spy.mockRestore();
     });
@@ -483,20 +531,138 @@ describe('DomainController (static)', () => {
       spy.mockRestore();
     });
 
-    it('should return 500 if an unexpected error occurs during deleteCompanyDomain', async () => {
+    it('should return 404 if an unexpected error occurs during deleteCompanyDomain (P2025)', async () => {
       const spy = jest
-        .spyOn(prisma.companyDomain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+        .spyOn(prisma.companyDomain, 'delete')
+        .mockRejectedValueOnce({
+          code: 'P2025',
+          meta: { cause: 'Record not found' },
+        });
 
       const req = { params: { id: 'some-id' } } as unknown as Request;
       const res = createMockResponse();
 
       await DomainController.deleteCompanyDomain(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        message: new CompanyDomainNotFoundError(
+          `Company domain with ID some-id not found.`
+        ).message,
+      });
 
       spy.mockRestore();
+    });
+  });
+
+  describe('Branch coverage for unknown error types', () => {
+    const unknownErrorWithoutCode = new Error('An unknown error occurred');
+    it('should return 500 if error is object without code in createDomain', async () => {
+      const req = { body: { name: 'error.com' } } as unknown as Request;
+      const res = createMockResponse();
+
+      jest
+        .spyOn(prisma.domain, 'create')
+        .mockRejectedValueOnce(unknownErrorWithoutCode);
+
+      await DomainController.createDomain(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'An unknown error occurred',
+      });
+    });
+
+    it('should return 500 if error is object without code in updateDomain', async () => {
+      const domain = await prisma.domain.create({
+        data: { name: 'to-update.com' },
+      });
+
+      const req = {
+        params: { id: domain.id },
+        body: { name: 'new-name.com' },
+      } as unknown as Request;
+
+      const res = createMockResponse();
+
+      jest
+        .spyOn(prisma.domain, 'update')
+        .mockRejectedValueOnce(unknownErrorWithoutCode);
+
+      await DomainController.updateDomain(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'An unknown error occurred',
+      });
+    });
+
+    it('should return 500 if createCompanyDomain throws non-P2002 error', async () => {
+      const company = await prisma.company.create({
+        data: { name: 'NoP2002Company' },
+      });
+      const domain = await prisma.domain.create({
+        data: { name: 'no-p2002.com' },
+      });
+
+      const req = {
+        body: { companyId: company.id, domainId: domain.id },
+      } as unknown as Request;
+
+      const res = createMockResponse();
+
+      const errorObj = { code: 'OTHER_CODE' }; // not P2002
+      jest
+        .spyOn(prisma.companyDomain, 'create')
+        .mockRejectedValueOnce(errorObj);
+
+      await DomainController.createCompanyDomain(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'An unknown error occurred',
+      });
+    });
+    it('should return 500 if error object has no code property in updateDomain', async () => {
+      const domain = await prisma.domain.create({
+        data: { name: 'update-no-code.com' },
+      });
+
+      const req = {
+        params: { id: domain.id },
+        body: { name: 'new-update.com' },
+      } as unknown as Request;
+
+      const res = createMockResponse();
+
+      const errorWithoutCodeProperty = { message: 'No code prop' };
+      jest
+        .spyOn(prisma.domain, 'update')
+        .mockRejectedValueOnce(errorWithoutCodeProperty);
+
+      await DomainController.updateDomain(req, res);
+
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith({
+        message: 'An unknown error occurred',
+      });
+    });
+  });
+  it('should return 500 if createDomain throws error object without "code" property', async () => {
+    const req = { body: { name: 'missing-code.com' } } as unknown as Request;
+    const res = createMockResponse();
+
+    const errorWithoutCode = {
+      message: 'Simulated error without code property',
+    };
+
+    jest.spyOn(prisma.domain, 'create').mockRejectedValueOnce(errorWithoutCode);
+
+    await DomainController.createDomain(req, res);
+
+    expect(res.status).toHaveBeenCalledWith(500);
+    expect(res.json).toHaveBeenCalledWith({
+      message: 'An unknown error occurred',
     });
   });
 });
