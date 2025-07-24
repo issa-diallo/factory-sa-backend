@@ -1,6 +1,10 @@
 import { Request, Response } from 'express';
 import { DomainController } from '../../src/controllers/domainController';
 import { prisma } from '../../src/database/prismaClient';
+import {
+  DomainNotFoundError,
+  CompanyDomainNotFoundError,
+} from '../../src/errors/customErrors';
 
 function createMockResponse(): Response {
   const res = {
@@ -121,7 +125,11 @@ describe('DomainController (static)', () => {
       await DomainController.getDomainById(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Domain not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(
+          `Domain with ID non-existent-id not found.`
+        ).message,
+      });
     });
   });
 
@@ -186,7 +194,11 @@ describe('DomainController (static)', () => {
       await DomainController.updateDomain(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Domain not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(
+          `Domain with ID non-existent-id not found.`
+        ).message,
+      });
     });
 
     it('should return 400 for invalid validation data', async () => {
@@ -262,7 +274,11 @@ describe('DomainController (static)', () => {
       await DomainController.deleteDomain(req, res);
 
       expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Domain not found' });
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(
+          `Domain with ID non-existent-id not found.`
+        ).message,
+      });
     });
   });
 
@@ -337,8 +353,7 @@ describe('DomainController (static)', () => {
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message:
-            'Unique constraint failed on the fields: (`companyId`,`domainId`)',
+          message: 'Domain with this name already exists.', // mapDomainError transforms Prisma P2002 to DomainAlreadyExistsError
         })
       );
     });
@@ -391,7 +406,9 @@ describe('DomainController (static)', () => {
 
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        message: 'Company domain not found',
+        message: new CompanyDomainNotFoundError(
+          `Company domain with ID non-existent-id not found.`
+        ).message,
       });
     });
   });
@@ -445,10 +462,11 @@ describe('DomainController (static)', () => {
       spy.mockRestore();
     });
 
-    it('should return 500 if an unexpected error occurs during updateDomain', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+    it('should return 404 if an unexpected error occurs during updateDomain (P2025)', async () => {
+      const spy = jest.spyOn(prisma.domain, 'update').mockRejectedValueOnce({
+        code: 'P2025',
+        meta: { cause: 'Record not found' },
+      });
 
       const req = {
         params: { id: 'some-id' },
@@ -458,24 +476,31 @@ describe('DomainController (static)', () => {
 
       await DomainController.updateDomain(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(`Domain with ID some-id not found.`)
+          .message,
+      });
 
       spy.mockRestore();
     });
 
-    it('should return 500 if an unexpected error occurs during deleteDomain', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+    it('should return 404 if an unexpected error occurs during deleteDomain (P2025)', async () => {
+      const spy = jest.spyOn(prisma.domain, 'delete').mockRejectedValueOnce({
+        code: 'P2025',
+        meta: { cause: 'Record not found' },
+      });
 
       const req = { params: { id: 'some-id' } } as unknown as Request;
       const res = createMockResponse();
 
       await DomainController.deleteDomain(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        message: new DomainNotFoundError(`Domain with ID some-id not found.`)
+          .message,
+      });
 
       spy.mockRestore();
     });
@@ -506,18 +531,25 @@ describe('DomainController (static)', () => {
       spy.mockRestore();
     });
 
-    it('should return 500 if an unexpected error occurs during deleteCompanyDomain', async () => {
+    it('should return 404 if an unexpected error occurs during deleteCompanyDomain (P2025)', async () => {
       const spy = jest
-        .spyOn(prisma.companyDomain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+        .spyOn(prisma.companyDomain, 'delete')
+        .mockRejectedValueOnce({
+          code: 'P2025',
+          meta: { cause: 'Record not found' },
+        });
 
       const req = { params: { id: 'some-id' } } as unknown as Request;
       const res = createMockResponse();
 
       await DomainController.deleteCompanyDomain(req, res);
 
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
+      expect(res.status).toHaveBeenCalledWith(404);
+      expect(res.json).toHaveBeenCalledWith({
+        message: new CompanyDomainNotFoundError(
+          `Company domain with ID some-id not found.`
+        ).message,
+      });
 
       spy.mockRestore();
     });
