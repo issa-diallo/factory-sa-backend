@@ -11,11 +11,11 @@ import { z, ZodError } from 'zod';
 const packingListRowSchema = z
   .object({
     LINE: z.number(),
-    'SKU MIN': z.string(),
-    MAKE: z.string(),
+    'SKU MIN': z.string().optional(),
+    MAKE: z.string().optional(),
     MODEL: z.string(),
     'DESCRIPTION MIN': z.string(),
-    'QTY REQ MATCH': z.number(),
+    'QTY REQ MATCH': z.number().optional(),
     'QTY ALLOC': z
       .number()
       .nullish()
