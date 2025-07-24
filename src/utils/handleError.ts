@@ -4,6 +4,7 @@ import {
   DomainAlreadyExistsError,
   DomainNotFoundError,
   CompanyDomainNotFoundError,
+  CompanyAlreadyExistsError, // Import CompanyAlreadyExistsError
 } from '../errors/customErrors';
 
 export function handleError(res: Response, error: unknown): Response {
@@ -15,8 +16,11 @@ export function handleError(res: Response, error: unknown): Response {
     });
   }
 
-  // Domain already exists
-  if (error instanceof DomainAlreadyExistsError) {
+  // Already exists errors
+  if (
+    error instanceof DomainAlreadyExistsError ||
+    error instanceof CompanyAlreadyExistsError // Add CompanyAlreadyExistsError here
+  ) {
     return res.status(409).json({ message: error.message });
   }
 

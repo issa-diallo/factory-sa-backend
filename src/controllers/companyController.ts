@@ -1,10 +1,11 @@
 import { Request, Response } from 'express';
-import { ZodError } from 'zod';
 import { CompanyService } from '../services/company/companyService';
 import {
   createCompanySchema,
   updateCompanySchema,
 } from '../schemas/companySchema';
+import { handleError } from '../utils/handleError';
+import { mapCompanyError } from '../errors/companyErrorMapper';
 
 const companyService = new CompanyService();
 
@@ -14,14 +15,8 @@ export class CompanyController {
       const data = createCompanySchema.parse(req.body);
       const company = await companyService.createCompany(data);
       return res.status(201).json(company);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Invalid validation data',
-          errors: error.issues,
-        });
-      }
-      return res.status(500).json({ message: (error as Error).message });
+    } catch (error: unknown) {
+      return handleError(res, mapCompanyError(error));
     }
   }
 
@@ -35,8 +30,8 @@ export class CompanyController {
       }
 
       return res.status(200).json(company);
-    } catch (error) {
-      return res.status(500).json({ message: (error as Error).message });
+    } catch (error: unknown) {
+      return handleError(res, mapCompanyError(error));
     }
   }
 
@@ -44,8 +39,8 @@ export class CompanyController {
     try {
       const companies = await companyService.getAllCompanies();
       return res.status(200).json(companies);
-    } catch (error) {
-      return res.status(500).json({ message: (error as Error).message });
+    } catch (error: unknown) {
+      return handleError(res, mapCompanyError(error));
     }
   }
 
@@ -61,14 +56,8 @@ export class CompanyController {
 
       const updated = await companyService.updateCompany(id, data);
       return res.status(200).json(updated);
-    } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Invalid validation data',
-          errors: error.issues,
-        });
-      }
-      return res.status(500).json({ message: (error as Error).message });
+    } catch (error: unknown) {
+      return handleError(res, mapCompanyError(error));
     }
   }
 
@@ -82,8 +71,8 @@ export class CompanyController {
 
       await companyService.deleteCompany(id);
       return res.status(204).send();
-    } catch (error) {
-      return res.status(500).json({ message: (error as Error).message });
+    } catch (error: unknown) {
+      return handleError(res, mapCompanyError(error));
     }
   }
 }
