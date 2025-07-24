@@ -1,24 +1,25 @@
 import { Request, Response } from 'express';
-import { PackingListService } from '../services/packingList/packingListService';
 import {
   formatValidationErrors,
   PackingListData,
   validatePackingListData,
 } from '../schemas/packingListSchema';
+import { inject, injectable } from 'tsyringe';
+import { IPackingListService } from '../services/packingList/interfaces';
 
-const packingListService = new PackingListService();
-
+@injectable()
 export class PackingListController {
+  constructor(
+    @inject('PackingListService')
+    private packingListService: IPackingListService
+  ) {}
   /**
    * Handles the upload and processing of packing list data.
    *
    * @param req - Express request containing the data in req.body
    * @param res - Express response to return the result
    */
-  static async handlePackingList(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
+  async handlePackingList(req: Request, res: Response): Promise<Response> {
     try {
       // Step 1: Validate data with Zod
       const validationResult = validatePackingListData(req.body);
@@ -44,7 +45,8 @@ export class PackingListController {
       const cleanedData: PackingListData = validationResult.data;
 
       // Step 3: Process data with the service
-      const processResult = await packingListService.processData(cleanedData);
+      const processResult =
+        await this.packingListService.processData(cleanedData);
 
       if (!processResult.success) {
         return res.status(400).json({
@@ -63,8 +65,6 @@ export class PackingListController {
         },
       });
     } catch (error) {
-      console.error('Error processing packing list:', error);
-
       return res.status(500).json({
         error: 'Internal server error',
         message: error instanceof Error ? error.message : 'Unknown error',
