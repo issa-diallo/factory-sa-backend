@@ -136,11 +136,8 @@ describe('PackingListService', () => {
       },
       {
         LINE: 2,
-        'SKU MIN': '',
-        MAKE: 'Make2',
         MODEL: 'Model2',
         'DESCRIPTION MIN': '',
-        'QTY REQ MATCH': 20,
         'QTY ALLOC': 20,
         ORIGIN: 'Origin2',
         CTN: '11-20',
