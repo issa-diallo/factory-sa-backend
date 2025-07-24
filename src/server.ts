@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+import './container';
 import app from './index';
 import { getServerConfig } from './config/server.config';
 

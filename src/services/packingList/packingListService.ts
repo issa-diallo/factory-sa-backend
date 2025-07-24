@@ -1,3 +1,4 @@
+import { injectable } from 'tsyringe';
 import { PackingListData } from '../../schemas/packingListSchema';
 import {
   createError,
@@ -10,6 +11,7 @@ import { extractCtnBlocksFromRow } from '../../utils/extractCtnBlocksFromRow';
 
 import { IPackingListService } from './interfaces';
 
+@injectable()
 export class PackingListService implements IPackingListService {
   /**
    * Processes packing list data rows and extracts ProcessedItems.

@@ -1,4 +1,3 @@
-import { PackingListService } from '../../src/services/packingList/packingListService';
 import {
   createSuccess,
   createError,
@@ -6,6 +5,8 @@ import {
 } from '../../src/types/result';
 import { extractCtnBlocksFromRow } from '../../src/utils/extractCtnBlocksFromRow';
 import { PackingListData } from '../../src/schemas/packingListSchema';
+import { IPackingListService } from '../../src/services/packingList/interfaces';
+import { container } from '../../src/container';
 
 // Mock the dependency
 jest.mock('@utils/extractCtnBlocksFromRow');
@@ -18,10 +19,10 @@ const MISSING_BASE_DATA_ERROR =
   'Line 2: missing base data (description, model)';
 
 describe('PackingListService', () => {
-  let service: PackingListService;
+  let service: IPackingListService;
 
   beforeEach(() => {
-    service = new PackingListService();
+    service = container.resolve<IPackingListService>('PackingListService');
     mockExtractCtnBlocksFromRow.mockClear();
     jest.spyOn(console, 'warn').mockImplementation(() => {});
   });
