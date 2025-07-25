@@ -1,153 +1,126 @@
+// tests/controllers/companyController.test.ts
 import { Request, Response } from 'express';
 import { CompanyController } from '../../src/controllers/companyController';
-import { prisma } from '../../src/database/prismaClient';
+import { ICompanyService } from '../../src/services/company/interfaces';
+import { Company } from '../../src/generated/prisma';
+import { generateValidCompany } from '../fixtures/company/generateCompanyFixtures';
 
 function createMockResponse(): Response {
-  const res = {
+  return {
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
     send: jest.fn(),
-  };
-  return res as unknown as Response;
+  } as unknown as Response;
 }
 
-describe('CompanyController', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    await prisma.company.deleteMany();
-  });
+describe('CompanyController with mocked service', () => {
+  let mockService: jest.Mocked<ICompanyService>;
+  let controller: CompanyController;
+  let res: Response;
 
-  afterAll(async () => {
-    await prisma.company.deleteMany();
-    await prisma.$disconnect();
+  beforeEach(() => {
+    mockService = {
+      createCompany: jest.fn(),
+      getCompanyById: jest.fn(),
+      getAllCompanies: jest.fn(),
+      updateCompany: jest.fn(),
+      deleteCompany: jest.fn(),
+      getCompanyByName: jest.fn(),
+    };
+    controller = new CompanyController(mockService);
+    res = createMockResponse();
   });
 
   describe('createCompany', () => {
     it('should create a company and return 201 status', async () => {
-      const req = {
-        body: {
-          name: 'Test Company',
-          description: 'A test company',
-          isActive: true,
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
+      const newCompany = generateValidCompany()[0];
+      const req = { body: newCompany } as Request;
+      mockService.createCompany.mockResolvedValueOnce({
+        id: 'company-id-1',
+        ...newCompany,
+      } as Company);
 
-      await CompanyController.createCompany(req, res);
+      await controller.createCompany(req, res);
 
+      expect(mockService.createCompany).toHaveBeenCalledWith(newCompany);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'Test Company',
-        })
+        expect.objectContaining({ id: 'company-id-1', name: newCompany.name })
       );
-      const createdCompany = await prisma.company.findUnique({
-        where: { name: 'Test Company' },
-      });
-      expect(createdCompany).not.toBeNull();
-      expect(createdCompany?.name).toBe('Test Company');
     });
 
     it('should return 400 for invalid validation data', async () => {
       const req = { body: { name: 123 } } as unknown as Request; // Invalid data
-      const res = createMockResponse();
-
-      await CompanyController.createCompany(req, res);
-
+      await controller.createCompany(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Invalid validation data',
-          errors: expect.any(Array),
-        })
+        expect.objectContaining({ message: 'Invalid validation data' })
       );
-      const companyCount = await prisma.company.count();
-      expect(companyCount).toBe(0);
     });
 
     it('should return 409 if company name already exists', async () => {
-      const existingCompanyName = 'Existing Company';
-      await prisma.company.create({
-        data: {
-          name: existingCompanyName,
-          description: 'An existing company',
-          isActive: true,
-        },
+      const existingCompany = generateValidCompany()[0];
+      const req = { body: existingCompany } as Request;
+      mockService.createCompany.mockRejectedValueOnce({
+        code: 'P2002', // Prisma error code for unique constraint violation
+        meta: { target: ['name'] },
       });
 
-      const req = {
-        body: {
-          name: existingCompanyName,
-          description: 'Another existing company',
-          isActive: true,
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
+      await controller.createCompany(req, res);
 
-      await CompanyController.createCompany(req, res);
-
+      expect(mockService.createCompany).toHaveBeenCalledWith(existingCompany);
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
           message: 'Company with this name already exists.',
         })
       );
-      const companyCount = await prisma.company.count();
-      expect(companyCount).toBe(1);
     });
 
     it('should return 500 if an unexpected error occurs', async () => {
-      const req = {
-        body: {
-          name: 'Error Company',
-          description: 'A company with an error',
-          isActive: true,
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
+      const newCompany = generateValidCompany()[0];
+      const req = { body: newCompany } as Request;
+      mockService.createCompany.mockRejectedValueOnce(
+        new Error('Something went wrong')
+      );
 
-      const spy = jest
-        .spyOn(prisma.company, 'create')
-        .mockRejectedValueOnce(new Error('Database connection failed'));
+      await controller.createCompany(req, res);
 
-      await CompanyController.createCompany(req, res);
-
+      expect(mockService.createCompany).toHaveBeenCalledWith(newCompany);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Database connection failed',
-        })
+        expect.objectContaining({ message: 'Something went wrong' })
       );
-      spy.mockRestore();
     });
   });
 
   describe('getCompanyById', () => {
     it('should return 200 and company if found', async () => {
-      const company = await prisma.company.create({
-        data: {
-          name: 'Found Company',
-          description: 'A found company',
-          isActive: true,
-        },
-      });
-      const req = { params: { id: company.id } } as unknown as Request;
-      const res = createMockResponse();
+      const companyId = 'company-id-get';
+      const foundCompany = {
+        id: companyId,
+        ...generateValidCompany()[0],
+      } as Company;
+      const req = { params: { id: companyId } } as unknown as Request;
+      mockService.getCompanyById.mockResolvedValueOnce(foundCompany);
 
-      await CompanyController.getCompanyById(req, res);
+      await controller.getCompanyById(req, res);
 
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ id: company.id, name: 'Found Company' })
+        expect.objectContaining(foundCompany)
       );
     });
 
     it('should return 404 if company not found', async () => {
-      const req = { params: { id: 'non-existent-id' } } as unknown as Request;
-      const res = createMockResponse();
+      const companyId = 'non-existent-id';
+      const req = { params: { id: companyId } } as unknown as Request;
+      mockService.getCompanyById.mockResolvedValueOnce(null);
 
-      await CompanyController.getCompanyById(req, res);
+      await controller.getCompanyById(req, res);
 
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
         message: 'Company not found',
@@ -155,115 +128,111 @@ describe('CompanyController', () => {
     });
 
     it('should return 500 if an unexpected error occurs', async () => {
-      const req = { params: { id: 'error-id' } } as unknown as Request;
-      const res = createMockResponse();
+      const companyId = 'error-id';
+      const req = { params: { id: companyId } } as unknown as Request;
+      mockService.getCompanyById.mockRejectedValueOnce(
+        new Error('Database error')
+      );
 
-      const spy = jest
-        .spyOn(prisma.company, 'findUnique')
-        .mockRejectedValueOnce(new Error('Network error'));
+      await controller.getCompanyById(req, res);
 
-      await CompanyController.getCompanyById(req, res);
-
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Network error',
-        })
+        expect.objectContaining({ message: 'Database error' })
       );
-      spy.mockRestore();
     });
   });
 
   describe('getAllCompanies', () => {
     it('should return all companies', async () => {
-      await prisma.company.createMany({
-        data: [
-          { name: 'Company One', description: 'Desc One', isActive: true },
-          { name: 'Company Two', description: 'Desc Two', isActive: true },
-        ],
-      });
-
+      const companies = generateValidCompany(2).map((c, i) => ({
+        id: `company-id-${i + 1}`,
+        ...c,
+      })) as Company[];
       const req = {} as Request;
-      const res = createMockResponse();
+      mockService.getAllCompanies.mockResolvedValueOnce(companies);
 
-      await CompanyController.getAllCompanies(req, res);
+      await controller.getAllCompanies(req, res);
 
+      expect(mockService.getAllCompanies).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(expect.any(Array));
+      expect(res.json).toHaveBeenCalledWith(expect.arrayContaining(companies));
       expect((res.json as jest.Mock).mock.calls[0][0].length).toBe(2);
     });
 
     it('should return empty array if no companies', async () => {
       const req = {} as Request;
-      const res = createMockResponse();
+      mockService.getAllCompanies.mockResolvedValueOnce([]);
 
-      await CompanyController.getAllCompanies(req, res);
+      await controller.getAllCompanies(req, res);
 
+      expect(mockService.getAllCompanies).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith([]);
     });
 
     it('should return 500 if an unexpected error occurs', async () => {
       const req = {} as Request;
-      const res = createMockResponse();
+      mockService.getAllCompanies.mockRejectedValueOnce(
+        new Error('Network error')
+      );
 
-      const spy = jest
-        .spyOn(prisma.company, 'findMany')
-        .mockRejectedValueOnce(new Error('DB error'));
+      await controller.getAllCompanies(req, res);
 
-      await CompanyController.getAllCompanies(req, res);
-
+      expect(mockService.getAllCompanies).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'DB error',
-        })
+        expect.objectContaining({ message: 'Network error' })
       );
-      spy.mockRestore();
     });
   });
 
   describe('updateCompany', () => {
     it('should update a company and return 200', async () => {
-      const company = await prisma.company.create({
-        data: {
-          name: 'Original Name',
-          description: 'Original description',
-          isActive: true,
-        },
-      });
+      const companyId = 'company-id-update';
+      const updatedData = {
+        name: 'Updated Name',
+        description: 'Updated Description',
+      };
+      const existingCompany = {
+        id: companyId,
+        ...generateValidCompany()[0],
+      } as Company;
+      const updatedCompany = { ...existingCompany, ...updatedData } as Company;
+
       const req = {
-        params: { id: company.id },
-        body: { name: 'Updated Company Name', description: 'New Description' },
+        params: { id: companyId },
+        body: updatedData,
       } as unknown as Request;
-      const res = createMockResponse();
+      mockService.getCompanyById.mockResolvedValueOnce(existingCompany);
+      mockService.updateCompany.mockResolvedValueOnce(updatedCompany);
 
-      await CompanyController.updateCompany(req, res);
+      await controller.updateCompany(req, res);
 
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
+      expect(mockService.updateCompany).toHaveBeenCalledWith(
+        companyId,
+        updatedData
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          id: company.id,
-          name: 'Updated Company Name',
-          description: 'New Description',
-        })
+        expect.objectContaining(updatedCompany)
       );
-      const updatedCompany = await prisma.company.findUnique({
-        where: { id: company.id },
-      });
-      expect(updatedCompany?.name).toBe('Updated Company Name');
-      expect(updatedCompany?.description).toBe('New Description');
     });
 
     it('should return 404 if company not found', async () => {
+      const companyId = 'non-existent-update-id';
       const req = {
-        params: { id: 'non-existent-update-id' },
-        body: { name: 'Updated Name' },
+        params: { id: companyId },
+        body: { name: 'New Name' },
       } as unknown as Request;
-      const res = createMockResponse();
+      mockService.getCompanyById.mockResolvedValueOnce(null);
 
-      await CompanyController.updateCompany(req, res);
+      await controller.updateCompany(req, res);
 
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
+      expect(mockService.updateCompany).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
         message: 'Company not found',
@@ -271,94 +240,77 @@ describe('CompanyController', () => {
     });
 
     it('should return 400 for invalid validation data', async () => {
-      const company = await prisma.company.create({
-        data: {
-          name: 'Valid Company',
-          description: 'Valid description',
-          isActive: true,
-        },
-      });
+      const companyId = 'company-id-invalid-update';
       const req = {
-        params: { id: company.id },
-        body: { name: 123 }, // Invalid data
-      } as unknown as Request;
-      const res = createMockResponse();
-
-      await CompanyController.updateCompany(req, res);
-
+        params: { id: companyId },
+        body: { name: 123 },
+      } as unknown as Request; // Invalid data
+      await controller.updateCompany(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Invalid validation data',
-          errors: expect.any(Array),
-        })
+        expect.objectContaining({ message: 'Invalid validation data' })
       );
-      const originalCompany = await prisma.company.findUnique({
-        where: { id: company.id },
-      });
-      expect(originalCompany?.name).toBe('Valid Company');
     });
 
     it('should return 500 if an unexpected error occurs', async () => {
-      const company = await prisma.company.create({
-        data: {
-          name: 'Error Update Company',
-          description: 'Error description',
-          isActive: true,
-        },
-      });
+      const companyId = 'error-update-id';
+      const updatedData = { name: 'Updated Name' };
+      const existingCompany = {
+        id: companyId,
+        ...generateValidCompany()[0],
+      } as Company;
+
       const req = {
-        params: { id: company.id },
-        body: { name: 'Error Name' },
+        params: { id: companyId },
+        body: updatedData,
       } as unknown as Request;
-      const res = createMockResponse();
+      mockService.getCompanyById.mockResolvedValueOnce(existingCompany);
+      mockService.updateCompany.mockRejectedValueOnce(
+        new Error('Update failed')
+      );
 
-      const spy = jest
-        .spyOn(prisma.company, 'update')
-        .mockRejectedValueOnce(new Error('Update failed'));
+      await controller.updateCompany(req, res);
 
-      await CompanyController.updateCompany(req, res);
-
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
+      expect(mockService.updateCompany).toHaveBeenCalledWith(
+        companyId,
+        updatedData
+      );
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Update failed',
-        })
+        expect.objectContaining({ message: 'Update failed' })
       );
-      spy.mockRestore();
     });
   });
 
   describe('deleteCompany', () => {
     it('should delete a company and return 204', async () => {
-      const company = await prisma.company.create({
-        data: {
-          name: 'Company to Delete',
-          description: 'Description to delete',
-          isActive: true,
-        },
-      });
-      const req = { params: { id: company.id } } as unknown as Request;
-      const res = createMockResponse();
+      const companyId = 'company-id-delete';
+      const req = { params: { id: companyId } } as unknown as Request;
+      const deletedCompany = {
+        id: companyId,
+        ...generateValidCompany()[0],
+      } as Company;
+      mockService.getCompanyById.mockResolvedValueOnce(deletedCompany);
+      mockService.deleteCompany.mockResolvedValueOnce(deletedCompany);
 
-      await CompanyController.deleteCompany(req, res);
+      await controller.deleteCompany(req, res);
 
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
+      expect(mockService.deleteCompany).toHaveBeenCalledWith(companyId);
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.send).toHaveBeenCalled();
-      const deletedCompany = await prisma.company.findUnique({
-        where: { id: company.id },
-      });
-      expect(deletedCompany).toBeNull();
     });
 
     it('should return 404 if company not found', async () => {
-      const req = {
-        params: { id: 'non-existent-delete-id' },
-      } as unknown as Request;
-      const res = createMockResponse();
+      const companyId = 'non-existent-delete-id';
+      const req = { params: { id: companyId } } as unknown as Request;
+      mockService.getCompanyById.mockResolvedValueOnce(null);
 
-      await CompanyController.deleteCompany(req, res);
+      await controller.deleteCompany(req, res);
 
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
+      expect(mockService.deleteCompany).not.toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
         message: 'Company not found',
@@ -366,29 +318,23 @@ describe('CompanyController', () => {
     });
 
     it('should return 500 if an unexpected error occurs', async () => {
-      const company = await prisma.company.create({
-        data: {
-          name: 'Error Delete Company',
-          description: 'Error description',
-          isActive: true,
-        },
-      });
-      const req = { params: { id: company.id } } as unknown as Request;
-      const res = createMockResponse();
+      const companyId = 'error-delete-id';
+      const req = { params: { id: companyId } } as unknown as Request;
+      mockService.getCompanyById.mockResolvedValueOnce({
+        id: companyId,
+      } as Company);
+      mockService.deleteCompany.mockRejectedValueOnce(
+        new Error('Delete failed')
+      );
 
-      const spy = jest
-        .spyOn(prisma.company, 'delete')
-        .mockRejectedValueOnce(new Error('Delete failed'));
+      await controller.deleteCompany(req, res);
 
-      await CompanyController.deleteCompany(req, res);
-
+      expect(mockService.getCompanyById).toHaveBeenCalledWith(companyId);
+      expect(mockService.deleteCompany).toHaveBeenCalledWith(companyId);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Delete failed',
-        })
+        expect.objectContaining({ message: 'Delete failed' })
       );
-      spy.mockRestore();
     });
   });
 });
