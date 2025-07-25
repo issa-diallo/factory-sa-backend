@@ -1,29 +1,32 @@
 import { Request, Response } from 'express';
-import { CompanyService } from '../services/company/companyService';
 import {
   createCompanySchema,
   updateCompanySchema,
 } from '../schemas/companySchema';
 import { handleError } from '../utils/handleError';
 import { mapCompanyError } from '../errors/companyErrorMapper';
+import { inject, injectable } from 'tsyringe';
+import { ICompanyService } from '../services/company/interfaces';
 
-const companyService = new CompanyService();
-
+@injectable()
 export class CompanyController {
-  static async createCompany(req: Request, res: Response): Promise<Response> {
+  constructor(
+    @inject('CompanyService') private companyService: ICompanyService
+  ) {}
+  async createCompany(req: Request, res: Response): Promise<Response> {
     try {
       const data = createCompanySchema.parse(req.body);
-      const company = await companyService.createCompany(data);
+      const company = await this.companyService.createCompany(data);
       return res.status(201).json(company);
     } catch (error: unknown) {
       return handleError(res, mapCompanyError(error));
     }
   }
 
-  static async getCompanyById(req: Request, res: Response): Promise<Response> {
+  async getCompanyById(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const company = await companyService.getCompanyById(id);
+      const company = await this.companyService.getCompanyById(id);
 
       if (!company) {
         return res.status(404).json({ message: 'Company not found' });
@@ -35,41 +38,41 @@ export class CompanyController {
     }
   }
 
-  static async getAllCompanies(req: Request, res: Response): Promise<Response> {
+  async getAllCompanies(req: Request, res: Response): Promise<Response> {
     try {
-      const companies = await companyService.getAllCompanies();
+      const companies = await this.companyService.getAllCompanies();
       return res.status(200).json(companies);
     } catch (error: unknown) {
       return handleError(res, mapCompanyError(error));
     }
   }
 
-  static async updateCompany(req: Request, res: Response): Promise<Response> {
+  async updateCompany(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
       const data = updateCompanySchema.parse(req.body);
 
-      const existing = await companyService.getCompanyById(id);
+      const existing = await this.companyService.getCompanyById(id);
       if (!existing) {
         return res.status(404).json({ message: 'Company not found' });
       }
 
-      const updated = await companyService.updateCompany(id, data);
+      const updated = await this.companyService.updateCompany(id, data);
       return res.status(200).json(updated);
     } catch (error: unknown) {
       return handleError(res, mapCompanyError(error));
     }
   }
 
-  static async deleteCompany(req: Request, res: Response): Promise<Response> {
+  async deleteCompany(req: Request, res: Response): Promise<Response> {
     try {
       const { id } = req.params;
-      const existing = await companyService.getCompanyById(id);
+      const existing = await this.companyService.getCompanyById(id);
       if (!existing) {
         return res.status(404).json({ message: 'Company not found' });
       }
 
-      await companyService.deleteCompany(id);
+      await this.companyService.deleteCompany(id);
       return res.status(204).send();
     } catch (error: unknown) {
       return handleError(res, mapCompanyError(error));

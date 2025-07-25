@@ -6,7 +6,9 @@ import {
 } from '../../types/company';
 import { prisma } from '../../database/prismaClient';
 import { CompanyAlreadyExistsError } from '../../errors/customErrors';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class CompanyService implements ICompanyService {
   constructor() {}
 
