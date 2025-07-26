@@ -9,13 +9,11 @@ import {
   DomainNotFoundError,
   CompanyDomainNotFoundError,
 } from '../../errors/customErrors';
+import { injectable } from 'tsyringe';
 
+@injectable()
 export class DomainService implements IDomainService {
-  private prisma: PrismaClient;
-
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
-  }
+  constructor(private prisma: PrismaClient) {}
 
   async createDomain(data: CreateDomainRequest): Promise<Domain> {
     return this.prisma.domain.create({
@@ -30,9 +28,8 @@ export class DomainService implements IDomainService {
     const domain = await this.prisma.domain.findUnique({
       where: { id },
     });
-    if (!domain) {
+    if (!domain)
       throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
-    }
     return domain;
   }
 
@@ -57,30 +54,19 @@ export class DomainService implements IDomainService {
         typeof error === 'object' &&
         error !== null &&
         'code' in error &&
-        error.code === 'P2025'
+        (error as { code: string }).code === 'P2025'
       ) {
         throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
       }
+
       throw error;
     }
   }
 
   async deleteDomain(id: string): Promise<Domain> {
-    try {
-      return await this.prisma.domain.delete({
-        where: { id },
-      });
-    } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        error.code === 'P2025'
-      ) {
-        throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
-      }
-      throw error;
-    }
+    return this.prisma.domain.delete({
+      where: { id },
+    });
   }
 
   async createCompanyDomain(
@@ -122,23 +108,17 @@ export class DomainService implements IDomainService {
     });
   }
 
-  async deleteCompanyDomain(id: string): Promise<CompanyDomain> {
-    try {
-      return await this.prisma.companyDomain.delete({
-        where: { id },
-      });
-    } catch (error) {
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        error.code === 'P2025'
-      ) {
-        throw new CompanyDomainNotFoundError(
-          `Company domain with ID ${id} not found.`
-        );
-      }
-      throw error;
-    }
+  async deleteCompanyDomain(
+    companyId: string,
+    domainId: string
+  ): Promise<void> {
+    await this.prisma.companyDomain.delete({
+      where: {
+        companyId_domainId: {
+          companyId,
+          domainId,
+        },
+      },
+    });
   }
 }
