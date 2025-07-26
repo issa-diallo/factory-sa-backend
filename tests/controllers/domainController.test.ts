@@ -1,97 +1,82 @@
-import { Request, Response } from 'express';
 import { DomainController } from '../../src/controllers/domainController';
-import { prisma } from '../../src/database/prismaClient';
+import { IDomainService } from '../../src/services/domain/interfaces';
 import {
   DomainNotFoundError,
   CompanyDomainNotFoundError,
 } from '../../src/errors/customErrors';
+import { Request, Response } from 'express';
+import { generateValidDomain } from '../fixtures/domain/generateDomainFixtures';
+import { Domain } from '../../src/generated/prisma'; // Assurez-vous que ce chemin est correct
+import { faker } from '@faker-js/faker'; // Importation de faker
 
-function createMockResponse(): Response {
-  const res = {
+const createMockResponse = (): Response => {
+  return {
     status: jest.fn().mockReturnThis(),
     json: jest.fn(),
     send: jest.fn(),
-  };
-  return res as unknown as Response;
-}
+  } as unknown as Response;
+};
 
-describe('DomainController (static)', () => {
-  beforeEach(async () => {
-    jest.clearAllMocks();
-    await prisma.userRole.deleteMany();
-    await prisma.companyDomain.deleteMany();
-    await prisma.rolePermission.deleteMany();
-    await prisma.session.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.company.deleteMany();
-    await prisma.domain.deleteMany();
-    await prisma.permission.deleteMany();
-  });
+describe('DomainController with dependency injection', () => {
+  let controller: DomainController;
+  let mockService: jest.Mocked<IDomainService>;
+  let res: Response;
 
-  afterAll(async () => {
-    await prisma.userRole.deleteMany();
-    await prisma.companyDomain.deleteMany();
-    await prisma.rolePermission.deleteMany();
-    await prisma.session.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.role.deleteMany();
-    await prisma.company.deleteMany();
-    await prisma.domain.deleteMany();
-    await prisma.permission.deleteMany();
-    await prisma.$disconnect();
+  beforeEach(() => {
+    mockService = {
+      createDomain: jest.fn(),
+      getDomainById: jest.fn(),
+      getDomainByName: jest.fn(),
+      getAllDomains: jest.fn(),
+      updateDomain: jest.fn(),
+      deleteDomain: jest.fn(),
+      createCompanyDomain: jest.fn(),
+      getCompanyDomainById: jest.fn(),
+      getCompanyDomainsByCompanyId: jest.fn(),
+      getCompanyDomainsByDomainId: jest.fn(),
+      deleteCompanyDomain: jest.fn(),
+    };
+    controller = new DomainController(mockService);
+    res = createMockResponse();
   });
 
   describe('createDomain', () => {
-    it('should create a domain and return 201 status', async () => {
-      const req = {
-        body: {
-          name: 'example.com',
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
+    it('should create a domain and return 201', async () => {
+      const newDomain = generateValidDomain()[0];
+      const req = { body: newDomain } as Request;
+      mockService.createDomain.mockResolvedValue({
+        id: 'domain-id-1',
+        ...newDomain,
+      } as Domain);
 
-      await DomainController.createDomain(req, res);
+      await controller.createDomain(req, res);
 
+      expect(mockService.createDomain).toHaveBeenCalledWith(newDomain);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          name: 'example.com',
-        })
+        expect.objectContaining({ id: 'domain-id-1', name: newDomain.name })
       );
     });
 
-    it('should return 400 for invalid validation data', async () => {
-      const req = { body: { name: 123 } } as unknown as Request;
-      const res = createMockResponse();
+    it('should return 400 if validation fails', async () => {
+      const req = { body: { name: 123 } } as unknown as Request; // Invalid data
 
-      await DomainController.createDomain(req, res);
+      await controller.createDomain(req, res);
 
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Invalid validation data',
-          errors: expect.any(Array),
-        })
+        expect.objectContaining({ message: 'Invalid validation data' })
       );
     });
 
-    it('should return 409 if domain name already exists', async () => {
-      const req = {
-        body: {
-          name: 'existing.com',
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
+    it('should return 409 if domain already exists', async () => {
+      const existingDomain = generateValidDomain()[0];
+      const req = { body: existingDomain } as Request;
+      mockService.createDomain.mockRejectedValue({ code: 'P2002' });
 
-      await prisma.domain.create({
-        data: {
-          name: req.body.name,
-        },
-      });
+      await controller.createDomain(req, res);
 
-      await DomainController.createDomain(req, res);
-
+      expect(mockService.createDomain).toHaveBeenCalledWith(existingDomain);
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
@@ -99,570 +84,387 @@ describe('DomainController (static)', () => {
         })
       );
     });
+
+    it('should return 500 for unknown error', async () => {
+      const newDomain = generateValidDomain()[0];
+      const req = { body: newDomain } as Request;
+      mockService.createDomain.mockRejectedValue(
+        new Error('Something went wrong')
+      );
+
+      await controller.createDomain(req, res);
+
+      expect(mockService.createDomain).toHaveBeenCalledWith(newDomain);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Something went wrong' })
+      );
+    });
   });
 
   describe('getDomainById', () => {
     it('should return 200 and domain if found', async () => {
-      const newDomain = await prisma.domain.create({
-        data: { name: 'test-get.com' },
-      });
+      const domainId = 'domain-id-get';
+      const foundDomain = {
+        id: domainId,
+        ...generateValidDomain()[0],
+      } as Domain;
+      const req = { params: { id: domainId } } as unknown as Request;
+      mockService.getDomainById.mockResolvedValueOnce(foundDomain);
 
-      const req = { params: { id: newDomain.id } } as unknown as Request;
-      const res = createMockResponse();
+      await controller.getDomainById(req, res);
 
-      await DomainController.getDomainById(req, res);
-
+      expect(mockService.getDomainById).toHaveBeenCalledWith(domainId);
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ id: newDomain.id, name: 'test-get.com' })
+        expect.objectContaining(foundDomain)
       );
     });
 
-    it('should return 404 if not found', async () => {
-      const req = { params: { id: 'non-existent-id' } } as unknown as Request;
-      const res = createMockResponse();
+    it('should return 404 if domain not found', async () => {
+      const domainId = 'non-existent-id';
+      const req = { params: { id: domainId } } as unknown as Request;
+      mockService.getDomainById.mockRejectedValueOnce(
+        new DomainNotFoundError(`Domain with ID ${domainId} not found.`)
+      );
 
-      await DomainController.getDomainById(req, res);
+      await controller.getDomainById(req, res);
 
+      expect(mockService.getDomainById).toHaveBeenCalledWith(domainId);
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        message: new DomainNotFoundError(
-          `Domain with ID non-existent-id not found.`
-        ).message,
+        message: `Domain with ID ${domainId} not found.`,
       });
+    });
+
+    it('should return 500 if an unexpected error occurs', async () => {
+      const domainId = 'error-id';
+      const req = { params: { id: domainId } } as unknown as Request;
+      mockService.getDomainById.mockRejectedValueOnce(
+        new Error('Database error')
+      );
+
+      await controller.getDomainById(req, res);
+
+      expect(mockService.getDomainById).toHaveBeenCalledWith(domainId);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Database error' })
+      );
     });
   });
 
   describe('getAllDomains', () => {
     it('should return all domains', async () => {
-      const domainsData = [{ name: 'domain1.com' }, { name: 'domain2.com' }];
-      await prisma.domain.createMany({ data: domainsData });
-
+      const domains = generateValidDomain(2).map((d, i) => ({
+        id: `domain-id-${i + 1}`,
+        ...d,
+      })) as Domain[];
       const req = {} as Request;
-      const res = createMockResponse();
+      mockService.getAllDomains.mockResolvedValueOnce(domains);
 
-      await DomainController.getAllDomains(req, res);
+      await controller.getAllDomains(req, res);
 
+      expect(mockService.getAllDomains).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
-      expect(res.json).toHaveBeenCalledWith(
-        expect.arrayContaining([
-          expect.objectContaining({ name: 'domain1.com' }),
-          expect.objectContaining({ name: 'domain2.com' }),
-        ])
-      );
+      expect(res.json).toHaveBeenCalledWith(expect.arrayContaining(domains));
       expect((res.json as jest.Mock).mock.calls[0][0].length).toBe(2);
     });
 
-    it('should return empty array and 200 status if no domains', async () => {
+    it('should return empty array if no domains', async () => {
       const req = {} as Request;
-      const res = createMockResponse();
+      mockService.getAllDomains.mockResolvedValueOnce([]);
 
-      await DomainController.getAllDomains(req, res);
+      await controller.getAllDomains(req, res);
 
+      expect(mockService.getAllDomains).toHaveBeenCalled();
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith([]);
+    });
+
+    it('should return 500 if an unexpected error occurs', async () => {
+      const req = {} as Request;
+      mockService.getAllDomains.mockRejectedValueOnce(
+        new Error('Network error')
+      );
+
+      await controller.getAllDomains(req, res);
+
+      expect(mockService.getAllDomains).toHaveBeenCalled();
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Network error' })
+      );
     });
   });
 
   describe('updateDomain', () => {
-    it('should update and return 200', async () => {
-      const existingDomain = await prisma.domain.create({
-        data: { name: 'old-domain.com' },
-      });
+    it('should update a domain and return 200', async () => {
+      const domainId = 'domain-id-update';
+      const updatedData = {
+        name: 'updated.com',
+        isActive: false,
+      };
+      const existingDomain = {
+        id: domainId,
+        ...generateValidDomain()[0],
+      } as Domain;
+      const updatedDomain = { ...existingDomain, ...updatedData } as Domain;
 
       const req = {
-        params: { id: existingDomain.id },
-        body: { name: 'updated-domain.com' },
+        params: { id: domainId },
+        body: updatedData,
       } as unknown as Request;
-      const res = createMockResponse();
+      mockService.updateDomain.mockResolvedValueOnce(updatedDomain);
 
-      await DomainController.updateDomain(req, res);
+      await controller.updateDomain(req, res);
 
+      expect(mockService.updateDomain).toHaveBeenCalledWith(
+        domainId,
+        updatedData
+      );
       expect(res.status).toHaveBeenCalledWith(200);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({ name: 'updated-domain.com' })
+        expect.objectContaining(updatedDomain)
       );
     });
 
     it('should return 404 if domain not found', async () => {
+      const domainId = 'non-existent-update-id';
       const req = {
-        params: { id: 'non-existent-id' },
-        body: { name: 'updated-domain.com' },
+        params: { id: domainId },
+        body: { name: 'new.com' },
       } as unknown as Request;
-      const res = createMockResponse();
+      mockService.updateDomain.mockRejectedValueOnce(
+        new DomainNotFoundError(`Domain with ID ${domainId} not found.`)
+      );
 
-      await DomainController.updateDomain(req, res);
+      await controller.updateDomain(req, res);
 
+      expect(mockService.updateDomain).toHaveBeenCalledWith(domainId, req.body);
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        message: new DomainNotFoundError(
-          `Domain with ID non-existent-id not found.`
-        ).message,
+        message: `Domain with ID ${domainId} not found.`,
       });
     });
 
     it('should return 400 for invalid validation data', async () => {
-      const existingDomain = await prisma.domain.create({
-        data: { name: 'valid.com' },
-      });
-
+      const domainId = 'domain-id-invalid-update';
       const req = {
-        params: { id: existingDomain.id },
+        params: { id: domainId },
         body: { name: 123 },
-      } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.updateDomain(req, res);
-
+      } as unknown as Request; // Invalid data
+      await controller.updateDomain(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Invalid validation data',
-          errors: expect.any(Array),
-        })
+        expect.objectContaining({ message: 'Invalid validation data' })
       );
     });
-    it('should return 409 if updated domain name already exists', async () => {
-      const domain1 = await prisma.domain.create({
-        data: { name: 'original.com' },
-      });
 
-      await prisma.domain.create({
-        data: { name: 'existing.com' },
-      });
-
+    it('should return 500 if an unexpected error occurs', async () => {
+      const domainId = 'error-update-id';
+      const updatedData = { name: 'error.com' };
       const req = {
-        params: { id: domain1.id },
-        body: { name: 'existing.com' },
+        params: { id: domainId },
+        body: updatedData,
       } as unknown as Request;
+      mockService.updateDomain.mockRejectedValueOnce(
+        new Error('Update failed')
+      );
 
-      const res = createMockResponse();
+      await controller.updateDomain(req, res);
 
-      await DomainController.updateDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(409);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'Domain with this name already exists.',
-      });
+      expect(mockService.updateDomain).toHaveBeenCalledWith(
+        domainId,
+        updatedData
+      );
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Update failed' })
+      );
     });
   });
 
   describe('deleteDomain', () => {
-    it('should delete and return 204', async () => {
-      const domainToDelete = await prisma.domain.create({
-        data: { name: 'to-delete.com' },
-      });
+    it('should delete a domain and return 204', async () => {
+      const domainId = 'domain-id-delete';
+      const req = { params: { id: domainId } } as unknown as Request;
+      const deletedDomain = {
+        id: domainId,
+        ...generateValidDomain()[0],
+      } as Domain;
+      mockService.deleteDomain.mockResolvedValueOnce(deletedDomain);
 
-      const req = { params: { id: domainToDelete.id } } as unknown as Request;
-      const res = createMockResponse();
+      await controller.deleteDomain(req, res);
 
-      await DomainController.deleteDomain(req, res);
-
+      expect(mockService.deleteDomain).toHaveBeenCalledWith(domainId);
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.send).toHaveBeenCalled();
-
-      const deletedDomain = await prisma.domain.findUnique({
-        where: { id: domainToDelete.id },
-      });
-      expect(deletedDomain).toBeNull();
     });
 
     it('should return 404 if domain not found', async () => {
-      const req = { params: { id: 'non-existent-id' } } as unknown as Request;
-      const res = createMockResponse();
+      const domainId = 'non-existent-delete-id';
+      const req = { params: { id: domainId } } as unknown as Request;
+      mockService.deleteDomain.mockRejectedValueOnce(
+        new DomainNotFoundError(`Domain with ID ${domainId} not found.`)
+      );
 
-      await DomainController.deleteDomain(req, res);
+      await controller.deleteDomain(req, res);
 
+      expect(mockService.deleteDomain).toHaveBeenCalledWith(domainId);
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        message: new DomainNotFoundError(
-          `Domain with ID non-existent-id not found.`
-        ).message,
+        message: `Domain with ID ${domainId} not found.`,
       });
+    });
+
+    it('should return 500 if an unexpected error occurs', async () => {
+      const domainId = 'error-delete-id';
+      const req = { params: { id: domainId } } as unknown as Request;
+      mockService.deleteDomain.mockRejectedValueOnce(
+        new Error('Delete failed')
+      );
+
+      await controller.deleteDomain(req, res);
+
+      expect(mockService.deleteDomain).toHaveBeenCalledWith(domainId);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Delete failed' })
+      );
     });
   });
 
   describe('createCompanyDomain', () => {
-    let companyId: string;
-    let domainId: string;
+    it('should create a company-domain relationship and return 201', async () => {
+      const companyId = faker.string.uuid();
+      const domainId = faker.string.uuid();
+      const req = { body: { companyId, domainId } } as Request;
+      const newCompanyDomain = {
+        companyId,
+        domainId,
+        id: faker.string.uuid(),
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockService.createCompanyDomain.mockResolvedValueOnce(newCompanyDomain);
 
-    beforeEach(async () => {
-      const company = await prisma.company.create({
-        data: { name: 'TestCompany' },
-      });
-      const domain = await prisma.domain.create({
-        data: { name: 'testcompany.com' },
-      });
-      companyId = company.id;
-      domainId = domain.id;
-    });
+      await controller.createCompanyDomain(req, res);
 
-    it('should create a company domain and return 201 status', async () => {
-      const req = {
-        body: {
-          companyId,
-          domainId,
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.createCompanyDomain(req, res);
-
+      expect(mockService.createCompanyDomain).toHaveBeenCalledWith(req.body);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          companyId,
-          domainId,
-        })
+        expect.objectContaining(newCompanyDomain)
       );
     });
 
-    it('should return 400 for invalid validation data', async () => {
-      const req = { body: { companyId: 'abc' } } as unknown as Request; // Missing domainId
-      const res = createMockResponse();
-
-      await DomainController.createCompanyDomain(req, res);
-
+    it('should return 400 if validation fails', async () => {
+      const req = {
+        body: { companyId: 'invalid-uuid', domainId: 'invalid-uuid' },
+      } as unknown as Request;
+      await controller.createCompanyDomain(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          message: 'Invalid validation data',
-          errors: expect.any(Array),
-        })
+        expect.objectContaining({ message: 'Invalid validation data' })
       );
     });
 
-    it('should return 409 if company domain already exists', async () => {
-      await prisma.companyDomain.create({
-        data: {
-          companyId,
-          domainId,
-        },
+    it('should return 409 if relationship already exists', async () => {
+      const companyId = faker.string.uuid();
+      const domainId = faker.string.uuid();
+      const req = { body: { companyId, domainId } } as Request;
+      mockService.createCompanyDomain.mockRejectedValueOnce({
+        code: 'P2002',
+        meta: { target: ['companyId', 'domainId'] },
       });
 
-      const req = {
-        body: {
-          companyId,
-          domainId,
-        },
-      } as unknown as Request;
-      const res = createMockResponse();
+      await controller.createCompanyDomain(req, res);
 
-      await DomainController.createCompanyDomain(req, res);
-
+      expect(mockService.createCompanyDomain).toHaveBeenCalledWith(req.body);
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Domain with this name already exists.', // mapDomainError transforms Prisma P2002 to DomainAlreadyExistsError
+          message: 'Company-domain relationship already exists.',
         })
+      );
+    });
+
+    it('should return 500 for unknown error', async () => {
+      const companyId = faker.string.uuid();
+      const domainId = faker.string.uuid();
+      const req = { body: { companyId, domainId } } as Request;
+      mockService.createCompanyDomain.mockRejectedValueOnce(
+        new Error('Relationship error')
+      );
+
+      await controller.createCompanyDomain(req, res);
+
+      expect(mockService.createCompanyDomain).toHaveBeenCalledWith(req.body);
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Relationship error' })
       );
     });
   });
 
   describe('deleteCompanyDomain', () => {
-    let companyDomainId: string;
-    let companyId: string;
-    let domainId: string;
+    it('should delete a company-domain relationship and return 204', async () => {
+      const companyId = faker.string.uuid();
+      const domainId = faker.string.uuid();
+      const req = { params: { companyId, domainId } } as unknown as Request;
 
-    beforeEach(async () => {
-      const company = await prisma.company.create({
-        data: { name: 'AnotherCompany' },
-      });
-      const domain = await prisma.domain.create({
-        data: { name: 'anothercompany.com' },
-      });
-      companyId = company.id;
-      domainId = domain.id;
+      mockService.deleteCompanyDomain.mockResolvedValueOnce();
 
-      const companyDomain = await prisma.companyDomain.create({
-        data: {
-          companyId,
-          domainId,
-        },
-      });
-      companyDomainId = companyDomain.id;
-    });
+      await controller.deleteCompanyDomain(req, res);
 
-    it('should delete a company domain and return 204', async () => {
-      const req = { params: { id: companyDomainId } } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.deleteCompanyDomain(req, res);
-
+      expect(mockService.deleteCompanyDomain).toHaveBeenCalledWith(
+        req.params.companyId,
+        req.params.domainId
+      );
       expect(res.status).toHaveBeenCalledWith(204);
       expect(res.send).toHaveBeenCalled();
-
-      const deletedCompanyDomain = await prisma.companyDomain.findUnique({
-        where: { id: companyDomainId },
-      });
-      expect(deletedCompanyDomain).toBeNull();
     });
 
-    it('should return 404 if company domain not found', async () => {
-      const req = { params: { id: 'non-existent-id' } } as unknown as Request;
-      const res = createMockResponse();
+    it('should return 404 if relationship not found', async () => {
+      const companyId = faker.string.uuid();
+      const domainId = faker.string.uuid();
+      const req = { params: { companyId, domainId } } as unknown as Request;
+      mockService.deleteCompanyDomain.mockRejectedValueOnce(
+        new CompanyDomainNotFoundError(
+          `Company domain with ID ${req.params.companyId}-${req.params.domainId} not found.`
+        )
+      );
 
-      await DomainController.deleteCompanyDomain(req, res);
+      await controller.deleteCompanyDomain(req, res);
 
+      expect(mockService.deleteCompanyDomain).toHaveBeenCalledWith(
+        req.params.companyId,
+        req.params.domainId
+      );
       expect(res.status).toHaveBeenCalledWith(404);
       expect(res.json).toHaveBeenCalledWith({
-        message: new CompanyDomainNotFoundError(
-          `Company domain with ID non-existent-id not found.`
-        ).message,
+        message: `Company domain with ID ${req.params.companyId}-${req.params.domainId} not found.`,
       });
     });
-  });
 
-  describe('Error Handling 500', () => {
-    it('should return 500 if an unexpected error occurs during createDomain', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'create')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
+    it('should return 500 if an unexpected error occurs', async () => {
+      const companyId = faker.string.uuid();
+      const domainId = faker.string.uuid();
+      const req = { params: { companyId, domainId } } as unknown as Request;
+      mockService.deleteCompanyDomain.mockRejectedValueOnce(
+        new Error('Deletion error')
+      );
 
-      const req = { body: { name: 'error.com' } } as unknown as Request;
-      const res = createMockResponse();
+      await controller.deleteCompanyDomain(req, res);
 
-      await DomainController.createDomain(req, res);
-
+      expect(mockService.deleteCompanyDomain).toHaveBeenCalledWith(
+        req.params.companyId,
+        req.params.domainId
+      );
       expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
-
-      spy.mockRestore();
-    });
-
-    it('should return 500 if an unexpected error occurs during getDomainById', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'findUnique')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
-
-      const req = { params: { id: 'some-id' } } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.getDomainById(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
-
-      spy.mockRestore();
-    });
-
-    it('should return 500 if an unexpected error occurs during getAllDomains', async () => {
-      const spy = jest
-        .spyOn(prisma.domain, 'findMany')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
-
-      const req = {} as Request;
-      const res = createMockResponse();
-
-      await DomainController.getAllDomains(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
-
-      spy.mockRestore();
-    });
-
-    it('should return 404 if an unexpected error occurs during updateDomain (P2025)', async () => {
-      const spy = jest.spyOn(prisma.domain, 'update').mockRejectedValueOnce({
-        code: 'P2025',
-        meta: { cause: 'Record not found' },
-      });
-
-      const req = {
-        params: { id: 'some-id' },
-        body: { name: 'new.com' },
-      } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.updateDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: new DomainNotFoundError(`Domain with ID some-id not found.`)
-          .message,
-      });
-
-      spy.mockRestore();
-    });
-
-    it('should return 404 if an unexpected error occurs during deleteDomain (P2025)', async () => {
-      const spy = jest.spyOn(prisma.domain, 'delete').mockRejectedValueOnce({
-        code: 'P2025',
-        meta: { cause: 'Record not found' },
-      });
-
-      const req = { params: { id: 'some-id' } } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.deleteDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: new DomainNotFoundError(`Domain with ID some-id not found.`)
-          .message,
-      });
-
-      spy.mockRestore();
-    });
-
-    it('should return 500 if an unexpected error occurs during createCompanyDomain', async () => {
-      const spy = jest
-        .spyOn(prisma.companyDomain, 'create')
-        .mockRejectedValueOnce(new Error('Unexpected DB error'));
-
-      // Ensure valid data to bypass Zod validation and hit the service layer
-      const company = await prisma.company.create({
-        data: { name: 'ErrorCompany' },
-      });
-      const domain = await prisma.domain.create({
-        data: { name: 'errorcompany.com' },
-      });
-
-      const req = {
-        body: { companyId: company.id, domainId: domain.id },
-      } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.createCompanyDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({ message: 'Unexpected DB error' });
-
-      spy.mockRestore();
-    });
-
-    it('should return 404 if an unexpected error occurs during deleteCompanyDomain (P2025)', async () => {
-      const spy = jest
-        .spyOn(prisma.companyDomain, 'delete')
-        .mockRejectedValueOnce({
-          code: 'P2025',
-          meta: { cause: 'Record not found' },
-        });
-
-      const req = { params: { id: 'some-id' } } as unknown as Request;
-      const res = createMockResponse();
-
-      await DomainController.deleteCompanyDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(404);
-      expect(res.json).toHaveBeenCalledWith({
-        message: new CompanyDomainNotFoundError(
-          `Company domain with ID some-id not found.`
-        ).message,
-      });
-
-      spy.mockRestore();
-    });
-  });
-
-  describe('Branch coverage for unknown error types', () => {
-    const unknownErrorWithoutCode = new Error('An unknown error occurred');
-    it('should return 500 if error is object without code in createDomain', async () => {
-      const req = { body: { name: 'error.com' } } as unknown as Request;
-      const res = createMockResponse();
-
-      jest
-        .spyOn(prisma.domain, 'create')
-        .mockRejectedValueOnce(unknownErrorWithoutCode);
-
-      await DomainController.createDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'An unknown error occurred',
-      });
-    });
-
-    it('should return 500 if error is object without code in updateDomain', async () => {
-      const domain = await prisma.domain.create({
-        data: { name: 'to-update.com' },
-      });
-
-      const req = {
-        params: { id: domain.id },
-        body: { name: 'new-name.com' },
-      } as unknown as Request;
-
-      const res = createMockResponse();
-
-      jest
-        .spyOn(prisma.domain, 'update')
-        .mockRejectedValueOnce(unknownErrorWithoutCode);
-
-      await DomainController.updateDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'An unknown error occurred',
-      });
-    });
-
-    it('should return 500 if createCompanyDomain throws non-P2002 error', async () => {
-      const company = await prisma.company.create({
-        data: { name: 'NoP2002Company' },
-      });
-      const domain = await prisma.domain.create({
-        data: { name: 'no-p2002.com' },
-      });
-
-      const req = {
-        body: { companyId: company.id, domainId: domain.id },
-      } as unknown as Request;
-
-      const res = createMockResponse();
-
-      const errorObj = { code: 'OTHER_CODE' }; // not P2002
-      jest
-        .spyOn(prisma.companyDomain, 'create')
-        .mockRejectedValueOnce(errorObj);
-
-      await DomainController.createCompanyDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'An unknown error occurred',
-      });
-    });
-    it('should return 500 if error object has no code property in updateDomain', async () => {
-      const domain = await prisma.domain.create({
-        data: { name: 'update-no-code.com' },
-      });
-
-      const req = {
-        params: { id: domain.id },
-        body: { name: 'new-update.com' },
-      } as unknown as Request;
-
-      const res = createMockResponse();
-
-      const errorWithoutCodeProperty = { message: 'No code prop' };
-      jest
-        .spyOn(prisma.domain, 'update')
-        .mockRejectedValueOnce(errorWithoutCodeProperty);
-
-      await DomainController.updateDomain(req, res);
-
-      expect(res.status).toHaveBeenCalledWith(500);
-      expect(res.json).toHaveBeenCalledWith({
-        message: 'An unknown error occurred',
-      });
-    });
-  });
-  it('should return 500 if createDomain throws error object without "code" property', async () => {
-    const req = { body: { name: 'missing-code.com' } } as unknown as Request;
-    const res = createMockResponse();
-
-    const errorWithoutCode = {
-      message: 'Simulated error without code property',
-    };
-
-    jest.spyOn(prisma.domain, 'create').mockRejectedValueOnce(errorWithoutCode);
-
-    await DomainController.createDomain(req, res);
-
-    expect(res.status).toHaveBeenCalledWith(500);
-    expect(res.json).toHaveBeenCalledWith({
-      message: 'An unknown error occurred',
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Deletion error' })
+      );
     });
   });
 });

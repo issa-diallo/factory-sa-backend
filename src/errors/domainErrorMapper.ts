@@ -1,33 +1,67 @@
 import { ZodError } from 'zod';
-import { DomainAlreadyExistsError } from './customErrors';
+import {
+  DomainAlreadyExistsError,
+  CompanyDomainAlreadyExistsError,
+  DomainNotFoundError,
+  CompanyDomainNotFoundError,
+} from './customErrors';
+
+type PrismaKnownError = {
+  code: string;
+  meta?: {
+    target?: string[];
+    cause?: string;
+  };
+};
 
 export function mapDomainError(error: unknown): Error {
-  if (error instanceof ZodError) {
-    return error;
+  // 1. Zod validation errors
+  if (error instanceof ZodError) return error;
+
+  // 2. Prisma known errors
+  if (typeof error === 'object' && error !== null && 'code' in error) {
+    const prismaError = error as PrismaKnownError;
+
+    switch (prismaError.code) {
+      case 'P2002': {
+        const target = prismaError.meta?.target ?? [];
+        const isCompanyDomainConflict =
+          target.includes('companyId') && target.includes('domainId');
+
+        return isCompanyDomainConflict
+          ? new CompanyDomainAlreadyExistsError()
+          : new DomainAlreadyExistsError();
+      }
+
+      case 'P2025': {
+        const cause = prismaError.meta?.cause ?? '';
+
+        if (cause.includes('CompanyDomain')) {
+          return new CompanyDomainNotFoundError(
+            'Company-domain relationship not found.'
+          );
+        }
+
+        if (cause.includes('Domain')) {
+          return new DomainNotFoundError('Domain not found.');
+        }
+
+        return new Error('Resource not found (P2025).');
+      }
+    }
   }
 
+  // 3. Custom business errors already thrown
   if (
-    typeof error === 'object' &&
-    error !== null &&
-    'code' in error &&
-    error.code === 'P2002'
+    error instanceof DomainNotFoundError ||
+    error instanceof CompanyDomainNotFoundError
   ) {
-    return new DomainAlreadyExistsError();
-  }
-
-  // If it's an instance of Error, return it as is.
-  // This includes ZodError, DomainAlreadyExistsError, DomainNotFoundError, etc.
-  if (error instanceof Error) {
     return error;
   }
 
-  // If it's a plain object with a 'code' property (like some Prisma errors not handled above),
-  // or any other unknown object, return a generic unknown error.
-  // This ensures that non-Error objects are still caught and wrapped.
-  if (typeof error === 'object' && error !== null) {
-    return new Error('An unknown error occurred');
-  }
+  // 4. Generic fallback for other error instances
+  if (error instanceof Error) return error;
 
-  // For primitive types or truly unknown errors
+  // 5. Final fallback for truly unknown error shapes
   return new Error('An unknown error occurred');
 }

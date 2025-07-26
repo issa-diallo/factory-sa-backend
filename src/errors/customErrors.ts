@@ -24,3 +24,10 @@ export class CompanyDomainNotFoundError extends Error {
     this.name = 'CompanyDomainNotFoundError';
   }
 }
+
+export class CompanyDomainAlreadyExistsError extends Error {
+  constructor(message = 'Company-domain relationship already exists.') {
+    super(message);
+    this.name = 'CompanyDomainAlreadyExistsError';
+  }
+}

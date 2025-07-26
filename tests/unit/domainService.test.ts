@@ -544,38 +544,56 @@ describe('DomainService', () => {
         where: { domainId },
       });
     });
+    it('should throw DomainNotFoundError if domain to update is not found (P2025)', async () => {
+      const domainId = 'notfound';
+      const updateData: UpdateDomainRequest = { name: 'notfound.com' };
+
+      const prismaError = {
+        code: 'P2025',
+        message: 'Record to update not found.',
+        name: 'PrismaClientKnownRequestError',
+      };
+
+      mockPrisma.domain.update.mockRejectedValue(prismaError);
+
+      await expect(
+        domainService.updateDomain(domainId, updateData)
+      ).rejects.toThrow(`Domain with ID ${domainId} not found.`);
+
+      expect(mockPrisma.domain.update).toHaveBeenCalledWith({
+        where: { id: domainId },
+        data: updateData,
+      });
+    });
   });
 
   describe('deleteCompanyDomain', () => {
     it('should successfully delete a company domain', async () => {
-      const companyDomainId = 'companyDomain1';
-      const deletedCompanyDomain: CompanyDomain = {
-        id: companyDomainId,
-        companyId: 'company1',
-        domainId: 'domain1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      mockPrisma.companyDomain.delete.mockResolvedValue(deletedCompanyDomain);
+      const companyId = 'company1';
+      const domainId = 'domain1';
 
-      const result = await domainService.deleteCompanyDomain(companyDomainId);
+      mockPrisma.companyDomain.delete.mockResolvedValue({});
+
+      await expect(
+        domainService.deleteCompanyDomain(companyId, domainId)
+      ).resolves.toBeUndefined();
 
       expect(mockPrisma.companyDomain.delete).toHaveBeenCalledWith({
-        where: { id: companyDomainId },
+        where: { companyId_domainId: { companyId, domainId } },
       });
-      expect(result).toEqual(deletedCompanyDomain);
     });
 
     it('should reject if deletion fails', async () => {
-      const companyDomainId = 'companyDomain1';
+      const companyId = 'company1';
+      const domainId = 'domain1';
       const error = new Error('Database error');
       mockPrisma.companyDomain.delete.mockRejectedValue(error);
 
       await expect(
-        domainService.deleteCompanyDomain(companyDomainId)
+        domainService.deleteCompanyDomain(companyId, domainId)
       ).rejects.toThrow(error);
       expect(mockPrisma.companyDomain.delete).toHaveBeenCalledWith({
-        where: { id: companyDomainId },
+        where: { companyId_domainId: { companyId, domainId } },
       });
     });
   });

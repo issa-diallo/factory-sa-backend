@@ -17,5 +17,5 @@ export interface IDomainService {
   getCompanyDomainById(id: string): Promise<CompanyDomain | null>;
   getCompanyDomainsByCompanyId(companyId: string): Promise<CompanyDomain[]>;
   getCompanyDomainsByDomainId(domainId: string): Promise<CompanyDomain[]>;
-  deleteCompanyDomain(id: string): Promise<CompanyDomain>;
+  deleteCompanyDomain(companyId: string, domainId: string): Promise<void>;
 }

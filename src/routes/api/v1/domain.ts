@@ -2,51 +2,53 @@ import { Router } from 'express';
 import { authenticate } from '../../../middlewares/authenticate';
 import { authorize } from '../../../middlewares/authorize';
 import { DomainController } from '../../../controllers/domainController';
+import { container } from 'tsyringe';
 
 const router: Router = Router();
+const domainController = container.resolve(DomainController);
 
 router.post(
   '/',
   authenticate,
   authorize(['domain:create']),
-  DomainController.createDomain
+  domainController.createDomain
 );
 router.get(
   '/',
   authenticate,
   authorize(['domain:read']),
-  DomainController.getAllDomains
+  domainController.getAllDomains
 );
 router.get(
   '/:id',
   authenticate,
   authorize(['domain:read']),
-  DomainController.getDomainById
+  domainController.getDomainById
 );
 router.put(
   '/:id',
   authenticate,
   authorize(['domain:update']),
-  DomainController.updateDomain
+  domainController.updateDomain
 );
 router.delete(
   '/:id',
   authenticate,
   authorize(['domain:delete']),
-  DomainController.deleteDomain
+  domainController.deleteDomain
 );
 
 router.post(
   '/company-domain',
   authenticate,
   authorize(['companyDomain:create']),
-  DomainController.createCompanyDomain
+  domainController.createCompanyDomain
 );
 router.delete(
-  '/company-domain/:id',
+  '/company/:companyId/domain/:domainId',
   authenticate,
   authorize(['companyDomain:delete']),
-  DomainController.deleteCompanyDomain
+  domainController.deleteCompanyDomain
 );
 
 export default router;
