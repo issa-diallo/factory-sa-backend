@@ -1,33 +1,33 @@
 import { PermissionService } from '../../src/services/permission/permissionService';
-import { PrismaClient } from '../../src/generated/prisma';
+import { IPermissionRepository } from '../../src/repositories/permission/IPermissionRepository';
+import { IRolePermissionRepository } from '../../src/repositories/rolePermission/IRolePermissionRepository';
 
-// Mock de PrismaClient
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    permission: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    rolePermission: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      delete: jest.fn(),
-    },
-  })),
-}));
+// Mock des dépôts
+const mockPermissionRepository: jest.Mocked<IPermissionRepository> = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByName: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+
+const mockRolePermissionRepository: jest.Mocked<IRolePermissionRepository> = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findRolePermissionsByRoleId: jest.fn(),
+  delete: jest.fn(),
+};
 
 describe('PermissionService', () => {
   let permissionService: PermissionService;
-  let prisma: PrismaClient;
 
   beforeEach(() => {
-    prisma = new PrismaClient();
-    permissionService = new PermissionService(prisma);
     jest.clearAllMocks();
+    permissionService = new PermissionService(
+      mockPermissionRepository,
+      mockRolePermissionRepository
+    );
   });
 
   describe('createPermission', () => {
@@ -36,19 +36,19 @@ describe('PermissionService', () => {
         id: '1',
         name: 'test.permission',
         description: 'Test Description',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.permission.create as jest.Mock).mockResolvedValue(mockPermission);
+      mockPermissionRepository.create.mockResolvedValue(mockPermission);
 
       const result = await permissionService.createPermission({
         name: 'test.permission',
         description: 'Test Description',
       });
 
-      expect(prisma.permission.create).toHaveBeenCalledWith({
-        data: {
-          name: 'test.permission',
-          description: 'Test Description',
-        },
+      expect(mockPermissionRepository.create).toHaveBeenCalledWith({
+        name: 'test.permission',
+        description: 'Test Description',
       });
       expect(result).toEqual(mockPermission);
     });
@@ -60,27 +60,23 @@ describe('PermissionService', () => {
         id: '1',
         name: 'test.permission',
         description: 'Test Description',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.permission.findUnique as jest.Mock).mockResolvedValue(
-        mockPermission
-      );
+      mockPermissionRepository.findById.mockResolvedValue(mockPermission);
 
       const result = await permissionService.getPermissionById('1');
 
-      expect(prisma.permission.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
+      expect(mockPermissionRepository.findById).toHaveBeenCalledWith('1');
       expect(result).toEqual(mockPermission);
     });
 
     it("devrait retourner null si la permission n'est pas trouvée par ID", async () => {
-      (prisma.permission.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPermissionRepository.findById.mockResolvedValue(null);
 
       const result = await permissionService.getPermissionById('99');
 
-      expect(prisma.permission.findUnique).toHaveBeenCalledWith({
-        where: { id: '99' },
-      });
+      expect(mockPermissionRepository.findById).toHaveBeenCalledWith('99');
       expect(result).toBeNull();
     });
   });
@@ -91,30 +87,30 @@ describe('PermissionService', () => {
         id: '1',
         name: 'test.permission',
         description: 'Test Description',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.permission.findUnique as jest.Mock).mockResolvedValue(
-        mockPermission
-      );
+      mockPermissionRepository.findByName.mockResolvedValue(mockPermission);
 
       const result =
         await permissionService.getPermissionByName('test.permission');
 
-      expect(prisma.permission.findUnique).toHaveBeenCalledWith({
-        where: { name: 'test.permission' },
-      });
+      expect(mockPermissionRepository.findByName).toHaveBeenCalledWith(
+        'test.permission'
+      );
       expect(result).toEqual(mockPermission);
     });
 
     it("devrait retourner null si la permission n'est pas trouvée par nom", async () => {
-      (prisma.permission.findUnique as jest.Mock).mockResolvedValue(null);
+      mockPermissionRepository.findByName.mockResolvedValue(null);
 
       const result = await permissionService.getPermissionByName(
         'non.existent.permission'
       );
 
-      expect(prisma.permission.findUnique).toHaveBeenCalledWith({
-        where: { name: 'non.existent.permission' },
-      });
+      expect(mockPermissionRepository.findByName).toHaveBeenCalledWith(
+        'non.existent.permission'
+      );
       expect(result).toBeNull();
     });
   });
@@ -122,25 +118,35 @@ describe('PermissionService', () => {
   describe('getAllPermissions', () => {
     it('devrait retourner toutes les permissions', async () => {
       const mockPermissions = [
-        { id: '1', name: 'test.permission1', description: 'Desc 1' },
-        { id: '2', name: 'test.permission2', description: 'Desc 2' },
+        {
+          id: '1',
+          name: 'test.permission1',
+          description: 'Desc 1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: '2',
+          name: 'test.permission2',
+          description: 'Desc 2',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
       ];
-      (prisma.permission.findMany as jest.Mock).mockResolvedValue(
-        mockPermissions
-      );
+      mockPermissionRepository.findAll.mockResolvedValue(mockPermissions);
 
       const result = await permissionService.getAllPermissions();
 
-      expect(prisma.permission.findMany).toHaveBeenCalledWith();
+      expect(mockPermissionRepository.findAll).toHaveBeenCalledWith();
       expect(result).toEqual(mockPermissions);
     });
 
     it("devrait retourner un tableau vide s'il n'y a pas de permissions", async () => {
-      (prisma.permission.findMany as jest.Mock).mockResolvedValue([]);
+      mockPermissionRepository.findAll.mockResolvedValue([]);
 
       const result = await permissionService.getAllPermissions();
 
-      expect(prisma.permission.findMany).toHaveBeenCalledWith();
+      expect(mockPermissionRepository.findAll).toHaveBeenCalledWith();
       expect(result).toEqual([]);
     });
   });
@@ -151,18 +157,17 @@ describe('PermissionService', () => {
         id: '1',
         name: 'updated.permission',
         description: 'Updated Description',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.permission.update as jest.Mock).mockResolvedValue(
-        updatedPermission
-      );
+      mockPermissionRepository.update.mockResolvedValue(updatedPermission);
 
       const result = await permissionService.updatePermission('1', {
         name: 'updated.permission',
       });
 
-      expect(prisma.permission.update).toHaveBeenCalledWith({
-        where: { id: '1' },
-        data: { name: 'updated.permission' },
+      expect(mockPermissionRepository.update).toHaveBeenCalledWith('1', {
+        name: 'updated.permission',
       });
       expect(result).toEqual(updatedPermission);
     });
@@ -174,16 +179,14 @@ describe('PermissionService', () => {
         id: '1',
         name: 'test.permission',
         description: 'Test Description',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.permission.delete as jest.Mock).mockResolvedValue(
-        deletedPermission
-      );
+      mockPermissionRepository.delete.mockResolvedValue(deletedPermission);
 
       const result = await permissionService.deletePermission('1');
 
-      expect(prisma.permission.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
+      expect(mockPermissionRepository.delete).toHaveBeenCalledWith('1');
       expect(result).toEqual(deletedPermission);
     });
   });
@@ -194,21 +197,19 @@ describe('PermissionService', () => {
         id: 'rp1',
         roleId: 'role1',
         permissionId: 'perm1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.rolePermission.create as jest.Mock).mockResolvedValue(
-        mockRolePermission
-      );
+      mockRolePermissionRepository.create.mockResolvedValue(mockRolePermission);
 
       const result = await permissionService.createRolePermission({
         roleId: 'role1',
         permissionId: 'perm1',
       });
 
-      expect(prisma.rolePermission.create).toHaveBeenCalledWith({
-        data: {
-          roleId: 'role1',
-          permissionId: 'perm1',
-        },
+      expect(mockRolePermissionRepository.create).toHaveBeenCalledWith({
+        role: { connect: { id: 'role1' } },
+        permission: { connect: { id: 'perm1' } },
       });
       expect(result).toEqual(mockRolePermission);
     });
@@ -220,27 +221,27 @@ describe('PermissionService', () => {
         id: 'rp1',
         roleId: 'role1',
         permissionId: 'perm1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.rolePermission.findUnique as jest.Mock).mockResolvedValue(
+      mockRolePermissionRepository.findById.mockResolvedValue(
         mockRolePermission
       );
 
       const result = await permissionService.getRolePermissionById('rp1');
 
-      expect(prisma.rolePermission.findUnique).toHaveBeenCalledWith({
-        where: { id: 'rp1' },
-      });
+      expect(mockRolePermissionRepository.findById).toHaveBeenCalledWith('rp1');
       expect(result).toEqual(mockRolePermission);
     });
 
     it("devrait retourner null si l'association rôle-permission n'est pas trouvée par ID", async () => {
-      (prisma.rolePermission.findUnique as jest.Mock).mockResolvedValue(null);
+      mockRolePermissionRepository.findById.mockResolvedValue(null);
 
       const result = await permissionService.getRolePermissionById('rp99');
 
-      expect(prisma.rolePermission.findUnique).toHaveBeenCalledWith({
-        where: { id: 'rp99' },
-      });
+      expect(mockRolePermissionRepository.findById).toHaveBeenCalledWith(
+        'rp99'
+      );
       expect(result).toBeNull();
     });
   });
@@ -248,63 +249,47 @@ describe('PermissionService', () => {
   describe('getRolePermissionsByRoleId', () => {
     it('devrait retourner les associations rôle-permission par ID de rôle', async () => {
       const mockRolePermissions = [
-        { id: 'rp1', roleId: 'role1', permissionId: 'perm1' },
-        { id: 'rp2', roleId: 'role1', permissionId: 'perm2' },
+        {
+          id: 'rp1',
+          roleId: 'role1',
+          permissionId: 'perm1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          permission: { name: 'perm1_name' },
+        },
+        {
+          id: 'rp2',
+          roleId: 'role1',
+          permissionId: 'perm2',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          permission: { name: 'perm2_name' },
+        },
       ];
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue(
+      mockRolePermissionRepository.findRolePermissionsByRoleId.mockResolvedValue(
         mockRolePermissions
       );
 
       const result =
         await permissionService.getRolePermissionsByRoleId('role1');
 
-      expect(prisma.rolePermission.findMany).toHaveBeenCalledWith({
-        where: { roleId: 'role1' },
-      });
+      expect(
+        mockRolePermissionRepository.findRolePermissionsByRoleId
+      ).toHaveBeenCalledWith('role1');
       expect(result).toEqual(mockRolePermissions);
     });
 
     it("devrait retourner un tableau vide si aucune association n'est trouvée pour l'ID de rôle", async () => {
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue([]);
+      mockRolePermissionRepository.findRolePermissionsByRoleId.mockResolvedValue(
+        []
+      );
 
       const result =
         await permissionService.getRolePermissionsByRoleId('role99');
 
-      expect(prisma.rolePermission.findMany).toHaveBeenCalledWith({
-        where: { roleId: 'role99' },
-      });
-      expect(result).toEqual([]);
-    });
-  });
-
-  describe('getRolePermissionsByPermissionId', () => {
-    it('devrait retourner les associations rôle-permission par ID de permission', async () => {
-      const mockRolePermissions = [
-        { id: 'rp1', roleId: 'role1', permissionId: 'perm1' },
-        { id: 'rp3', roleId: 'role2', permissionId: 'perm1' },
-      ];
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue(
-        mockRolePermissions
-      );
-
-      const result =
-        await permissionService.getRolePermissionsByPermissionId('perm1');
-
-      expect(prisma.rolePermission.findMany).toHaveBeenCalledWith({
-        where: { permissionId: 'perm1' },
-      });
-      expect(result).toEqual(mockRolePermissions);
-    });
-
-    it("devrait retourner un tableau vide si aucune association n'est trouvée pour l'ID de permission", async () => {
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue([]);
-
-      const result =
-        await permissionService.getRolePermissionsByPermissionId('perm99');
-
-      expect(prisma.rolePermission.findMany).toHaveBeenCalledWith({
-        where: { permissionId: 'perm99' },
-      });
+      expect(
+        mockRolePermissionRepository.findRolePermissionsByRoleId
+      ).toHaveBeenCalledWith('role99');
       expect(result).toEqual([]);
     });
   });
@@ -315,16 +300,16 @@ describe('PermissionService', () => {
         id: 'rp1',
         roleId: 'role1',
         permissionId: 'perm1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.rolePermission.delete as jest.Mock).mockResolvedValue(
+      mockRolePermissionRepository.delete.mockResolvedValue(
         deletedRolePermission
       );
 
       const result = await permissionService.deleteRolePermission('rp1');
 
-      expect(prisma.rolePermission.delete).toHaveBeenCalledWith({
-        where: { id: 'rp1' },
-      });
+      expect(mockRolePermissionRepository.delete).toHaveBeenCalledWith('rp1');
       expect(result).toEqual(deletedRolePermission);
     });
   });

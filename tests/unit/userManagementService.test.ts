@@ -1,65 +1,67 @@
 import { UserManagementService } from '../../src/services/userManagement/userManagementService';
-import { PrismaClient } from '../../src/generated/prisma';
 import { IPasswordService } from '../../src/services/auth/interfaces';
+import { IUserRepository } from '../../src/repositories/user/IUserRepository';
+import { IUserRoleRepository } from '../../src/repositories/userRole/IUserRoleRepository';
 import { normalizeEmail } from '../../src/utils/normalizeEmail';
+import { User, UserRole } from '../../src/generated/prisma';
 
-// Mock de PrismaClient
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    user: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    userRole: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      delete: jest.fn(),
-    },
-  })),
-}));
-
-// Mock de IPasswordService
-const mockPasswordService = {
-  hash: jest.fn().mockResolvedValue('hashedPassword'),
-  verify: jest.fn(),
-} as jest.Mocked<IPasswordService>;
-
-// Mock de normalizeEmail
 jest.mock('../../src/utils/normalizeEmail', () => ({
   normalizeEmail: jest.fn((email: string) => email.toLowerCase()),
 }));
 
+const mockPasswordService: jest.Mocked<IPasswordService> = {
+  hash: jest.fn().mockResolvedValue('hashedPassword'),
+  verify: jest.fn(),
+};
+
+const mockUserRepository: jest.Mocked<IUserRepository> = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByEmail: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  updateUserLastLogin: jest.fn(),
+};
+
+const mockUserRoleRepository: jest.Mocked<IUserRoleRepository> = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByUserId: jest.fn(),
+  findByCompanyId: jest.fn(),
+  findByRoleId: jest.fn(),
+  delete: jest.fn(),
+  findUserRoleByUserIdAndCompanyId: jest.fn(),
+};
+
 describe('UserManagementService', () => {
   let userManagementService: UserManagementService;
-  let prisma: PrismaClient;
 
   beforeEach(() => {
-    prisma = new PrismaClient();
     userManagementService = new UserManagementService(
-      prisma,
+      mockUserRepository,
+      mockUserRoleRepository,
       mockPasswordService
     );
     jest.clearAllMocks();
   });
 
+  const mockUser: User = {
+    id: '1',
+    email: 'test@example.com',
+    password: 'hashedPassword',
+    firstName: 'Test',
+    lastName: 'User',
+    isActive: true,
+    lastLoginAt: null,
+    lastLoginIp: null,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+  };
+
   describe('createUser', () => {
-    it('devrait créer un nouvel utilisateur', async () => {
-      const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        isActive: true,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      (prisma.user.create as jest.Mock).mockResolvedValue(mockUser);
+    it('should create a new user with default isActive true', async () => {
+      mockUserRepository.create.mockResolvedValue(mockUser);
 
       const result = await userManagementService.createUser({
         email: 'TEST@EXAMPLE.COM',
@@ -70,237 +72,178 @@ describe('UserManagementService', () => {
 
       expect(mockPasswordService.hash).toHaveBeenCalledWith('password123');
       expect(normalizeEmail).toHaveBeenCalledWith('TEST@EXAMPLE.COM');
-      expect(prisma.user.create).toHaveBeenCalledWith({
-        data: {
-          email: 'test@example.com',
-          password: 'hashedPassword',
-          firstName: 'Test',
-          lastName: 'User',
-          isActive: true,
-        },
-        select: expect.any(Object),
+      expect(mockUserRepository.create).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'hashedPassword',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: true,
+      });
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should create a new user with isActive false', async () => {
+      const inactiveUser = { ...mockUser, isActive: false };
+      mockUserRepository.create.mockResolvedValue(inactiveUser);
+
+      const result = await userManagementService.createUser({
+        email: 'TEST@EXAMPLE.COM',
+        password: 'password123',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: false,
+      });
+
+      expect(mockPasswordService.hash).toHaveBeenCalledWith('password123');
+      expect(normalizeEmail).toHaveBeenCalledWith('TEST@EXAMPLE.COM');
+      expect(mockUserRepository.create).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'hashedPassword',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: false,
+      });
+      expect(result).toEqual(inactiveUser);
+    });
+
+    it('should create a new user with explicit isActive true', async () => {
+      mockUserRepository.create.mockResolvedValue(mockUser);
+
+      const result = await userManagementService.createUser({
+        email: 'TEST@EXAMPLE.COM',
+        password: 'password123',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: true,
+      });
+
+      expect(mockPasswordService.hash).toHaveBeenCalledWith('password123');
+      expect(normalizeEmail).toHaveBeenCalledWith('TEST@EXAMPLE.COM');
+      expect(mockUserRepository.create).toHaveBeenCalledWith({
+        email: 'test@example.com',
+        password: 'hashedPassword',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: true,
       });
       expect(result).toEqual(mockUser);
     });
   });
 
   describe('getUserById', () => {
-    it('devrait retourner un utilisateur par ID', async () => {
-      const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        isActive: true,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+    it('should return a user by ID', async () => {
+      mockUserRepository.findById.mockResolvedValue(mockUser);
 
       const result = await userManagementService.getUserById('1');
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: '1' },
-        select: expect.any(Object),
-      });
+      expect(mockUserRepository.findById).toHaveBeenCalledWith('1');
       expect(result).toEqual(mockUser);
     });
 
-    it("devrait retourner null si l'utilisateur n'est pas trouvé par ID", async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+    it('should return null if the user is not found', async () => {
+      mockUserRepository.findById.mockResolvedValue(null);
 
       const result = await userManagementService.getUserById('99');
 
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { id: '99' },
-        select: expect.any(Object),
-      });
       expect(result).toBeNull();
     });
   });
 
   describe('getUserByEmail', () => {
-    it('devrait retourner un utilisateur par email', async () => {
-      const mockUser = {
-        id: '1',
-        email: 'test@example.com',
-        password: 'hashedPassword',
-        firstName: 'Test',
-        lastName: 'User',
-        isActive: true,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockUser);
+    it('should return a user by email', async () => {
+      mockUserRepository.findByEmail.mockResolvedValue(mockUser);
 
       const result =
         await userManagementService.getUserByEmail('TEST@EXAMPLE.COM');
 
       expect(normalizeEmail).toHaveBeenCalledWith('TEST@EXAMPLE.COM');
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'test@example.com' },
-      });
-      expect(result).toEqual(mockUser);
-    });
-
-    it("devrait retourner null si l'utilisateur n'est pas trouvé par email", async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
-
-      const result = await userManagementService.getUserByEmail(
-        'nonexistent@example.com'
+      expect(mockUserRepository.findByEmail).toHaveBeenCalledWith(
+        'test@example.com'
       );
-
-      expect(normalizeEmail).toHaveBeenCalledWith('nonexistent@example.com');
-      expect(prisma.user.findUnique).toHaveBeenCalledWith({
-        where: { email: 'nonexistent@example.com' },
-      });
-      expect(result).toBeNull();
+      expect(result).toEqual(mockUser);
     });
   });
 
   describe('getAllUsers', () => {
-    it('devrait retourner tous les utilisateurs', async () => {
-      const mockUsers = [
-        {
-          id: '1',
-          email: 'test1@example.com',
-          firstName: 'Test1',
-          lastName: 'User1',
-          isActive: true,
-          lastLoginAt: null,
-          lastLoginIp: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        {
-          id: '2',
-          email: 'test2@example.com',
-          firstName: 'Test2',
-          lastName: 'User2',
-          isActive: true,
-          lastLoginAt: null,
-          lastLoginIp: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      ];
-      (prisma.user.findMany as jest.Mock).mockResolvedValue(mockUsers);
+    it('should return all users', async () => {
+      mockUserRepository.findAll.mockResolvedValue([mockUser]);
 
       const result = await userManagementService.getAllUsers();
 
-      expect(prisma.user.findMany).toHaveBeenCalledWith({
-        select: expect.any(Object),
-      });
-      expect(result).toEqual(mockUsers);
-    });
-
-    it("devrait retourner un tableau vide s'il n'y a pas d'utilisateurs", async () => {
-      (prisma.user.findMany as jest.Mock).mockResolvedValue([]);
-
-      const result = await userManagementService.getAllUsers();
-
-      expect(prisma.user.findMany).toHaveBeenCalledWith({
-        select: expect.any(Object),
-      });
-      expect(result).toEqual([]);
+      expect(mockUserRepository.findAll).toHaveBeenCalled();
+      expect(result).toEqual([mockUser]);
     });
   });
 
   describe('updateUser', () => {
-    it('devrait mettre à jour un utilisateur existant', async () => {
-      const updatedUser = {
-        id: '1',
-        email: 'updated@example.com',
-        firstName: 'Updated',
-        lastName: 'User',
-        isActive: true,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      (prisma.user.update as jest.Mock).mockResolvedValue(updatedUser);
+    it('should update a user with email only', async () => {
+      const updatedUser = { ...mockUser, email: 'updated@example.com' };
+      mockUserRepository.update.mockResolvedValue(updatedUser);
 
       const result = await userManagementService.updateUser('1', {
         email: 'UPDATED@EXAMPLE.COM',
-        firstName: 'Updated',
       });
 
       expect(normalizeEmail).toHaveBeenCalledWith('UPDATED@EXAMPLE.COM');
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: '1' },
-        data: { email: 'updated@example.com', firstName: 'Updated' },
-        select: expect.any(Object),
+      expect(mockUserRepository.update).toHaveBeenCalled();
+      expect(result).toEqual(updatedUser);
+    });
+
+    it('should update a user with password', async () => {
+      const updatedUser = { ...mockUser, firstName: 'Updated' };
+      mockUserRepository.update.mockResolvedValue(updatedUser);
+
+      const result = await userManagementService.updateUser('1', {
+        password: 'newPassword123',
+        firstName: 'Updated',
+      });
+
+      expect(mockPasswordService.hash).toHaveBeenCalledWith('newPassword123');
+      expect(mockUserRepository.update).toHaveBeenCalledWith('1', {
+        password: 'hashedPassword',
+        firstName: 'Updated',
       });
       expect(result).toEqual(updatedUser);
     });
 
-    it('devrait mettre à jour le mot de passe si fourni', async () => {
-      const updatedUser = {
-        id: '1',
-        email: 'test@example.com',
-        firstName: 'Test',
-        lastName: 'User',
-        isActive: true,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      (prisma.user.update as jest.Mock).mockResolvedValue(updatedUser);
+    it('should update a user without password', async () => {
+      const updatedUser = { ...mockUser, firstName: 'Updated' };
+      mockUserRepository.update.mockResolvedValue(updatedUser);
 
       const result = await userManagementService.updateUser('1', {
-        password: 'newPassword123',
+        firstName: 'Updated',
       });
 
-      expect(mockPasswordService.hash).toHaveBeenCalledWith('newPassword123');
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: '1' },
-        data: { password: 'hashedPassword' },
-        select: expect.any(Object),
+      expect(mockPasswordService.hash).not.toHaveBeenCalled();
+      expect(mockUserRepository.update).toHaveBeenCalledWith('1', {
+        firstName: 'Updated',
       });
       expect(result).toEqual(updatedUser);
     });
   });
 
   describe('deleteUser', () => {
-    it('devrait supprimer un utilisateur existant', async () => {
-      const deletedUser = {
-        id: '1',
-        email: 'test@example.com',
-        password: 'hashedPassword',
-        firstName: 'Test',
-        lastName: 'User',
-        isActive: true,
-        lastLoginAt: null,
-        lastLoginIp: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-      (prisma.user.delete as jest.Mock).mockResolvedValue(deletedUser);
+    it('should delete a user', async () => {
+      mockUserRepository.delete.mockResolvedValue(mockUser);
 
       const result = await userManagementService.deleteUser('1');
 
-      expect(prisma.user.delete).toHaveBeenCalledWith({
-        where: { id: '1' },
-      });
-      expect(result).toEqual(deletedUser);
+      expect(mockUserRepository.delete).toHaveBeenCalledWith('1');
+      expect(result).toEqual(mockUser);
     });
   });
 
   describe('createUserRole', () => {
-    it('devrait créer une nouvelle association utilisateur-rôle', async () => {
-      const mockUserRole = {
+    it('should create a user-role association', async () => {
+      const mockUserRole: UserRole = {
         id: 'ur1',
         userId: 'user1',
         companyId: 'company1',
         roleId: 'role1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.userRole.create as jest.Mock).mockResolvedValue(mockUserRole);
+      mockUserRoleRepository.create.mockResolvedValue(mockUserRole);
 
       const result = await userManagementService.createUserRole({
         userId: 'user1',
@@ -308,171 +251,136 @@ describe('UserManagementService', () => {
         roleId: 'role1',
       });
 
-      expect(prisma.userRole.create).toHaveBeenCalledWith({
-        data: {
-          userId: 'user1',
-          companyId: 'company1',
-          roleId: 'role1',
-        },
-      });
+      expect(mockUserRoleRepository.create).toHaveBeenCalled();
       expect(result).toEqual(mockUserRole);
     });
   });
 
   describe('getUserRoleById', () => {
-    it('devrait retourner une association utilisateur-rôle par ID', async () => {
-      const mockUserRole = {
+    it('should return a user-role association', async () => {
+      const userRole: UserRole = {
         id: 'ur1',
         userId: 'user1',
         companyId: 'company1',
         roleId: 'role1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.userRole.findUnique as jest.Mock).mockResolvedValue(mockUserRole);
+      mockUserRoleRepository.findById.mockResolvedValue(userRole);
 
       const result = await userManagementService.getUserRoleById('ur1');
 
-      expect(prisma.userRole.findUnique).toHaveBeenCalledWith({
-        where: { id: 'ur1' },
-      });
-      expect(result).toEqual(mockUserRole);
-    });
-
-    it("devrait retourner null si l'association utilisateur-rôle n'est pas trouvée par ID", async () => {
-      (prisma.userRole.findUnique as jest.Mock).mockResolvedValue(null);
-
-      const result = await userManagementService.getUserRoleById('ur99');
-
-      expect(prisma.userRole.findUnique).toHaveBeenCalledWith({
-        where: { id: 'ur99' },
-      });
-      expect(result).toBeNull();
+      expect(mockUserRoleRepository.findById).toHaveBeenCalledWith('ur1');
+      expect(result).toEqual(userRole);
     });
   });
 
   describe('getUserRolesByUserId', () => {
-    it('devrait retourner les associations utilisateur-rôle par ID utilisateur', async () => {
-      const mockUserRoles = [
+    it('should return user roles by user ID', async () => {
+      const userRoles: UserRole[] = [
         {
           id: 'ur1',
           userId: 'user1',
           companyId: 'company1',
           roleId: 'role1',
-          role: { id: 'role1', name: 'Admin', description: 'Admin Role' },
-          company: { id: 'company1', name: 'Company A', isActive: true },
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'ur2',
+          userId: 'user1',
+          companyId: 'company2',
+          roleId: 'role2',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
-      (prisma.userRole.findMany as jest.Mock).mockResolvedValue(mockUserRoles);
+      mockUserRoleRepository.findByUserId.mockResolvedValue(userRoles);
 
       const result = await userManagementService.getUserRolesByUserId('user1');
 
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user1' },
-        include: {
-          role: true,
-          company: true,
-        },
-      });
-      expect(result).toEqual(mockUserRoles);
-    });
-
-    it("devrait retourner un tableau vide si aucune association n'est trouvée pour l'ID utilisateur", async () => {
-      (prisma.userRole.findMany as jest.Mock).mockResolvedValue([]);
-
-      const result = await userManagementService.getUserRolesByUserId('user99');
-
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
-        where: { userId: 'user99' },
-        include: {
-          role: true,
-          company: true,
-        },
-      });
-      expect(result).toEqual([]);
+      expect(mockUserRoleRepository.findByUserId).toHaveBeenCalledWith('user1');
+      expect(result).toEqual(userRoles);
     });
   });
 
   describe('getUserRolesByCompanyId', () => {
-    it('devrait retourner les associations utilisateur-rôle par ID de compagnie', async () => {
-      const mockUserRoles = [
+    it('should return user roles by company ID', async () => {
+      const userRoles: UserRole[] = [
         {
           id: 'ur1',
           userId: 'user1',
           companyId: 'company1',
           roleId: 'role1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'ur2',
+          userId: 'user2',
+          companyId: 'company1',
+          roleId: 'role2',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
-      (prisma.userRole.findMany as jest.Mock).mockResolvedValue(mockUserRoles);
+      mockUserRoleRepository.findByCompanyId.mockResolvedValue(userRoles);
 
       const result =
         await userManagementService.getUserRolesByCompanyId('company1');
 
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
-        where: { companyId: 'company1' },
-      });
-      expect(result).toEqual(mockUserRoles);
-    });
-
-    it("devrait retourner un tableau vide si aucune association n'est trouvée pour l'ID de compagnie", async () => {
-      (prisma.userRole.findMany as jest.Mock).mockResolvedValue([]);
-
-      const result =
-        await userManagementService.getUserRolesByCompanyId('company99');
-
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
-        where: { companyId: 'company99' },
-      });
-      expect(result).toEqual([]);
+      expect(mockUserRoleRepository.findByCompanyId).toHaveBeenCalledWith(
+        'company1'
+      );
+      expect(result).toEqual(userRoles);
     });
   });
 
   describe('getUserRolesByRoleId', () => {
-    it('devrait retourner les associations utilisateur-rôle par ID de rôle', async () => {
-      const mockUserRoles = [
+    it('should return user roles by role ID', async () => {
+      const userRoles: UserRole[] = [
         {
           id: 'ur1',
           userId: 'user1',
           companyId: 'company1',
           roleId: 'role1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'ur2',
+          userId: 'user2',
+          companyId: 'company2',
+          roleId: 'role1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       ];
-      (prisma.userRole.findMany as jest.Mock).mockResolvedValue(mockUserRoles);
+      mockUserRoleRepository.findByRoleId.mockResolvedValue(userRoles);
 
       const result = await userManagementService.getUserRolesByRoleId('role1');
 
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
-        where: { roleId: 'role1' },
-      });
-      expect(result).toEqual(mockUserRoles);
-    });
-
-    it("devrait retourner un tableau vide si aucune association n'est trouvée pour l'ID de rôle", async () => {
-      (prisma.userRole.findMany as jest.Mock).mockResolvedValue([]);
-
-      const result = await userManagementService.getUserRolesByRoleId('role99');
-
-      expect(prisma.userRole.findMany).toHaveBeenCalledWith({
-        where: { roleId: 'role99' },
-      });
-      expect(result).toEqual([]);
+      expect(mockUserRoleRepository.findByRoleId).toHaveBeenCalledWith('role1');
+      expect(result).toEqual(userRoles);
     });
   });
 
   describe('deleteUserRole', () => {
-    it('devrait supprimer une association utilisateur-rôle existante', async () => {
-      const deletedUserRole = {
+    it('should delete a user role', async () => {
+      const userRole: UserRole = {
         id: 'ur1',
         userId: 'user1',
         companyId: 'company1',
         roleId: 'role1',
+        createdAt: new Date(),
+        updatedAt: new Date(),
       };
-      (prisma.userRole.delete as jest.Mock).mockResolvedValue(deletedUserRole);
+      mockUserRoleRepository.delete.mockResolvedValue(userRole);
 
       const result = await userManagementService.deleteUserRole('ur1');
 
-      expect(prisma.userRole.delete).toHaveBeenCalledWith({
-        where: { id: 'ur1' },
-      });
-      expect(result).toEqual(deletedUserRole);
+      expect(mockUserRoleRepository.delete).toHaveBeenCalledWith('ur1');
+      expect(result).toEqual(userRole);
     });
   });
 });

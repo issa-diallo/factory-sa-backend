@@ -1,52 +1,60 @@
 import { Request, Response } from 'express';
-import { AuthService } from '../services/auth/authService';
 import { loginSchema } from '../schemas/authSchema';
-import { ZodError } from 'zod';
-import { prisma } from '../database/prismaClient';
-import { PasswordService } from '../services/auth/passwordService';
-import { TokenService } from '../services/auth/tokenService';
+import { inject, injectable } from 'tsyringe';
+import { AuthService } from '../services/auth/authService';
+import { BaseController } from './baseController';
 
-const passwordService = new PasswordService();
-const tokenService = new TokenService(prisma);
-const authService = new AuthService(prisma, passwordService, tokenService);
+@injectable()
+export class AuthController extends BaseController {
+  constructor(@inject(AuthService) private authService: AuthService) {
+    super();
+  }
 
-export class AuthController {
-  static async login(req: Request, res: Response): Promise<Response> {
+  async login(req: Request, res: Response): Promise<Response> {
     try {
       const { email, password } = loginSchema.parse(req.body);
-      const { token, user } = await authService.login(email, password, req);
+      const { token, user } = await this.authService.login(
+        email,
+        password,
+        req
+      );
 
       return res.status(200).json({ message: 'Login successful', token, user });
     } catch (error: unknown) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Invalid validation data',
-          errors: error.issues,
-        });
-      }
-      const authError = error as Error;
-      return res.status(401).json({ message: authError.message });
+      // Use the handleError method from BaseController
+      return this.handleError(res, error, (err: unknown) => {
+        const authError = err as Error;
+        // You might want to define a specific AuthErrorMapper here
+        // For now, a simple mapping for common auth errors
+        if (
+          authError.message === 'Invalid credentials' ||
+          authError.message === 'Invalid token'
+        ) {
+          return { statusCode: 401, message: authError.message };
+        }
+        return { statusCode: 500, message: authError.message };
+      });
     }
   }
 
-  static async logout(req: Request, res: Response): Promise<Response> {
+  async logout(req: Request, res: Response): Promise<Response> {
     try {
       const authHeader = req.headers.authorization;
       if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(400).json({ message: 'Missing token' });
       }
       const token = authHeader.split(' ')[1];
-      try {
-        await authService.logout(token);
-        return res.status(200).json({ message: 'Logout successful' });
-      } catch (error: unknown) {
-        if ((error as Error).message === 'Invalid token') {
-          return res.status(401).json({ message: 'Invalid token' });
-        }
-        throw error;
-      }
+      await this.authService.logout(token);
+      return res.status(200).json({ message: 'Logout successful' });
     } catch (error: unknown) {
-      return res.status(500).json({ message: (error as Error).message });
+      // Use the handleError method from BaseController
+      return this.handleError(res, error, (err: unknown) => {
+        const authError = err as Error;
+        if (authError.message === 'Invalid token') {
+          return { statusCode: 401, message: 'Invalid token' };
+        }
+        return { statusCode: 500, message: authError.message };
+      });
     }
   }
 }

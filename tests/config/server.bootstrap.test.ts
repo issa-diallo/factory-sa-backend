@@ -1,43 +1,63 @@
-import { startApplication } from '../../src/config/server.bootstrap';
-import { prisma } from '../../src/database/prismaClient';
+const signalHandlers: Record<string, () => void> = {};
 
-jest.mock('../../src/server', () => {
-  const events: Partial<Record<string, (...args: unknown[]) => void>> = {};
+const mockServer = {
+  on: jest.fn((event: string, handler: () => void) => {
+    if (event === 'listening') handler();
+  }),
+  close: jest.fn((cb?: () => void) => cb?.()),
+};
 
+const mockPrismaDisconnect = jest.fn();
+
+jest.mock('tsyringe', () => {
+  const actual = jest.requireActual('tsyringe');
   return {
-    startServer: jest.fn(() => ({
-      on: jest.fn((event: string, handler: (...args: unknown[]) => void) => {
-        events[event] = handler;
-        if (event === 'listening') handler();
+    ...actual,
+    container: {
+      resolve: jest.fn((service: unknown) => {
+        if (service === 'IPrismaService') {
+          return { $disconnect: mockPrismaDisconnect };
+        }
+        return {};
       }),
-      close: jest.fn((cb?: () => void) => cb?.()),
-    })),
+    },
   };
 });
 
-jest.mock('../../src/database/prismaClient', () => ({
-  prisma: {
-    $disconnect: jest.fn(),
-  },
+jest.mock('../../src/server', () => ({
+  startServer: jest.fn(() => mockServer),
 }));
+
+import { startApplication } from '../../src/config/server.bootstrap';
 
 describe('startApplication', () => {
   const oldExit = process.exit;
 
   beforeEach(() => {
-    jest.spyOn(console, 'log').mockImplementation(() => {}); // 👈 mock console.log
+    jest.spyOn(console, 'log').mockImplementation(() => {});
     process.exit = jest.fn() as never;
+
+    jest.spyOn(process, 'on').mockImplementation((signal, handler) => {
+      if (typeof signal === 'string') {
+        signalHandlers[signal] = handler as () => void;
+      }
+      return process;
+    });
   });
 
   afterEach(() => {
     jest.restoreAllMocks();
     process.exit = oldExit;
+    Object.keys(signalHandlers).forEach(k => delete signalHandlers[k]);
   });
 
   it('should start the server and log status', () => {
-    const server = startApplication();
+    startApplication();
 
-    expect(server.on).toHaveBeenCalledWith('listening', expect.any(Function));
+    expect(mockServer.on).toHaveBeenCalledWith(
+      'listening',
+      expect.any(Function)
+    );
     expect(console.log).toHaveBeenCalledWith(
       expect.stringContaining('Server running on port')
     );
@@ -45,25 +65,23 @@ describe('startApplication', () => {
   });
 
   it('should handle SIGINT and close the server', async () => {
-    const sigint = process.listeners('SIGINT')[0] as (
-      signal: NodeJS.Signals
-    ) => void;
-    await sigint('SIGINT');
+    startApplication();
+    await signalHandlers['SIGINT']();
 
     expect(console.log).toHaveBeenCalledWith('Shutting down server...');
-    expect(prisma.$disconnect).toHaveBeenCalled();
+    expect(mockPrismaDisconnect).toHaveBeenCalled();
+
     expect(console.log).toHaveBeenCalledWith('Server closed');
     expect(process.exit).toHaveBeenCalledWith(0);
   });
 
   it('should handle SIGTERM and close the server', async () => {
-    const sigterm = process.listeners('SIGTERM')[0] as (
-      signal: NodeJS.Signals
-    ) => void;
-    await sigterm('SIGTERM');
+    startApplication();
+    await signalHandlers['SIGTERM']();
 
     expect(console.log).toHaveBeenCalledWith('Shutting down server...');
-    expect(prisma.$disconnect).toHaveBeenCalled();
+    expect(mockPrismaDisconnect).toHaveBeenCalled();
+
     expect(console.log).toHaveBeenCalledWith('Server closed');
     expect(process.exit).toHaveBeenCalledWith(0);
   });

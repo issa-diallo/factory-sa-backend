@@ -1,19 +1,26 @@
-import jwt from 'jsonwebtoken';
+import * as defaultJwt from 'jsonwebtoken';
+import { inject, injectable } from 'tsyringe';
 import { ITokenService } from './interfaces';
-import { PrismaClient } from '../../generated/prisma';
 import { TokenPayload } from '../../types/auth';
 import {
   TOKEN_EXPIRATION_DURATION_MS,
   TOKEN_EXPIRATION_STRING,
 } from '../../constants';
+import { IPrismaService } from '../../database/interfaces';
 
+@injectable()
 export class TokenService implements ITokenService {
   private readonly JWT_SECRET: string;
   private readonly TOKEN_EXPIRATION = TOKEN_EXPIRATION_STRING;
-  private prisma: PrismaClient;
+  private prisma: IPrismaService;
+  private jwt: typeof defaultJwt;
 
-  constructor(prisma: PrismaClient) {
+  constructor(
+    @inject('IPrismaService') prisma: IPrismaService,
+    @inject('JWT') jwtImpl: typeof defaultJwt
+  ) {
     this.prisma = prisma;
+    this.jwt = jwtImpl;
     this.JWT_SECRET = (process.env.JWT_SECRET ||
       process.env.JWT_SECRET_DEVELOPPEMENT) as string;
 
@@ -25,7 +32,7 @@ export class TokenService implements ITokenService {
   }
 
   async generateToken(payload: TokenPayload): Promise<string> {
-    const token = jwt.sign(payload, this.JWT_SECRET, {
+    const token = this.jwt.sign(payload, this.JWT_SECRET, {
       expiresIn: this.TOKEN_EXPIRATION,
     });
 
@@ -43,7 +50,7 @@ export class TokenService implements ITokenService {
 
   async verifyToken(token: string): Promise<TokenPayload> {
     try {
-      const decoded = jwt.verify(token, this.JWT_SECRET) as TokenPayload;
+      const decoded = this.jwt.verify(token, this.JWT_SECRET) as TokenPayload;
 
       if (typeof decoded === 'string' || !decoded.userId) {
         throw new Error('Invalid or expired token');

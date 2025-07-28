@@ -1,14 +1,10 @@
-/**
- * Tests for prismaClient.ts
- * Testing the Prisma client initialization with proper logging configuration
- */
-
-// Mock PrismaClient globally before any imports
-const mockPrismaClient = jest.fn().mockImplementation((options: unknown) => {
+const mockConnect = jest.fn();
+const mockDisconnect = jest.fn();
+const mockPrismaClient = jest.fn().mockImplementation(options => {
   return {
     options,
-    $connect: jest.fn(),
-    $disconnect: jest.fn(),
+    $connect: mockConnect,
+    $disconnect: mockDisconnect,
   };
 });
 
@@ -16,51 +12,53 @@ jest.mock('../../src/generated/prisma', () => ({
   PrismaClient: mockPrismaClient,
 }));
 
-describe('PrismaClient', () => {
-  // Store original NODE_ENV
-  const originalNodeEnv = process.env.NODE_ENV;
+import 'reflect-metadata';
+import { container } from 'tsyringe';
 
-  // Reset mocks and environment after each test
-  afterEach(() => {
+describe('PrismaService', () => {
+  beforeEach(() => {
+    jest.resetModules();
     jest.clearAllMocks();
-    process.env.NODE_ENV = originalNodeEnv;
+    container.clearInstances();
   });
 
-  it('should initialize with full logging in development environment', async () => {
-    // Set environment to development
+  it('should configure full logging in development', () => {
     process.env.NODE_ENV = 'development';
 
-    // Clear module cache to ensure fresh import with new NODE_ENV
-    jest.resetModules();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PrismaService } = require('../../src/database/prismaClient');
+    const instance = new PrismaService();
 
-    // Import the module to test within an isolated context
-    await jest.isolateModules(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const module = await import('../../src/database/prismaClient');
-    });
-
-    // Verify PrismaClient was called with correct options
     expect(mockPrismaClient).toHaveBeenCalledWith({
       log: ['query', 'error', 'warn'],
     });
+    expect(instance.options.log).toEqual(['query', 'error', 'warn']);
   });
 
-  it('should initialize with error-only logging in non-development environments', async () => {
-    // Set environment to production
+  it('should configure minimal logging in production', () => {
     process.env.NODE_ENV = 'production';
 
-    // Clear module cache to ensure fresh import with new NODE_ENV
-    jest.resetModules();
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PrismaService } = require('../../src/database/prismaClient');
+    const instance = new PrismaService();
 
-    // Import the module to test within an isolated context
-    await jest.isolateModules(async () => {
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const module = await import('../../src/database/prismaClient');
-    });
-
-    // Verify PrismaClient was called with correct options
     expect(mockPrismaClient).toHaveBeenCalledWith({
       log: ['error'],
     });
+    expect(instance.options.log).toEqual(['error']);
+  });
+
+  it('should connect and disconnect properly', async () => {
+    process.env.NODE_ENV = 'development';
+
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
+    const { PrismaService } = require('../../src/database/prismaClient');
+    const instance = new PrismaService();
+
+    await instance.$connect();
+    await instance.$disconnect();
+
+    expect(mockConnect).toHaveBeenCalled();
+    expect(mockDisconnect).toHaveBeenCalled();
   });
 });

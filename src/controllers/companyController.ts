@@ -3,27 +3,29 @@ import {
   createCompanySchema,
   updateCompanySchema,
 } from '../schemas/companySchema';
-import { handleError } from '../utils/handleError';
 import { mapCompanyError } from '../errors/companyErrorMapper';
 import { inject, injectable } from 'tsyringe';
-import { ICompanyService } from '../services/company/interfaces';
+import { ICompanyRepository } from '../repositories/company/ICompanyRepository';
+import { BaseController } from './baseController';
 
 @injectable()
-export class CompanyController {
+export class CompanyController extends BaseController {
   constructor(
-    @inject('CompanyService') private companyService: ICompanyService
-  ) {}
-  async createCompany(req: Request, res: Response): Promise<Response> {
+    @inject('CompanyService') private companyService: ICompanyRepository
+  ) {
+    super();
+  }
+  create = async (req: Request, res: Response): Promise<Response> => {
     try {
       const data = createCompanySchema.parse(req.body);
-      const company = await this.companyService.createCompany(data);
+      const company = await this.companyService.create(data);
       return res.status(201).json(company);
     } catch (error: unknown) {
-      return handleError(res, mapCompanyError(error));
+      return this.handleError(res, error, mapCompanyError);
     }
-  }
+  };
 
-  async getCompanyById(req: Request, res: Response): Promise<Response> {
+  getCompanyById = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
       const company = await this.companyService.getCompanyById(id);
@@ -34,20 +36,20 @@ export class CompanyController {
 
       return res.status(200).json(company);
     } catch (error: unknown) {
-      return handleError(res, mapCompanyError(error));
+      return this.handleError(res, error, mapCompanyError);
     }
-  }
+  };
 
-  async getAllCompanies(req: Request, res: Response): Promise<Response> {
+  getAllCompanies = async (req: Request, res: Response): Promise<Response> => {
     try {
       const companies = await this.companyService.getAllCompanies();
       return res.status(200).json(companies);
     } catch (error: unknown) {
-      return handleError(res, mapCompanyError(error));
+      return this.handleError(res, error, mapCompanyError);
     }
-  }
+  };
 
-  async updateCompany(req: Request, res: Response): Promise<Response> {
+  updateCompany = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
       const data = updateCompanySchema.parse(req.body);
@@ -60,11 +62,11 @@ export class CompanyController {
       const updated = await this.companyService.updateCompany(id, data);
       return res.status(200).json(updated);
     } catch (error: unknown) {
-      return handleError(res, mapCompanyError(error));
+      return this.handleError(res, error, mapCompanyError);
     }
-  }
+  };
 
-  async deleteCompany(req: Request, res: Response): Promise<Response> {
+  deleteCompany = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
       const existing = await this.companyService.getCompanyById(id);
@@ -75,7 +77,7 @@ export class CompanyController {
       await this.companyService.deleteCompany(id);
       return res.status(204).send();
     } catch (error: unknown) {
-      return handleError(res, mapCompanyError(error));
+      return this.handleError(res, error, mapCompanyError);
     }
-  }
+  };
 }

@@ -6,9 +6,8 @@ import {
 } from '../../src/errors/customErrors';
 import { Request, Response } from 'express';
 import { generateValidDomain } from '../fixtures/domain/generateDomainFixtures';
-import { Domain } from '../../src/generated/prisma'; // Assurez-vous que ce chemin est correct
-import { faker } from '@faker-js/faker'; // Importation de faker
-
+import { Domain } from '../../src/generated/prisma';
+import { faker } from '@faker-js/faker';
 const createMockResponse = (): Response => {
   return {
     status: jest.fn().mockReturnThis(),
@@ -59,7 +58,7 @@ describe('DomainController with dependency injection', () => {
     });
 
     it('should return 400 if validation fails', async () => {
-      const req = { body: { name: 123 } } as unknown as Request; // Invalid data
+      const req = { body: { name: 123 } } as unknown as Request;
 
       await controller.createDomain(req, res);
 
@@ -80,7 +79,7 @@ describe('DomainController with dependency injection', () => {
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Domain with this name already exists.',
+          message: 'Domain already exists.',
         })
       );
     });

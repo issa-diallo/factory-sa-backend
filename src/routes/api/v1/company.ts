@@ -11,7 +11,7 @@ router.post(
   '/',
   authenticate,
   authorize(['company:create']),
-  companyController.createCompany
+  companyController.create
 );
 router.get(
   '/',

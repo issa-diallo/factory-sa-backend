@@ -3,38 +3,26 @@ import {
   CreateCompanyRequest,
   UpdateCompanyRequest,
 } from '../../src/types/company';
-import { prisma } from '../../src/database/prismaClient';
 import { CompanyAlreadyExistsError } from '../../src/errors/customErrors';
+import { ICompanyRepository } from '../../src/repositories/company/ICompanyRepository';
+import { Company } from '../../src/generated/prisma';
 
-// Mock the entire prismaClient module
-jest.mock('../../src/database/prismaClient', () => ({
-  prisma: {
-    company: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-  },
-}));
-
-// Cast prisma to a mocked version for type safety
-const mockPrisma = prisma as unknown as {
-  company: {
-    create: jest.Mock;
-    findUnique: jest.Mock;
-    findMany: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
-  };
+// Mock the ICompanyRepository
+const mockCompanyRepository: jest.Mocked<ICompanyRepository> = {
+  create: jest.fn(),
+  getCompanyById: jest.fn(),
+  getCompanyByName: jest.fn(),
+  getAllCompanies: jest.fn(),
+  updateCompany: jest.fn(),
+  deleteCompany: jest.fn(),
 };
 
 describe('CompanyService', () => {
   let companyService: CompanyService;
 
   beforeEach(() => {
-    companyService = new CompanyService();
+    // Instanciez CompanyService en lui passant le mock de ICompanyRepository
+    companyService = new CompanyService(mockCompanyRepository);
     jest.clearAllMocks();
   });
 
@@ -46,100 +34,89 @@ describe('CompanyService', () => {
         isActive: true,
       };
 
-      mockPrisma.company.findUnique.mockResolvedValue({
+      // Assurez-vous que le type de retour correspond au modèle Prisma.Company
+      mockCompanyRepository.getCompanyByName.mockResolvedValue({
         id: 'existing-id',
-        ...companyData,
+        name: companyData.name,
+        description: companyData.description || null, // Assurez-vous que description est string | null
+        isActive: companyData.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
-      });
+      } as Company);
 
-      await expect(companyService.createCompany(companyData)).rejects.toThrow(
+      await expect(companyService.create(companyData)).rejects.toThrow(
         CompanyAlreadyExistsError
       );
-      expect(mockPrisma.company.create).not.toHaveBeenCalled();
+      expect(mockCompanyRepository.create).not.toHaveBeenCalled();
     });
 
     it('should successfully create a new company', async () => {
-      mockPrisma.company.findUnique.mockResolvedValue(null);
+      mockCompanyRepository.getCompanyByName.mockResolvedValue(null);
       const companyData: CreateCompanyRequest = {
         name: 'Test Company',
         description: 'Description for test company',
         isActive: true,
       };
-      const createdCompany = {
+      const createdCompany: Company = {
+        // Spécifiez le type Company
         id: '1',
-        ...companyData,
+        name: companyData.name,
+        description: companyData.description || null,
+        isActive: companyData.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.company.create.mockResolvedValue(createdCompany);
+      mockCompanyRepository.create.mockResolvedValue(createdCompany);
 
-      const result = await companyService.createCompany(companyData);
+      const result = await companyService.create(companyData);
 
-      expect(mockPrisma.company.create).toHaveBeenCalledWith({
-        data: {
-          name: companyData.name,
-          description: companyData.description,
-          isActive: companyData.isActive,
-        },
-      });
+      expect(mockCompanyRepository.create).toHaveBeenCalledWith(companyData);
       expect(result).toEqual(createdCompany);
     });
 
     it('should create a new company with isActive defaulting to true if not provided', async () => {
-      mockPrisma.company.findUnique.mockResolvedValue(null);
+      mockCompanyRepository.getCompanyByName.mockResolvedValue(null);
       const companyData: CreateCompanyRequest = {
         name: 'Default Active Company',
         description: 'Description for default active company',
       };
-      const createdCompany = {
+      const createdCompany: Company = {
+        // Spécifiez le type Company
         id: '2',
-        ...companyData,
+        name: companyData.name,
+        description: companyData.description || null,
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.company.create.mockResolvedValue(createdCompany);
+      mockCompanyRepository.create.mockResolvedValue(createdCompany);
 
-      const result = await companyService.createCompany(companyData);
+      const result = await companyService.create(companyData);
 
-      expect(mockPrisma.company.create).toHaveBeenCalledWith({
-        data: {
-          name: companyData.name,
-          description: companyData.description,
-          isActive: true, // Verifies that isActive defaults to true
-        },
-      });
+      expect(mockCompanyRepository.create).toHaveBeenCalledWith(companyData);
       expect(result).toEqual(createdCompany);
     });
 
     it('should reject if creation fails', async () => {
-      mockPrisma.company.findUnique.mockResolvedValue(null);
+      mockCompanyRepository.getCompanyByName.mockResolvedValue(null);
       const companyData: CreateCompanyRequest = {
         name: 'Failing Company',
         description: 'This company will fail',
         isActive: true,
       };
       const error = new Error('Database error');
-      mockPrisma.company.create.mockRejectedValue(error);
+      mockCompanyRepository.create.mockRejectedValue(error);
 
-      await expect(companyService.createCompany(companyData)).rejects.toThrow(
-        error
-      );
-      expect(mockPrisma.company.create).toHaveBeenCalledWith({
-        data: {
-          name: companyData.name,
-          description: companyData.description,
-          isActive: companyData.isActive,
-        },
-      });
+      await expect(companyService.create(companyData)).rejects.toThrow(error);
+      expect(mockCompanyRepository.create).toHaveBeenCalledWith(companyData);
     });
   });
 
   describe('getCompanyById', () => {
     it('should return a company by ID', async () => {
       const companyId = '1';
-      const company = {
+      const company: Company = {
+        // Spécifiez le type Company
         id: companyId,
         name: 'Test Company',
         description: 'Desc',
@@ -147,46 +124,47 @@ describe('CompanyService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.company.findUnique.mockResolvedValue(company);
+      mockCompanyRepository.getCompanyById.mockResolvedValue(company);
 
       const result = await companyService.getCompanyById(companyId);
 
-      expect(mockPrisma.company.findUnique).toHaveBeenCalledWith({
-        where: { id: companyId },
-      });
+      expect(mockCompanyRepository.getCompanyById).toHaveBeenCalledWith(
+        companyId
+      );
       expect(result).toEqual(company);
     });
 
     it('should return null if no company is found by ID', async () => {
       const companyId = 'nonexistent';
-      mockPrisma.company.findUnique.mockResolvedValue(null);
+      mockCompanyRepository.getCompanyById.mockResolvedValue(null);
 
       const result = await companyService.getCompanyById(companyId);
 
-      expect(mockPrisma.company.findUnique).toHaveBeenCalledWith({
-        where: { id: companyId },
-      });
+      expect(mockCompanyRepository.getCompanyById).toHaveBeenCalledWith(
+        companyId
+      );
       expect(result).toBeNull();
     });
 
     it('should reject if fetching by ID fails', async () => {
       const companyId = '1';
       const error = new Error('Database error');
-      mockPrisma.company.findUnique.mockRejectedValue(error);
+      mockCompanyRepository.getCompanyById.mockRejectedValue(error);
 
       await expect(companyService.getCompanyById(companyId)).rejects.toThrow(
         error
       );
-      expect(mockPrisma.company.findUnique).toHaveBeenCalledWith({
-        where: { id: companyId },
-      });
+      expect(mockCompanyRepository.getCompanyById).toHaveBeenCalledWith(
+        companyId
+      );
     });
   });
 
   describe('getCompanyByName', () => {
     it('should return a company by name', async () => {
       const companyName = 'Test Company';
-      const company = {
+      const company: Company = {
+        // Spécifiez le type Company
         id: '1',
         name: companyName,
         description: 'Desc',
@@ -194,45 +172,46 @@ describe('CompanyService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.company.findUnique.mockResolvedValue(company);
+      mockCompanyRepository.getCompanyByName.mockResolvedValue(company);
 
       const result = await companyService.getCompanyByName(companyName);
 
-      expect(mockPrisma.company.findUnique).toHaveBeenCalledWith({
-        where: { name: companyName },
-      });
+      expect(mockCompanyRepository.getCompanyByName).toHaveBeenCalledWith(
+        companyName
+      );
       expect(result).toEqual(company);
     });
 
     it('should return null if no company is found by name', async () => {
       const companyName = 'nonexistent';
-      mockPrisma.company.findUnique.mockResolvedValue(null);
+      mockCompanyRepository.getCompanyByName.mockResolvedValue(null);
 
       const result = await companyService.getCompanyByName(companyName);
 
-      expect(mockPrisma.company.findUnique).toHaveBeenCalledWith({
-        where: { name: companyName },
-      });
+      expect(mockCompanyRepository.getCompanyByName).toHaveBeenCalledWith(
+        companyName
+      );
       expect(result).toBeNull();
     });
 
     it('should reject if fetching by name fails', async () => {
       const companyName = 'Test Company';
       const error = new Error('Database error');
-      mockPrisma.company.findUnique.mockRejectedValue(error);
+      mockCompanyRepository.getCompanyByName.mockRejectedValue(error);
 
       await expect(
         companyService.getCompanyByName(companyName)
       ).rejects.toThrow(error);
-      expect(mockPrisma.company.findUnique).toHaveBeenCalledWith({
-        where: { name: companyName },
-      });
+      expect(mockCompanyRepository.getCompanyByName).toHaveBeenCalledWith(
+        companyName
+      );
     });
   });
 
   describe('getAllCompanies', () => {
     it('should return all companies', async () => {
-      const companies = [
+      const companies: Company[] = [
+        // Spécifiez le type Company[]
         {
           id: '1',
           name: 'Comp1',
@@ -250,29 +229,29 @@ describe('CompanyService', () => {
           updatedAt: new Date(),
         },
       ];
-      mockPrisma.company.findMany.mockResolvedValue(companies);
+      mockCompanyRepository.getAllCompanies.mockResolvedValue(companies);
 
       const result = await companyService.getAllCompanies();
 
-      expect(mockPrisma.company.findMany).toHaveBeenCalledWith();
+      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith();
       expect(result).toEqual(companies);
     });
 
     it('should return an empty array if no companies are found', async () => {
-      mockPrisma.company.findMany.mockResolvedValue([]);
+      mockCompanyRepository.getAllCompanies.mockResolvedValue([]);
 
       const result = await companyService.getAllCompanies();
 
-      expect(mockPrisma.company.findMany).toHaveBeenCalledWith();
+      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith();
       expect(result).toEqual([]);
     });
 
     it('should reject if fetching all companies fails', async () => {
       const error = new Error('Database error');
-      mockPrisma.company.findMany.mockRejectedValue(error);
+      mockCompanyRepository.getAllCompanies.mockRejectedValue(error);
 
       await expect(companyService.getAllCompanies()).rejects.toThrow(error);
-      expect(mockPrisma.company.findMany).toHaveBeenCalledWith();
+      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith();
     });
   });
 
@@ -283,21 +262,23 @@ describe('CompanyService', () => {
         name: 'Updated Company',
         description: 'Updated Description',
       };
-      const updatedCompany = {
+      const updatedCompany: Company = {
+        // Spécifiez le type Company
         id: companyId,
-        ...updateData,
+        name: updateData.name || 'Default Name', // Assurez-vous que name est string
+        description: updateData.description || null, // Assurez-vous que description est string | null
         isActive: true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.company.update.mockResolvedValue(updatedCompany);
+      mockCompanyRepository.updateCompany.mockResolvedValue(updatedCompany);
 
       const result = await companyService.updateCompany(companyId, updateData);
 
-      expect(mockPrisma.company.update).toHaveBeenCalledWith({
-        where: { id: companyId },
-        data: updateData,
-      });
+      expect(mockCompanyRepository.updateCompany).toHaveBeenCalledWith(
+        companyId,
+        updateData
+      );
       expect(result).toEqual(updatedCompany);
     });
 
@@ -305,22 +286,23 @@ describe('CompanyService', () => {
       const companyId = '1';
       const updateData: UpdateCompanyRequest = { name: 'Updated Company' };
       const error = new Error('Database error');
-      mockPrisma.company.update.mockRejectedValue(error);
+      mockCompanyRepository.updateCompany.mockRejectedValue(error);
 
       await expect(
         companyService.updateCompany(companyId, updateData)
       ).rejects.toThrow(error);
-      expect(mockPrisma.company.update).toHaveBeenCalledWith({
-        where: { id: companyId },
-        data: updateData,
-      });
+      expect(mockCompanyRepository.updateCompany).toHaveBeenCalledWith(
+        companyId,
+        updateData
+      );
     });
   });
 
   describe('deleteCompany', () => {
     it('should successfully delete a company', async () => {
       const companyId = '1';
-      const deletedCompany = {
+      const deletedCompany: Company = {
+        // Spécifiez le type Company
         id: companyId,
         name: 'Deleted Company',
         description: 'Desc',
@@ -328,27 +310,27 @@ describe('CompanyService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.company.delete.mockResolvedValue(deletedCompany);
+      mockCompanyRepository.deleteCompany.mockResolvedValue(deletedCompany);
 
       const result = await companyService.deleteCompany(companyId);
 
-      expect(mockPrisma.company.delete).toHaveBeenCalledWith({
-        where: { id: companyId },
-      });
+      expect(mockCompanyRepository.deleteCompany).toHaveBeenCalledWith(
+        companyId
+      );
       expect(result).toEqual(deletedCompany);
     });
 
     it('should reject if deletion fails', async () => {
       const companyId = '1';
       const error = new Error('Database error');
-      mockPrisma.company.delete.mockRejectedValue(error);
+      mockCompanyRepository.deleteCompany.mockRejectedValue(error);
 
       await expect(companyService.deleteCompany(companyId)).rejects.toThrow(
         error
       );
-      expect(mockPrisma.company.delete).toHaveBeenCalledWith({
-        where: { id: companyId },
-      });
+      expect(mockCompanyRepository.deleteCompany).toHaveBeenCalledWith(
+        companyId
+      );
     });
   });
 });

@@ -6,79 +6,49 @@ import {
   CreateUserRoleRequest,
   UpdateUserRequest,
 } from '../../types/userManagement';
-import { PrismaClient, User, UserRole } from '../../generated/prisma';
+import { User, UserRole, Prisma } from '../../generated/prisma';
+import { injectable, inject } from 'tsyringe';
+import { IUserRepository } from '../../repositories/user/IUserRepository';
+import { IUserRoleRepository } from '../../repositories/userRole/IUserRoleRepository';
 
+@injectable()
 export class UserManagementService implements IUserManagementService {
-  private prisma: PrismaClient;
+  private userRepository: IUserRepository;
+  private userRoleRepository: IUserRoleRepository;
   private passwordService: IPasswordService;
 
-  constructor(prisma: PrismaClient, passwordService: IPasswordService) {
-    this.prisma = prisma;
+  constructor(
+    @inject('IUserRepository') userRepository: IUserRepository,
+    @inject('IUserRoleRepository') userRoleRepository: IUserRoleRepository,
+    @inject('IPasswordService') passwordService: IPasswordService
+  ) {
+    this.userRepository = userRepository;
+    this.userRoleRepository = userRoleRepository;
     this.passwordService = passwordService;
   }
 
   async createUser(data: CreateUserRequest): Promise<Omit<User, 'password'>> {
     const hashedPassword = await this.passwordService.hash(data.password);
-    const user = await this.prisma.user.create({
-      data: {
-        email: normalizeEmail(data.email),
-        password: hashedPassword,
-        firstName: data.firstName,
-        lastName: data.lastName,
-        isActive: data.isActive ?? true,
-      },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        lastLoginAt: true,
-        lastLoginIp: true,
-        createdAt: true,
-        updatedAt: true,
-      },
+    const user = await this.userRepository.create({
+      email: normalizeEmail(data.email),
+      password: hashedPassword,
+      firstName: data.firstName,
+      lastName: data.lastName,
+      isActive: data.isActive ?? true,
     });
     return user;
   }
 
   async getUserById(id: string): Promise<Omit<User, 'password'> | null> {
-    return this.prisma.user.findUnique({
-      where: { id },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        lastLoginAt: true,
-        lastLoginIp: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    return this.userRepository.findById(id);
   }
 
   async getUserByEmail(email: string): Promise<User | null> {
-    return this.prisma.user.findUnique({
-      where: { email: normalizeEmail(email) },
-    });
+    return this.userRepository.findByEmail(normalizeEmail(email));
   }
 
   async getAllUsers(): Promise<Omit<User, 'password'>[]> {
-    return this.prisma.user.findMany({
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        lastLoginAt: true,
-        lastLoginIp: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    return this.userRepository.findAll();
   }
 
   async updateUser(
@@ -92,71 +62,40 @@ export class UserManagementService implements IUserManagementService {
     if (data.password) {
       data.password = await this.passwordService.hash(data.password);
     }
-    const updatedUser = await this.prisma.user.update({
-      where: { id },
-      data,
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        isActive: true,
-        lastLoginAt: true,
-        lastLoginIp: true,
-        createdAt: true,
-        updatedAt: true,
-      },
-    });
+    const updatedUser = await this.userRepository.update(id, data);
     return updatedUser;
   }
 
   async deleteUser(id: string): Promise<User> {
-    return this.prisma.user.delete({
-      where: { id },
-    });
+    return this.userRepository.delete(id);
   }
 
   async createUserRole(data: CreateUserRoleRequest): Promise<UserRole> {
-    return this.prisma.userRole.create({
-      data: {
-        userId: data.userId,
-        companyId: data.companyId,
-        roleId: data.roleId,
-      },
-    });
+    const prismaData: Prisma.UserRoleCreateInput = {
+      user: { connect: { id: data.userId } },
+      company: { connect: { id: data.companyId } },
+      role: { connect: { id: data.roleId } },
+    };
+    return this.userRoleRepository.create(prismaData);
   }
 
   async getUserRoleById(id: string): Promise<UserRole | null> {
-    return this.prisma.userRole.findUnique({
-      where: { id },
-    });
+    return this.userRoleRepository.findById(id);
   }
 
   async getUserRolesByUserId(userId: string): Promise<UserRole[]> {
-    return this.prisma.userRole.findMany({
-      where: { userId },
-      include: {
-        role: true,
-        company: true,
-      },
-    });
+    return this.userRoleRepository.findByUserId(userId);
   }
 
   async getUserRolesByCompanyId(companyId: string): Promise<UserRole[]> {
-    return this.prisma.userRole.findMany({
-      where: { companyId },
-    });
+    return this.userRoleRepository.findByCompanyId(companyId);
   }
 
   async getUserRolesByRoleId(roleId: string): Promise<UserRole[]> {
-    return this.prisma.userRole.findMany({
-      where: { roleId },
-    });
+    return this.userRoleRepository.findByRoleId(roleId);
   }
 
   async deleteUserRole(id: string): Promise<UserRole> {
-    return this.prisma.userRole.delete({
-      where: { id },
-    });
+    return this.userRoleRepository.delete(id);
   }
 }

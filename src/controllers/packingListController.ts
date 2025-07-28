@@ -6,20 +6,26 @@ import {
 } from '../schemas/packingListSchema';
 import { inject, injectable } from 'tsyringe';
 import { IPackingListService } from '../services/packingList/interfaces';
+import { BaseController } from './baseController';
 
 @injectable()
-export class PackingListController {
+export class PackingListController extends BaseController {
   constructor(
     @inject('PackingListService')
     private packingListService: IPackingListService
-  ) {}
+  ) {
+    super();
+  }
   /**
    * Handles the upload and processing of packing list data.
    *
    * @param req - Express request containing the data in req.body
    * @param res - Express response to return the result
    */
-  async handlePackingList(req: Request, res: Response): Promise<Response> {
+  handlePackingList = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
     try {
       // Step 1: Validate data with Zod
       const validationResult = validatePackingListData(req.body);
@@ -65,10 +71,7 @@ export class PackingListController {
         },
       });
     } catch (error) {
-      return res.status(500).json({
-        error: 'Internal server error',
-        message: error instanceof Error ? error.message : 'Unknown error',
-      });
+      return this.handleError(res, error);
     }
-  }
+  };
 }

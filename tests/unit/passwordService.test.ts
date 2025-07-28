@@ -1,65 +1,69 @@
-import bcrypt from 'bcrypt';
+import 'reflect-metadata';
 import { PasswordService } from '../../src/services/auth/passwordService';
 
-jest.mock('bcrypt', () => ({
-  hash: jest.fn(),
-  compare: jest.fn(),
-}));
+let mockedBcrypt: {
+  hash: jest.Mock<Promise<string>, [string, number]>;
+  compare: jest.Mock<Promise<boolean>, [string, string]>;
+};
+
+// ✅ Déclare et injecte les mocks dans le scope du mock
+jest.mock('bcrypt', () => {
+  const hash = jest.fn<Promise<string>, [string, number]>();
+  const compare = jest.fn<Promise<boolean>, [string, string]>();
+
+  mockedBcrypt = { hash, compare };
+
+  return {
+    __esModule: true,
+    hash,
+    compare,
+    default: { hash, compare },
+  };
+});
+
+import bcrypt from 'bcrypt'; // ⚠️ après le mock
+
+class TestablePasswordService extends PasswordService {
+  constructor(salt: number) {
+    super(salt);
+    // @ts-expect-error: override private field for test
+    this.bcryptLib = bcrypt;
+  }
+}
 
 describe('PasswordService', () => {
-  let passwordService: PasswordService;
   const SALT_ROUNDS = 10;
+  let service: PasswordService;
 
   beforeEach(() => {
-    passwordService = new PasswordService(SALT_ROUNDS);
     jest.clearAllMocks();
+    service = new TestablePasswordService(SALT_ROUNDS);
   });
 
   describe('hash', () => {
-    it('should hash the plain password', async () => {
-      const plainPassword = 'mysecretpassword';
-      const hashedPassword = 'hashedpassword123';
-      (bcrypt.hash as jest.Mock).mockResolvedValue(hashedPassword);
+    it('should hash a password', async () => {
+      mockedBcrypt.hash.mockResolvedValue('hashed123');
+      const result = await service.hash('secret');
 
-      const result = await passwordService.hash(plainPassword);
-
-      expect(bcrypt.hash).toHaveBeenCalledWith(plainPassword, SALT_ROUNDS);
-      expect(result).toBe(hashedPassword);
+      expect(mockedBcrypt.hash).toHaveBeenCalledWith('secret', SALT_ROUNDS);
+      expect(result).toBe('hashed123');
     });
   });
 
   describe('verify', () => {
-    it('should return true if the plain password matches the hashed password', async () => {
-      const plainPassword = 'mysecretpassword';
-      const hashedPassword = 'hashedpassword123';
-      (bcrypt.compare as jest.Mock).mockResolvedValue(true);
+    it('should return true when passwords match', async () => {
+      mockedBcrypt.compare.mockResolvedValue(true);
+      const result = await service.verify('secret', 'hashed123');
 
-      const result = await passwordService.verify(
-        plainPassword,
-        hashedPassword
-      );
-
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        plainPassword,
-        hashedPassword
-      );
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith('secret', 'hashed123');
       expect(result).toBe(true);
     });
 
-    it('should return false if the plain password does not match the hashed password', async () => {
-      const plainPassword = 'wrongpassword';
-      const hashedPassword = 'hashedpassword123';
-      (bcrypt.compare as jest.Mock).mockResolvedValue(false);
+    it('should return false when passwords do not match', async () => {
+      mockedBcrypt.compare.mockResolvedValue(false);
+      const result = await service.verify('wrong', 'hashed123');
 
-      const result = await passwordService.verify(
-        plainPassword,
-        hashedPassword
-      );
-
-      expect(bcrypt.compare).toHaveBeenCalledWith(
-        plainPassword,
-        hashedPassword
-      );
+      expect(mockedBcrypt.compare).toHaveBeenCalledWith('wrong', 'hashed123');
       expect(result).toBe(false);
     });
   });

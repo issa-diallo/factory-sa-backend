@@ -1,5 +1,6 @@
 import { TokenService } from '../services/auth/tokenService';
-import { prisma } from '../database/prismaClient';
+import { container } from 'tsyringe';
+import { IPrismaService } from '../database/interfaces';
 
 export function extractToken(authHeader?: string): string | null {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
@@ -9,6 +10,7 @@ export function extractToken(authHeader?: string): string | null {
 }
 
 export async function verifySession(token: string) {
+  const prisma = container.resolve<IPrismaService>('IPrismaService');
   const session = await prisma.session.findUnique({
     where: { token, isActive: true },
   });

@@ -1,49 +1,38 @@
 import { IRoleService } from './interfaces';
-import { PrismaClient, Role } from '../../generated/prisma';
+import { Role } from '../../generated/prisma';
 import { CreateRoleRequest, UpdateRoleRequest } from '../../types/role';
+import { injectable, inject } from 'tsyringe';
+import { IRoleRepository } from '../../repositories/role/IRoleRepository';
 
+@injectable()
 export class RoleService implements IRoleService {
-  private prisma: PrismaClient;
+  private roleRepository: IRoleRepository;
 
-  constructor(prisma: PrismaClient) {
-    this.prisma = prisma;
+  constructor(@inject('IRoleRepository') roleRepository: IRoleRepository) {
+    this.roleRepository = roleRepository;
   }
 
   async createRole(data: CreateRoleRequest): Promise<Role> {
-    return this.prisma.role.create({
-      data: {
-        name: data.name,
-        description: data.description,
-      },
-    });
+    return this.roleRepository.create(data);
   }
 
   async getRoleById(id: string): Promise<Role | null> {
-    return this.prisma.role.findUnique({
-      where: { id },
-    });
+    return this.roleRepository.findById(id);
   }
 
   async getRoleByName(name: string): Promise<Role | null> {
-    return this.prisma.role.findUnique({
-      where: { name },
-    });
+    return this.roleRepository.findByName(name);
   }
 
   async getAllRoles(): Promise<Role[]> {
-    return this.prisma.role.findMany();
+    return this.roleRepository.findAll();
   }
 
   async updateRole(id: string, data: UpdateRoleRequest): Promise<Role> {
-    return this.prisma.role.update({
-      where: { id },
-      data,
-    });
+    return this.roleRepository.update(id, data);
   }
 
   async deleteRole(id: string): Promise<Role> {
-    return this.prisma.role.delete({
-      where: { id },
-    });
+    return this.roleRepository.delete(id);
   }
 }

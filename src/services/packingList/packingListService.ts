@@ -54,16 +54,17 @@ export class PackingListService implements IPackingListService {
       if (itemsResult.success) {
         result.push(...itemsResult.data);
       } else {
-        errors.push(
-          `Line ${i + 1}: ${itemsResult.error} (code: ${itemsResult.code})`
-        );
+        const errorMessage = itemsResult.error ?? '';
+        const errorCode = itemsResult.code ?? '';
+        errors.push(`Line ${i + 1}: ${errorMessage} (code: ${errorCode})`);
       }
     }
 
     if (result.length > 0) {
-      if (errors.length > 0) {
-        console.warn('Errors while processing some rows:', errors);
-      }
+      console.warn?.(
+        'Errors while processing some rows:',
+        errors.length > 0 ? errors : undefined
+      );
 
       const totalPcs = result.reduce((sum, item) => sum + item.qty, 0);
 

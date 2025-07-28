@@ -1,5 +1,4 @@
 import { AuthService } from '../../src/services/auth/authService';
-import { PrismaClient } from '../../src/generated/prisma';
 import {
   IPasswordService,
   ITokenService,
@@ -12,27 +11,76 @@ import {
   CompanyNotFoundError,
   UserNotActiveError,
 } from '../../src/errors/AuthErrors';
+import { IUserRepository } from '../../src/repositories/user/IUserRepository';
+import { IDomainRepository } from '../../src/repositories/domain/IDomainRepository';
+import { ICompanyDomainRepository } from '../../src/repositories/companyDomain/ICompanyDomainRepository';
+import { IUserRoleRepository } from '../../src/repositories/userRole/IUserRoleRepository';
+import { IRolePermissionRepository } from '../../src/repositories/rolePermission/IRolePermissionRepository';
+import {
+  User,
+  Domain,
+  CompanyDomain,
+  UserRole,
+  RolePermission,
+  Role,
+} from '../../src/generated/prisma';
 
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    domain: { findFirst: jest.fn() },
-    companyDomain: { findFirst: jest.fn() },
-    user: { findUnique: jest.fn(), update: jest.fn() },
-    userRole: { findFirst: jest.fn() },
-    rolePermission: { findMany: jest.fn() },
-  })),
-}));
-
-const mockPasswordService = {
+const mockPasswordService: jest.Mocked<IPasswordService> = {
   hash: jest.fn(),
   verify: jest.fn().mockResolvedValue(true),
-} as jest.Mocked<IPasswordService>;
+};
 
-const mockTokenService = {
+const mockTokenService: jest.Mocked<ITokenService> = {
   generateToken: jest.fn().mockResolvedValue('mock_jwt_token'),
   verifyToken: jest.fn(),
   invalidateToken: jest.fn(),
-} as jest.Mocked<ITokenService>;
+};
+
+const mockUserRepository: jest.Mocked<IUserRepository> = {
+  findById: jest.fn(),
+  findByEmail: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  findAll: jest.fn(),
+  updateUserLastLogin: jest.fn(),
+};
+
+const mockDomainRepository: jest.Mocked<IDomainRepository> = {
+  findById: jest.fn(),
+  findByDomainName: jest.fn(),
+  create: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  findAll: jest.fn(),
+};
+
+const mockCompanyDomainRepository: jest.Mocked<ICompanyDomainRepository> = {
+  findByDomainId: jest.fn(),
+  findByDomainIdWithCompany: jest.fn(),
+  create: jest.fn(),
+  delete: jest.fn(),
+  findByCompanyId: jest.fn(),
+  findAllByDomainId: jest.fn(),
+  findById: jest.fn(),
+};
+
+const mockUserRoleRepository: jest.Mocked<IUserRoleRepository> = {
+  findUserRoleByUserIdAndCompanyId: jest.fn(),
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByUserId: jest.fn(),
+  findByCompanyId: jest.fn(),
+  findByRoleId: jest.fn(),
+  delete: jest.fn(),
+};
+
+const mockRolePermissionRepository: jest.Mocked<IRolePermissionRepository> = {
+  findRolePermissionsByRoleId: jest.fn(),
+  create: jest.fn(),
+  findById: jest.fn(),
+  delete: jest.fn(),
+};
 
 jest.mock('../../src/utils/getClientIp', () => ({
   getClientIp: jest.fn().mockReturnValue('127.0.0.1'),
@@ -40,7 +88,6 @@ jest.mock('../../src/utils/getClientIp', () => ({
 
 describe('AuthService', () => {
   let authService: AuthService;
-  let prisma: PrismaClient;
   let req: Request;
 
   const mockData = {
@@ -51,29 +98,32 @@ describe('AuthService', () => {
       isActive: true,
       firstName: 'Test',
       lastName: 'User',
-    },
-    domain: { id: 'domain1', name: 'example.com', isActive: true },
+    } as User,
+    domain: { id: 'domain1', name: 'example.com', isActive: true } as Domain,
     companyDomain: {
       domainId: 'domain1',
       companyId: 'company1',
       company: { isActive: true },
-    },
+    } as CompanyDomain & { company: { isActive: boolean } },
     userRole: {
       userId: 'user1',
       roleId: 'role1',
       companyId: 'company1',
       role: { name: 'Admin' },
-    },
+    } as UserRole & { role: Role },
     permissions: [
       { permission: { name: 'read' } },
       { permission: { name: 'write' } },
-    ],
+    ] as (RolePermission & { permission: { name: string } })[],
   };
 
   beforeEach(() => {
-    prisma = new PrismaClient();
     authService = new AuthService(
-      prisma,
+      mockUserRepository,
+      mockDomainRepository,
+      mockCompanyDomainRepository,
+      mockUserRoleRepository,
+      mockRolePermissionRepository,
       mockPasswordService,
       mockTokenService
     );
@@ -86,19 +136,19 @@ describe('AuthService', () => {
 
   describe('login', () => {
     it('should successfully log in a user and return token and user info', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockData.user);
-      (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-      (prisma.domain.findFirst as jest.Mock).mockResolvedValue(mockData.domain);
-      (prisma.companyDomain.findFirst as jest.Mock).mockResolvedValue(
+      mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+      mockPasswordService.verify.mockResolvedValue(true);
+      mockDomainRepository.findByDomainName.mockResolvedValue(mockData.domain);
+      mockCompanyDomainRepository.findByDomainIdWithCompany.mockResolvedValue(
         mockData.companyDomain
       );
-      (prisma.userRole.findFirst as jest.Mock).mockResolvedValue(
+      mockUserRoleRepository.findUserRoleByUserIdAndCompanyId.mockResolvedValue(
         mockData.userRole
       );
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue(
+      mockRolePermissionRepository.findRolePermissionsByRoleId.mockResolvedValue(
         mockData.permissions
       );
-      (prisma.user.update as jest.Mock).mockResolvedValue(mockData.user);
+      mockUserRepository.updateUserLastLogin.mockResolvedValue(undefined);
 
       const { token, user } = await authService.login(
         'test@example.com',
@@ -116,43 +166,42 @@ describe('AuthService', () => {
     });
 
     it('should update last login with correct data', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockData.user);
-      (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-      (prisma.domain.findFirst as jest.Mock).mockResolvedValue(mockData.domain);
-      (prisma.companyDomain.findFirst as jest.Mock).mockResolvedValue(
+      mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+      mockPasswordService.verify.mockResolvedValue(true);
+      mockDomainRepository.findByDomainName.mockResolvedValue(mockData.domain);
+      mockCompanyDomainRepository.findByDomainIdWithCompany.mockResolvedValue(
         mockData.companyDomain
       );
-      (prisma.userRole.findFirst as jest.Mock).mockResolvedValue(
+      mockUserRoleRepository.findUserRoleByUserIdAndCompanyId.mockResolvedValue(
         mockData.userRole
       );
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue(
+      mockRolePermissionRepository.findRolePermissionsByRoleId.mockResolvedValue(
         mockData.permissions
       );
-      (prisma.user.update as jest.Mock).mockResolvedValue(mockData.user);
+      mockUserRepository.updateUserLastLogin.mockResolvedValue(undefined);
 
       await authService.login('test@example.com', 'password123', req);
 
-      expect(prisma.user.update).toHaveBeenCalledWith({
-        where: { id: mockData.user.id },
-        data: {
-          lastLoginAt: expect.any(Date),
-          lastLoginIp: '127.0.0.1',
-        },
-      });
+      expect(mockUserRepository.updateUserLastLogin).toHaveBeenCalledWith(
+        mockData.user.id,
+        '127.0.0.1'
+      );
     });
 
     it('should login user even with no permissions', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockData.user);
-      (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-      (prisma.domain.findFirst as jest.Mock).mockResolvedValue(mockData.domain);
-      (prisma.companyDomain.findFirst as jest.Mock).mockResolvedValue(
+      mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+      mockPasswordService.verify.mockResolvedValue(true);
+      mockDomainRepository.findByDomainName.mockResolvedValue(mockData.domain);
+      mockCompanyDomainRepository.findByDomainIdWithCompany.mockResolvedValue(
         mockData.companyDomain
       );
-      (prisma.userRole.findFirst as jest.Mock).mockResolvedValue(
+      mockUserRoleRepository.findUserRoleByUserIdAndCompanyId.mockResolvedValue(
         mockData.userRole
       );
-      (prisma.rolePermission.findMany as jest.Mock).mockResolvedValue([]);
-      (prisma.user.update as jest.Mock).mockResolvedValue(mockData.user);
+      mockRolePermissionRepository.findRolePermissionsByRoleId.mockResolvedValue(
+        []
+      );
+      mockUserRepository.updateUserLastLogin.mockResolvedValue(undefined);
 
       const { token } = await authService.login(
         'test@example.com',
@@ -167,16 +216,20 @@ describe('AuthService', () => {
     });
 
     it('should not call domain or company DB methods if password is invalid', async () => {
-      (prisma.user.findUnique as jest.Mock).mockResolvedValue(mockData.user);
-      (mockPasswordService.verify as jest.Mock).mockResolvedValue(false);
+      mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+      mockPasswordService.verify.mockResolvedValue(false);
 
       await expect(
         authService.login('test@example.com', 'wrong-password', req)
       ).rejects.toThrow(InvalidCredentialsError);
 
-      expect(prisma.domain.findFirst).not.toHaveBeenCalled();
-      expect(prisma.companyDomain.findFirst).not.toHaveBeenCalled();
-      expect(prisma.userRole.findFirst).not.toHaveBeenCalled();
+      expect(mockDomainRepository.findByDomainName).not.toHaveBeenCalled();
+      expect(
+        mockCompanyDomainRepository.findByDomainIdWithCompany
+      ).not.toHaveBeenCalled();
+      expect(
+        mockUserRoleRepository.findUserRoleByUserIdAndCompanyId
+      ).not.toHaveBeenCalled();
       expect(mockTokenService.generateToken).not.toHaveBeenCalled();
     });
 
@@ -184,56 +237,54 @@ describe('AuthService', () => {
       {
         description: 'unauthorized or inactive domain',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue(
-            mockData.user
-          );
-          (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-          (prisma.domain.findFirst as jest.Mock).mockResolvedValue(null);
+          mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+          mockPasswordService.verify.mockResolvedValue(true);
+          mockDomainRepository.findByDomainName.mockResolvedValue(null);
         },
         errorClass: UserNotFoundError,
       },
       {
         description: 'domain not associated with active company',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue(
-            mockData.user
-          );
-          (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-          (prisma.domain.findFirst as jest.Mock).mockResolvedValue(
+          mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+          mockPasswordService.verify.mockResolvedValue(true);
+          mockDomainRepository.findByDomainName.mockResolvedValue(
             mockData.domain
           );
-          (prisma.companyDomain.findFirst as jest.Mock).mockResolvedValue(null);
+          mockCompanyDomainRepository.findByDomainIdWithCompany.mockResolvedValue(
+            null
+          );
         },
         errorClass: CompanyNotFoundError,
       },
       {
         description: 'inactive company',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue(
-            mockData.user
-          );
-          (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-          (prisma.domain.findFirst as jest.Mock).mockResolvedValue(
+          mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+          mockPasswordService.verify.mockResolvedValue(true);
+          mockDomainRepository.findByDomainName.mockResolvedValue(
             mockData.domain
           );
-          (prisma.companyDomain.findFirst as jest.Mock).mockResolvedValue({
-            ...mockData.companyDomain,
-            company: { isActive: false },
-          });
+          mockCompanyDomainRepository.findByDomainIdWithCompany.mockResolvedValue(
+            {
+              ...mockData.companyDomain,
+              company: { isActive: false },
+            }
+          );
         },
         errorClass: CompanyNotFoundError,
       },
       {
         description: 'user not found',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue(null);
+          mockUserRepository.findByEmail.mockResolvedValue(null);
         },
         errorClass: UserNotFoundError,
       },
       {
         description: 'inactive user',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue({
+          mockUserRepository.findByEmail.mockResolvedValue({
             ...mockData.user,
             isActive: false,
           });
@@ -243,27 +294,25 @@ describe('AuthService', () => {
       {
         description: 'invalid password',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue(
-            mockData.user
-          );
-          (mockPasswordService.verify as jest.Mock).mockResolvedValue(false);
+          mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+          mockPasswordService.verify.mockResolvedValue(false);
         },
         errorClass: InvalidCredentialsError,
       },
       {
         description: 'user has no role in this company',
         setup: () => {
-          (prisma.user.findUnique as jest.Mock).mockResolvedValue(
-            mockData.user
-          );
-          (mockPasswordService.verify as jest.Mock).mockResolvedValue(true);
-          (prisma.domain.findFirst as jest.Mock).mockResolvedValue(
+          mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+          mockPasswordService.verify.mockResolvedValue(true);
+          mockDomainRepository.findByDomainName.mockResolvedValue(
             mockData.domain
           );
-          (prisma.companyDomain.findFirst as jest.Mock).mockResolvedValue(
+          mockCompanyDomainRepository.findByDomainIdWithCompany.mockResolvedValue(
             mockData.companyDomain
           );
-          (prisma.userRole.findFirst as jest.Mock).mockResolvedValue(null);
+          mockUserRoleRepository.findUserRoleByUserIdAndCompanyId.mockResolvedValue(
+            null
+          );
         },
         errorClass: NoRoleInCompanyError,
       },
@@ -280,6 +329,7 @@ describe('AuthService', () => {
   describe('logout', () => {
     it('should invalidate the token successfully', async () => {
       const token = 'some_token';
+      mockTokenService.invalidateToken.mockResolvedValue(undefined); // Mock the return value
       await authService.logout(token);
       expect(mockTokenService.invalidateToken).toHaveBeenCalledWith(token);
     });
