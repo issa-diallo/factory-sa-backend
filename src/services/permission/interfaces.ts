@@ -21,8 +21,5 @@ export interface IPermissionService {
   ): Promise<RolePermission>;
   getRolePermissionById(id: string): Promise<RolePermission | null>;
   getRolePermissionsByRoleId(roleId: string): Promise<RolePermission[]>;
-  getRolePermissionsByPermissionId(
-    permissionId: string
-  ): Promise<RolePermission[]>;
   deleteRolePermission(id: string): Promise<RolePermission>;
 }

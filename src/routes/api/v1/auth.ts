@@ -1,10 +1,12 @@
 import { Router } from 'express';
 import { AuthController } from '../../../controllers/authController';
 import { authenticate } from '../../../middlewares/authenticate';
+import { container } from 'tsyringe';
 
 const router: Router = Router();
+const authController = container.resolve(AuthController);
 
-router.post('/login', AuthController.login);
-router.post('/logout', authenticate, AuthController.logout);
+router.post('/login', authController.login);
+router.post('/logout', authenticate, authController.logout);
 
 export default router;

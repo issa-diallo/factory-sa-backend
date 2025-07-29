@@ -3,22 +3,53 @@ import {
   verifySession,
   decodeToken,
 } from '../../src/utils/tokenUtils';
-import { prisma } from '../../src/database/prismaClient';
 import { TokenService } from '../../src/services/auth/tokenService';
+import { container } from 'tsyringe';
+import { PrismaService } from '../../src/database/prismaClient';
 
+// Mock du container tsyringe pour contrôler les résolutions
+jest.mock('tsyringe', () => ({
+  container: {
+    resolve: jest.fn(),
+    clear: jest.fn(), // Ajout de clear pour réinitialiser le container
+    registerInstance: jest.fn(), // Ajout de registerInstance
+  },
+  inject: jest.fn(() => () => {}),
+  injectable: jest.fn(() => () => {}),
+}));
+
+// Mock de PrismaService
 jest.mock('../../src/database/prismaClient', () => ({
-  prisma: {
+  PrismaService: jest.fn().mockImplementation(() => ({
     session: {
       findUnique: jest.fn(),
     },
-  },
+  })),
 }));
 
-const mockTokenService = {
+const mockPrismaService = new PrismaService();
+
+// Mock du TokenService
+const mockTokenService: Partial<jest.Mocked<TokenService>> = {
   verifyToken: jest.fn(),
-} as unknown as TokenService;
+};
 
 describe('tokenUtils', () => {
+  beforeEach(() => {
+    jest.clearAllMocks();
+    // (container.clear as jest.Mock).mockClear(); // Commenté
+    // (container.registerInstance as jest.Mock).mockClear(); // Commenté
+    (container.resolve as jest.Mock).mockClear();
+
+    // Configurez le mock du container pour retourner l'instance mockée de IPrismaService
+    (container.resolve as jest.Mock).mockImplementation((token: string) => {
+      if (token === 'IPrismaService') {
+        return mockPrismaService;
+      }
+      throw new Error(`Unregistered dependency: ${token}`);
+    });
+  });
+
   describe('extractToken', () => {
     it('should extract token from Bearer header', () => {
       const token = extractToken('Bearer my-token');
@@ -44,14 +75,18 @@ describe('tokenUtils', () => {
         expiresAt: new Date(now.getTime() + 60_000),
       };
 
-      (prisma.session.findUnique as jest.Mock).mockResolvedValueOnce(session);
+      (
+        mockPrismaService.session!.findUnique as jest.Mock
+      ).mockResolvedValueOnce(session);
 
       const result = await verifySession('valid-token');
       expect(result).toEqual(session);
     });
 
     it('should throw error if session is not found', async () => {
-      (prisma.session.findUnique as jest.Mock).mockResolvedValueOnce(null);
+      (
+        mockPrismaService.session!.findUnique as jest.Mock
+      ).mockResolvedValueOnce(null);
 
       await expect(verifySession('invalid-token')).rejects.toThrow(
         'Session expired or invalid'
@@ -65,7 +100,9 @@ describe('tokenUtils', () => {
         expiresAt: new Date(now.getTime() - 60_000),
       };
 
-      (prisma.session.findUnique as jest.Mock).mockResolvedValueOnce(session);
+      (
+        mockPrismaService.session!.findUnique as jest.Mock
+      ).mockResolvedValueOnce(session);
 
       await expect(verifySession('expired-token')).rejects.toThrow(
         'Session expired or invalid'
@@ -82,9 +119,14 @@ describe('tokenUtils', () => {
         permissions: ['VIEW'],
       };
 
-      mockTokenService.verifyToken = jest.fn().mockResolvedValueOnce(decoded);
+      (mockTokenService.verifyToken as jest.Mock).mockResolvedValueOnce(
+        decoded
+      );
 
-      const result = await decodeToken(mockTokenService, 'some-token');
+      const result = await decodeToken(
+        mockTokenService as unknown as TokenService,
+        'some-token'
+      );
       expect(result).toEqual(decoded);
       expect(mockTokenService.verifyToken).toHaveBeenCalledWith('some-token');
     });

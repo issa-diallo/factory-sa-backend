@@ -2,58 +2,60 @@ import { Router } from 'express';
 import { authenticate } from '../../../middlewares/authenticate';
 import { authorize } from '../../../middlewares/authorize';
 import { UserManagementController } from '../../../controllers/userManagementController';
+import { container } from 'tsyringe';
 
 const router: Router = Router();
+const userManagementController = container.resolve(UserManagementController);
 
 router.post(
   '/',
   authenticate,
   authorize(['user:create']),
-  UserManagementController.createUser
+  userManagementController.createUser
 );
 router.get(
   '/',
   authenticate,
   authorize(['user:read']),
-  UserManagementController.getAllUsers
+  userManagementController.getAllUsers
 );
 router.get(
   '/:id/roles',
   authenticate,
   authorize(['user:read']),
-  UserManagementController.getUserRoles
+  userManagementController.getUserRoles
 );
 router.get(
   '/:id',
   authenticate,
   authorize(['user:read']),
-  UserManagementController.getUserById
+  userManagementController.getUserById
 );
 router.put(
   '/:id',
   authenticate,
   authorize(['user:update']),
-  UserManagementController.updateUser
+  userManagementController.updateUser
 );
 router.delete(
   '/:id',
   authenticate,
   authorize(['user:delete']),
-  UserManagementController.deleteUser
+  userManagementController.deleteUser
 );
 
 router.post(
   '/user-role',
   authenticate,
   authorize(['userRole:create']),
-  UserManagementController.createUserRole
+  userManagementController.createUserRole
 );
 
 router.delete(
   '/user-role/:id',
   authenticate,
   authorize(['userRole:delete']),
-  UserManagementController.deleteUserRole
+  userManagementController.deleteUserRole
 );
 
 export default router;

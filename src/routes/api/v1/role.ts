@@ -2,38 +2,40 @@ import { Router } from 'express';
 import { authenticate } from '../../../middlewares/authenticate';
 import { authorize } from '../../../middlewares/authorize';
 import { RoleController } from '../../../controllers/roleController';
+import { container } from 'tsyringe';
 
 const router: Router = Router();
+const roleController = container.resolve(RoleController);
 
 router.post(
   '/',
   authenticate,
   authorize(['role:create']),
-  RoleController.createRole
+  roleController.createRole
 );
 router.get(
   '/',
   authenticate,
   authorize(['role:read']),
-  RoleController.getAllRoles
+  roleController.getAllRoles
 );
 router.get(
   '/:id',
   authenticate,
   authorize(['role:read']),
-  RoleController.getRoleById
+  roleController.getRoleById
 );
 router.put(
   '/:id',
   authenticate,
   authorize(['role:update']),
-  RoleController.updateRole
+  roleController.updateRole
 );
 router.delete(
   '/:id',
   authenticate,
   authorize(['role:delete']),
-  RoleController.deleteRole
+  roleController.deleteRole
 );
 
 export default router;

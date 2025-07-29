@@ -1,4 +1,4 @@
-import { PrismaClient, Domain, CompanyDomain } from '../../generated/prisma';
+import { Domain, CompanyDomain } from '../../generated/prisma';
 import {
   CreateDomainRequest,
   UpdateDomainRequest,
@@ -9,46 +9,46 @@ import {
   DomainNotFoundError,
   CompanyDomainNotFoundError,
 } from '../../errors/customErrors';
-import { injectable } from 'tsyringe';
+import { injectable, inject } from 'tsyringe';
+import { IDomainRepository } from '../../repositories/domain/IDomainRepository';
+import { ICompanyDomainRepository } from '../../repositories/companyDomain/ICompanyDomainRepository';
 
 @injectable()
 export class DomainService implements IDomainService {
-  constructor(private prisma: PrismaClient) {}
+  private domainRepository: IDomainRepository;
+  private companyDomainRepository: ICompanyDomainRepository;
+
+  constructor(
+    @inject('IDomainRepository') domainRepository: IDomainRepository,
+    @inject('ICompanyDomainRepository')
+    companyDomainRepository: ICompanyDomainRepository
+  ) {
+    this.domainRepository = domainRepository;
+    this.companyDomainRepository = companyDomainRepository;
+  }
 
   async createDomain(data: CreateDomainRequest): Promise<Domain> {
-    return this.prisma.domain.create({
-      data: {
-        name: data.name,
-        isActive: data.isActive ?? true,
-      },
-    });
+    return this.domainRepository.create(data);
   }
 
   async getDomainById(id: string): Promise<Domain> {
-    const domain = await this.prisma.domain.findUnique({
-      where: { id },
-    });
+    const domain = await this.domainRepository.findById(id);
     if (!domain)
       throw new DomainNotFoundError(`Domain with ID ${id} not found.`);
     return domain;
   }
 
   async getDomainByName(name: string): Promise<Domain | null> {
-    return this.prisma.domain.findUnique({
-      where: { name },
-    });
+    return this.domainRepository.findByDomainName(name);
   }
 
   async getAllDomains(): Promise<Domain[]> {
-    return this.prisma.domain.findMany();
+    return this.domainRepository.findAll();
   }
 
   async updateDomain(id: string, data: UpdateDomainRequest): Promise<Domain> {
     try {
-      return await this.prisma.domain.update({
-        where: { id },
-        data,
-      });
+      return await this.domainRepository.update(id, data);
     } catch (error) {
       if (
         typeof error === 'object' &&
@@ -64,26 +64,21 @@ export class DomainService implements IDomainService {
   }
 
   async deleteDomain(id: string): Promise<Domain> {
-    return this.prisma.domain.delete({
-      where: { id },
-    });
+    return this.domainRepository.delete(id);
   }
 
   async createCompanyDomain(
     data: CreateCompanyDomainRequest
   ): Promise<CompanyDomain> {
-    return this.prisma.companyDomain.create({
-      data: {
-        companyId: data.companyId,
-        domainId: data.domainId,
-      },
-    });
+    const prismaData = {
+      company: { connect: { id: data.companyId } },
+      domain: { connect: { id: data.domainId } },
+    };
+    return this.companyDomainRepository.create(prismaData);
   }
 
   async getCompanyDomainById(id: string): Promise<CompanyDomain> {
-    const companyDomain = await this.prisma.companyDomain.findUnique({
-      where: { id },
-    });
+    const companyDomain = await this.companyDomainRepository.findById(id);
     if (!companyDomain) {
       throw new CompanyDomainNotFoundError(
         `Company domain with ID ${id} not found.`
@@ -95,30 +90,19 @@ export class DomainService implements IDomainService {
   async getCompanyDomainsByCompanyId(
     companyId: string
   ): Promise<CompanyDomain[]> {
-    return this.prisma.companyDomain.findMany({
-      where: { companyId },
-    });
+    return this.companyDomainRepository.findByCompanyId(companyId);
   }
 
   async getCompanyDomainsByDomainId(
     domainId: string
   ): Promise<CompanyDomain[]> {
-    return this.prisma.companyDomain.findMany({
-      where: { domainId },
-    });
+    return this.companyDomainRepository.findAllByDomainId(domainId);
   }
 
   async deleteCompanyDomain(
     companyId: string,
     domainId: string
   ): Promise<void> {
-    await this.prisma.companyDomain.delete({
-      where: {
-        companyId_domainId: {
-          companyId,
-          domainId,
-        },
-      },
-    });
+    await this.companyDomainRepository.delete(companyId, domainId);
   }
 }

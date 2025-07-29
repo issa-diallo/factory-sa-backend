@@ -1,10 +1,9 @@
 import { Request } from 'express';
+import { inject, injectable } from 'tsyringe';
 import { IPasswordService, ITokenService } from './interfaces';
 import { IAuthService } from './interfaces';
 import {
-  CompanyDomain,
   Domain,
-  PrismaClient,
   RolePermission,
   User,
   UserRole,
@@ -19,18 +18,38 @@ import {
   CompanyNotFoundError,
   UserNotActiveError,
 } from '../../errors/AuthErrors';
+import { IUserRepository } from '../../repositories/user/IUserRepository';
+import { IDomainRepository } from '../../repositories/domain/IDomainRepository';
+import { ICompanyDomainRepository } from '../../repositories/companyDomain/ICompanyDomainRepository';
+import { IUserRoleRepository } from '../../repositories/userRole/IUserRoleRepository';
+import { IRolePermissionRepository } from '../../repositories/rolePermission/IRolePermissionRepository';
 
+@injectable()
 export class AuthService implements IAuthService {
-  private prisma: PrismaClient;
+  private userRepository: IUserRepository;
+  private domainRepository: IDomainRepository;
+  private companyDomainRepository: ICompanyDomainRepository;
+  private userRoleRepository: IUserRoleRepository;
+  private rolePermissionRepository: IRolePermissionRepository;
   private passwordService: IPasswordService;
   private tokenService: ITokenService;
 
   constructor(
-    prisma: PrismaClient,
-    passwordService: IPasswordService,
-    tokenService: ITokenService
+    @inject('IUserRepository') userRepository: IUserRepository,
+    @inject('IDomainRepository') domainRepository: IDomainRepository,
+    @inject('ICompanyDomainRepository')
+    companyDomainRepository: ICompanyDomainRepository,
+    @inject('IUserRoleRepository') userRoleRepository: IUserRoleRepository,
+    @inject('IRolePermissionRepository')
+    rolePermissionRepository: IRolePermissionRepository,
+    @inject('IPasswordService') passwordService: IPasswordService,
+    @inject('ITokenService') tokenService: ITokenService
   ) {
-    this.prisma = prisma;
+    this.userRepository = userRepository;
+    this.domainRepository = domainRepository;
+    this.companyDomainRepository = companyDomainRepository;
+    this.userRoleRepository = userRoleRepository;
+    this.rolePermissionRepository = rolePermissionRepository;
     this.passwordService = passwordService;
     this.tokenService = tokenService;
   }
@@ -47,7 +66,15 @@ export class AuthService implements IAuthService {
     await this.validatePassword(password, user.password);
 
     const domainEntity = await this.getActiveDomain(domain);
-    const companyDomain = await this.getCompanyDomain(domainEntity.id);
+
+    const companyDomain =
+      await this.companyDomainRepository.findByDomainIdWithCompany(
+        domainEntity.id
+      );
+    if (!companyDomain || !companyDomain.company.isActive) {
+      throw new CompanyNotFoundError();
+    }
+
     const { userRole, permissions } = await this.getUserRoleAndPermissions(
       user.id,
       companyDomain.companyId
@@ -80,9 +107,8 @@ export class AuthService implements IAuthService {
   private async getActiveDomain(domain: string): Promise<Domain> {
     const normalizedDomain = domain.toLowerCase();
 
-    const domainEntity: Domain | null = await this.prisma.domain.findFirst({
-      where: { name: normalizedDomain, isActive: true },
-    });
+    const domainEntity: Domain | null =
+      await this.domainRepository.findByDomainName(normalizedDomain);
 
     if (!domainEntity) {
       throw new UserNotFoundError();
@@ -91,27 +117,8 @@ export class AuthService implements IAuthService {
     return domainEntity;
   }
 
-  private async getCompanyDomain(
-    domainId: string
-  ): Promise<CompanyDomain & { company: { isActive: boolean } }> {
-    const companyDomain:
-      | (CompanyDomain & { company: { isActive: boolean } })
-      | null = await this.prisma.companyDomain.findFirst({
-      where: { domainId },
-      include: { company: true },
-    });
-
-    if (!companyDomain || !companyDomain.company.isActive) {
-      throw new CompanyNotFoundError();
-    }
-
-    return companyDomain;
-  }
-
   private async getActiveUserByEmail(email: string): Promise<User> {
-    const user: User | null = await this.prisma.user.findUnique({
-      where: { email },
-    });
+    const user: User | null = await this.userRepository.findByEmail(email);
 
     if (!user) {
       throw new UserNotFoundError();
@@ -141,10 +148,10 @@ export class AuthService implements IAuthService {
     companyId: string
   ): Promise<{ userRole: UserRole; permissions: string[] }> {
     const userRole: (UserRole & { role: Role }) | null =
-      await this.prisma.userRole.findFirst({
-        where: { userId, companyId },
-        include: { role: true },
-      });
+      await this.userRoleRepository.findUserRoleByUserIdAndCompanyId(
+        userId,
+        companyId
+      );
 
     if (!userRole) {
       throw new NoRoleInCompanyError();
@@ -152,10 +159,9 @@ export class AuthService implements IAuthService {
 
     const rolePermissions: (RolePermission & {
       permission: { name: string };
-    })[] = await this.prisma.rolePermission.findMany({
-      where: { roleId: userRole.roleId },
-      include: { permission: true },
-    });
+    })[] = await this.rolePermissionRepository.findRolePermissionsByRoleId(
+      userRole.roleId
+    );
 
     const permissions = rolePermissions.map(rp => rp.permission.name);
 
@@ -163,12 +169,6 @@ export class AuthService implements IAuthService {
   }
 
   private async updateLastLogin(userId: string, req: Request): Promise<void> {
-    await this.prisma.user.update({
-      where: { id: userId },
-      data: {
-        lastLoginAt: new Date(),
-        lastLoginIp: getClientIp(req),
-      },
-    });
+    await this.userRepository.updateUserLastLogin(userId, getClientIp(req));
   }
 }

@@ -1,10 +1,9 @@
 // tests/controllers/companyController.test.ts
 import { Request, Response } from 'express';
 import { CompanyController } from '../../src/controllers/companyController';
-import { ICompanyService } from '../../src/services/company/interfaces';
 import { Company } from '../../src/generated/prisma';
 import { generateValidCompany } from '../fixtures/company/generateCompanyFixtures';
-
+import { ICompanyRepository } from '../../src/repositories/company/ICompanyRepository';
 function createMockResponse(): Response {
   return {
     status: jest.fn().mockReturnThis(),
@@ -14,13 +13,13 @@ function createMockResponse(): Response {
 }
 
 describe('CompanyController with mocked service', () => {
-  let mockService: jest.Mocked<ICompanyService>;
+  let mockService: jest.Mocked<ICompanyRepository>;
   let controller: CompanyController;
   let res: Response;
 
   beforeEach(() => {
     mockService = {
-      createCompany: jest.fn(),
+      create: jest.fn(),
       getCompanyById: jest.fn(),
       getAllCompanies: jest.fn(),
       updateCompany: jest.fn(),
@@ -31,18 +30,18 @@ describe('CompanyController with mocked service', () => {
     res = createMockResponse();
   });
 
-  describe('createCompany', () => {
+  describe('create', () => {
     it('should create a company and return 201 status', async () => {
       const newCompany = generateValidCompany()[0];
       const req = { body: newCompany } as Request;
-      mockService.createCompany.mockResolvedValueOnce({
+      mockService.create.mockResolvedValueOnce({
         id: 'company-id-1',
         ...newCompany,
       } as Company);
 
-      await controller.createCompany(req, res);
+      await controller.create(req, res);
 
-      expect(mockService.createCompany).toHaveBeenCalledWith(newCompany);
+      expect(mockService.create).toHaveBeenCalledWith(newCompany);
       expect(res.status).toHaveBeenCalledWith(201);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ id: 'company-id-1', name: newCompany.name })
@@ -51,7 +50,7 @@ describe('CompanyController with mocked service', () => {
 
     it('should return 400 for invalid validation data', async () => {
       const req = { body: { name: 123 } } as unknown as Request; // Invalid data
-      await controller.createCompany(req, res);
+      await controller.create(req, res);
       expect(res.status).toHaveBeenCalledWith(400);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Invalid validation data' })
@@ -61,18 +60,18 @@ describe('CompanyController with mocked service', () => {
     it('should return 409 if company name already exists', async () => {
       const existingCompany = generateValidCompany()[0];
       const req = { body: existingCompany } as Request;
-      mockService.createCompany.mockRejectedValueOnce({
+      mockService.create.mockRejectedValueOnce({
         code: 'P2002', // Prisma error code for unique constraint violation
         meta: { target: ['name'] },
       });
 
-      await controller.createCompany(req, res);
+      await controller.create(req, res);
 
-      expect(mockService.createCompany).toHaveBeenCalledWith(existingCompany);
+      expect(mockService.create).toHaveBeenCalledWith(existingCompany);
       expect(res.status).toHaveBeenCalledWith(409);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({
-          message: 'Company with this name already exists.',
+          message: 'Resource already exists.',
         })
       );
     });
@@ -80,13 +79,13 @@ describe('CompanyController with mocked service', () => {
     it('should return 500 if an unexpected error occurs', async () => {
       const newCompany = generateValidCompany()[0];
       const req = { body: newCompany } as Request;
-      mockService.createCompany.mockRejectedValueOnce(
+      mockService.create.mockRejectedValueOnce(
         new Error('Something went wrong')
       );
 
-      await controller.createCompany(req, res);
+      await controller.create(req, res);
 
-      expect(mockService.createCompany).toHaveBeenCalledWith(newCompany);
+      expect(mockService.create).toHaveBeenCalledWith(newCompany);
       expect(res.status).toHaveBeenCalledWith(500);
       expect(res.json).toHaveBeenCalledWith(
         expect.objectContaining({ message: 'Something went wrong' })

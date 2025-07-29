@@ -1,4 +1,4 @@
-# 🏭 Factory Backend
+# 🏠 Factory Backend
 
 Backend for the Factory application, developed with Node.js, Express, and TypeScript.
 
@@ -10,6 +10,7 @@ Backend for the Factory application, developed with Node.js, Express, and TypeSc
 - [Available Scripts](#-available-scripts)
 - [Tests](#-tests)
 - [Project Structure](#-project-structure)
+- [Architecture Overview](#-architecture-overview)
 - [Database (Prisma & PostgreSQL)](#-database-prisma--postgresql)
 - [Linting and Formatting](#-linting-and-formatting)
 
@@ -152,7 +153,38 @@ To set up your development environment with Docker Compose:
 - `pnpm lint`: Fix linting errors
 - `pnpm format`: Format the code
 
-## 🧪 Tests
+## 🤪 Architecture Overview
+
+The backend follows a **modular architecture** combining:
+
+### ✅ Repository Pattern
+
+Each domain has an interface (e.g., `ICompanyRepository`) and a concrete implementation (e.g., `PrismaCompanyRepository`) to abstract Prisma operations.
+
+### ✅ Dependency Injection (with `tsyringe`)
+
+All dependencies are injected using the `@injectable()` and `@inject()` decorators, enabling loose coupling and easy mocking for tests.
+
+### ✅ Service Layer
+
+Services encapsulate the business logic and orchestrate calls to the repositories. Example: `CompanyService`, `AuthService`.
+
+### 📆 Inspired by Clean Architecture
+
+Although not fully DDD or hexagonal, the structure aligns with Clean Architecture principles:
+
+- Separation of concerns
+- Inversion of control
+- Testable and pluggable modules
+
+**Layers**:
+
+- `controllers/` — HTTP handlers
+- `services/` — business logic
+- `repositories/` — data persistence layer
+- `types/`, `schemas/`, `utils/` — shared concerns
+
+## 🕰️ Tests
 
 The project uses Jest for testing. Test files are organized into two categories:
 

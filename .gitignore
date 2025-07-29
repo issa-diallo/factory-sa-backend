@@ -10,3 +10,5 @@ tests/schemas/*.prod.test.ts
 docker-compose.override.yml
 
 *.sh
+.env
+.env.local

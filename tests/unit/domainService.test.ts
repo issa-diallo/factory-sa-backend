@@ -5,63 +5,42 @@ import {
   CreateCompanyDomainRequest,
 } from '../../src/types/domain';
 import { Domain, CompanyDomain } from '../../src/generated/prisma';
+import { IDomainRepository } from '../../src/repositories/domain/IDomainRepository';
+import { ICompanyDomainRepository } from '../../src/repositories/companyDomain/ICompanyDomainRepository';
+import {
+  DomainNotFoundError,
+  CompanyDomainNotFoundError,
+} from '../../src/errors/customErrors';
 
-// Mock the entire prismaClient module
-jest.mock('../../src/database/prismaClient', () => ({
-  prisma: {
-    domain: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      update: jest.fn(),
-      delete: jest.fn(),
-    },
-    companyDomain: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      findMany: jest.fn(),
-      delete: jest.fn(),
-    },
-  },
-}));
+// Mock des dépôts
+const mockDomainRepository: jest.Mocked<IDomainRepository> = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByDomainName: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
 
-const mockPrisma = {
-  domain: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    update: jest.fn(),
-    delete: jest.fn(),
-  },
-  companyDomain: {
-    create: jest.fn(),
-    findUnique: jest.fn(),
-    findMany: jest.fn(),
-    delete: jest.fn(),
-  },
-} as unknown as {
-  domain: {
-    create: jest.Mock;
-    findUnique: jest.Mock;
-    findMany: jest.Mock;
-    update: jest.Mock;
-    delete: jest.Mock;
-  };
-  companyDomain: {
-    create: jest.Mock;
-    findUnique: jest.Mock;
-    findMany: jest.Mock;
-    delete: jest.Mock;
-  };
+const mockCompanyDomainRepository: jest.Mocked<ICompanyDomainRepository> = {
+  findByDomainId: jest.fn(),
+  findByDomainIdWithCompany: jest.fn(),
+  create: jest.fn(),
+  delete: jest.fn(),
+  findByCompanyId: jest.fn(),
+  findAllByDomainId: jest.fn(),
+  findById: jest.fn(), // Ajout de la méthode findById
 };
 
 describe('DomainService', () => {
   let domainService: DomainService;
 
   beforeEach(() => {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    domainService = new DomainService(mockPrisma as any);
     jest.clearAllMocks();
+    domainService = new DomainService(
+      mockDomainRepository,
+      mockCompanyDomainRepository
+    );
   });
 
   describe('createDomain', () => {
@@ -73,20 +52,15 @@ describe('DomainService', () => {
       const createdDomain: Domain = {
         id: 'domain1',
         name: domainData.name,
-        isActive: domainData.isActive ?? true, // Ensure isActive is always boolean
+        isActive: domainData.isActive ?? true,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.domain.create.mockResolvedValue(createdDomain);
+      mockDomainRepository.create.mockResolvedValue(createdDomain);
 
       const result = await domainService.createDomain(domainData);
 
-      expect(mockPrisma.domain.create).toHaveBeenCalledWith({
-        data: {
-          name: domainData.name,
-          isActive: domainData.isActive,
-        },
-      });
+      expect(mockDomainRepository.create).toHaveBeenCalledWith(domainData);
       expect(result).toEqual(createdDomain);
     });
 
@@ -101,16 +75,11 @@ describe('DomainService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.domain.create.mockResolvedValue(createdDomain);
+      mockDomainRepository.create.mockResolvedValue(createdDomain);
 
       const result = await domainService.createDomain(domainData);
 
-      expect(mockPrisma.domain.create).toHaveBeenCalledWith({
-        data: {
-          name: domainData.name,
-          isActive: true,
-        },
-      });
+      expect(mockDomainRepository.create).toHaveBeenCalledWith(domainData);
       expect(result).toEqual(createdDomain);
     });
 
@@ -120,17 +89,12 @@ describe('DomainService', () => {
         isActive: true,
       };
       const error = new Error('Database error');
-      mockPrisma.domain.create.mockRejectedValue(error);
+      mockDomainRepository.create.mockRejectedValue(error);
 
       await expect(domainService.createDomain(domainData)).rejects.toThrow(
         error
       );
-      expect(mockPrisma.domain.create).toHaveBeenCalledWith({
-        data: {
-          name: domainData.name,
-          isActive: domainData.isActive,
-        },
-      });
+      expect(mockDomainRepository.create).toHaveBeenCalledWith(domainData);
     });
   });
 
@@ -144,39 +108,33 @@ describe('DomainService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.domain.findUnique.mockResolvedValue(domain);
+      mockDomainRepository.findById.mockResolvedValue(domain);
 
       const result = await domainService.getDomainById(domainId);
 
-      expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
-        where: { id: domainId },
-      });
+      expect(mockDomainRepository.findById).toHaveBeenCalledWith(domainId);
       expect(result).toEqual(domain);
     });
 
     it('should throw DomainNotFoundError if no domain is found by ID', async () => {
       const domainId = 'nonexistent';
-      mockPrisma.domain.findUnique.mockResolvedValue(null);
+      mockDomainRepository.findById.mockResolvedValue(null);
 
       await expect(domainService.getDomainById(domainId)).rejects.toThrow(
-        `Domain with ID ${domainId} not found.`
+        new DomainNotFoundError(`Domain with ID ${domainId} not found.`)
       );
-      expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
-        where: { id: domainId },
-      });
+      expect(mockDomainRepository.findById).toHaveBeenCalledWith(domainId);
     });
 
     it('should reject if fetching by ID fails', async () => {
       const domainId = 'domain1';
       const error = new Error('Database error');
-      mockPrisma.domain.findUnique.mockRejectedValue(error);
+      mockDomainRepository.findById.mockRejectedValue(error);
 
       await expect(domainService.getDomainById(domainId)).rejects.toThrow(
         error
       );
-      expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
-        where: { id: domainId },
-      });
+      expect(mockDomainRepository.findById).toHaveBeenCalledWith(domainId);
     });
   });
 
@@ -190,39 +148,39 @@ describe('DomainService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.domain.findUnique.mockResolvedValue(domain);
+      mockDomainRepository.findByDomainName.mockResolvedValue(domain);
 
       const result = await domainService.getDomainByName(domainName);
 
-      expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
-        where: { name: domainName },
-      });
+      expect(mockDomainRepository.findByDomainName).toHaveBeenCalledWith(
+        domainName
+      );
       expect(result).toEqual(domain);
     });
 
     it('should return null if no domain is found by name', async () => {
       const domainName = 'nonexistent.com';
-      mockPrisma.domain.findUnique.mockResolvedValue(null);
+      mockDomainRepository.findByDomainName.mockResolvedValue(null);
 
       const result = await domainService.getDomainByName(domainName);
 
-      expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
-        where: { name: domainName },
-      });
+      expect(mockDomainRepository.findByDomainName).toHaveBeenCalledWith(
+        domainName
+      );
       expect(result).toBeNull();
     });
 
     it('should reject if fetching by name fails', async () => {
       const domainName = 'test.com';
       const error = new Error('Database error');
-      mockPrisma.domain.findUnique.mockRejectedValue(error);
+      mockDomainRepository.findByDomainName.mockRejectedValue(error);
 
       await expect(domainService.getDomainByName(domainName)).rejects.toThrow(
         error
       );
-      expect(mockPrisma.domain.findUnique).toHaveBeenCalledWith({
-        where: { name: domainName },
-      });
+      expect(mockDomainRepository.findByDomainName).toHaveBeenCalledWith(
+        domainName
+      );
     });
   });
 
@@ -244,29 +202,29 @@ describe('DomainService', () => {
           updatedAt: new Date(),
         },
       ];
-      mockPrisma.domain.findMany.mockResolvedValue(domains);
+      mockDomainRepository.findAll.mockResolvedValue(domains);
 
       const result = await domainService.getAllDomains();
 
-      expect(mockPrisma.domain.findMany).toHaveBeenCalledWith();
+      expect(mockDomainRepository.findAll).toHaveBeenCalledWith();
       expect(result).toEqual(domains);
     });
 
     it('should return an empty array if no domains are found', async () => {
-      mockPrisma.domain.findMany.mockResolvedValue([]);
+      mockDomainRepository.findAll.mockResolvedValue([]);
 
       const result = await domainService.getAllDomains();
 
-      expect(mockPrisma.domain.findMany).toHaveBeenCalledWith();
+      expect(mockDomainRepository.findAll).toHaveBeenCalledWith();
       expect(result).toEqual([]);
     });
 
     it('should reject if fetching all domains fails', async () => {
       const error = new Error('Database error');
-      mockPrisma.domain.findMany.mockRejectedValue(error);
+      mockDomainRepository.findAll.mockRejectedValue(error);
 
       await expect(domainService.getAllDomains()).rejects.toThrow(error);
-      expect(mockPrisma.domain.findMany).toHaveBeenCalledWith();
+      expect(mockDomainRepository.findAll).toHaveBeenCalledWith();
     });
   });
 
@@ -284,30 +242,54 @@ describe('DomainService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.domain.update.mockResolvedValue(updatedDomain);
+      mockDomainRepository.update.mockResolvedValue(updatedDomain);
 
       const result = await domainService.updateDomain(domainId, updateData);
 
-      expect(mockPrisma.domain.update).toHaveBeenCalledWith({
-        where: { id: domainId },
-        data: updateData,
-      });
+      expect(mockDomainRepository.update).toHaveBeenCalledWith(
+        domainId,
+        updateData
+      );
       expect(result).toEqual(updatedDomain);
     });
 
-    it('should reject if update fails', async () => {
+    it('should throw DomainNotFoundError if domain to update is not found (P2025)', async () => {
+      const domainId = 'notfound';
+      const updateData: UpdateDomainRequest = { name: 'notfound.com' };
+
+      const prismaError = {
+        code: 'P2025',
+        message: 'Record to update not found.',
+        name: 'PrismaClientKnownRequestError',
+      };
+
+      mockDomainRepository.update.mockRejectedValue(prismaError);
+
+      await expect(
+        domainService.updateDomain(domainId, updateData)
+      ).rejects.toThrow(
+        new DomainNotFoundError(`Domain with ID ${domainId} not found.`)
+      );
+
+      expect(mockDomainRepository.update).toHaveBeenCalledWith(
+        domainId,
+        updateData
+      );
+    });
+
+    it('should reject if update fails with generic error', async () => {
       const domainId = 'domain1';
       const updateData: UpdateDomainRequest = { name: 'fail-update.com' };
       const error = new Error('Database error');
-      mockPrisma.domain.update.mockRejectedValue(error);
+      mockDomainRepository.update.mockRejectedValue(error);
 
       await expect(
         domainService.updateDomain(domainId, updateData)
       ).rejects.toThrow(error);
-      expect(mockPrisma.domain.update).toHaveBeenCalledWith({
-        where: { id: domainId },
-        data: updateData,
-      });
+      expect(mockDomainRepository.update).toHaveBeenCalledWith(
+        domainId,
+        updateData
+      );
     });
   });
 
@@ -321,25 +303,21 @@ describe('DomainService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.domain.delete.mockResolvedValue(deletedDomain);
+      mockDomainRepository.delete.mockResolvedValue(deletedDomain);
 
       const result = await domainService.deleteDomain(domainId);
 
-      expect(mockPrisma.domain.delete).toHaveBeenCalledWith({
-        where: { id: domainId },
-      });
+      expect(mockDomainRepository.delete).toHaveBeenCalledWith(domainId);
       expect(result).toEqual(deletedDomain);
     });
 
     it('should reject if deletion fails', async () => {
       const domainId = 'domain1';
       const error = new Error('Database error');
-      mockPrisma.domain.delete.mockRejectedValue(error);
+      mockDomainRepository.delete.mockRejectedValue(error);
 
       await expect(domainService.deleteDomain(domainId)).rejects.toThrow(error);
-      expect(mockPrisma.domain.delete).toHaveBeenCalledWith({
-        where: { id: domainId },
-      });
+      expect(mockDomainRepository.delete).toHaveBeenCalledWith(domainId);
     });
   });
 
@@ -351,19 +329,20 @@ describe('DomainService', () => {
       };
       const createdCompanyDomain: CompanyDomain = {
         id: 'companyDomain1',
-        ...companyDomainData,
+        companyId: companyDomainData.companyId,
+        domainId: companyDomainData.domainId,
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.companyDomain.create.mockResolvedValue(createdCompanyDomain);
+      mockCompanyDomainRepository.create.mockResolvedValue(
+        createdCompanyDomain
+      );
 
       const result = await domainService.createCompanyDomain(companyDomainData);
 
-      expect(mockPrisma.companyDomain.create).toHaveBeenCalledWith({
-        data: {
-          companyId: companyDomainData.companyId,
-          domainId: companyDomainData.domainId,
-        },
+      expect(mockCompanyDomainRepository.create).toHaveBeenCalledWith({
+        company: { connect: { id: companyDomainData.companyId } },
+        domain: { connect: { id: companyDomainData.domainId } },
       });
       expect(result).toEqual(createdCompanyDomain);
     });
@@ -374,16 +353,14 @@ describe('DomainService', () => {
         domainId: 'domain1',
       };
       const error = new Error('Database error');
-      mockPrisma.companyDomain.create.mockRejectedValue(error);
+      mockCompanyDomainRepository.create.mockRejectedValue(error);
 
       await expect(
         domainService.createCompanyDomain(companyDomainData)
       ).rejects.toThrow(error);
-      expect(mockPrisma.companyDomain.create).toHaveBeenCalledWith({
-        data: {
-          companyId: companyDomainData.companyId,
-          domainId: companyDomainData.domainId,
-        },
+      expect(mockCompanyDomainRepository.create).toHaveBeenCalledWith({
+        company: { connect: { id: companyDomainData.companyId } },
+        domain: { connect: { id: companyDomainData.domainId } },
       });
     });
   });
@@ -398,39 +375,43 @@ describe('DomainService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      mockPrisma.companyDomain.findUnique.mockResolvedValue(companyDomain);
+      mockCompanyDomainRepository.findById.mockResolvedValue(companyDomain);
 
       const result = await domainService.getCompanyDomainById(companyDomainId);
 
-      expect(mockPrisma.companyDomain.findUnique).toHaveBeenCalledWith({
-        where: { id: companyDomainId },
-      });
+      expect(mockCompanyDomainRepository.findById).toHaveBeenCalledWith(
+        companyDomainId
+      );
       expect(result).toEqual(companyDomain);
     });
 
     it('should throw CompanyDomainNotFoundError if no company domain is found by ID', async () => {
       const companyDomainId = 'nonexistent';
-      mockPrisma.companyDomain.findUnique.mockResolvedValue(null);
+      mockCompanyDomainRepository.findById.mockResolvedValue(null);
 
       await expect(
         domainService.getCompanyDomainById(companyDomainId)
-      ).rejects.toThrow(`Company domain with ID ${companyDomainId} not found.`);
-      expect(mockPrisma.companyDomain.findUnique).toHaveBeenCalledWith({
-        where: { id: companyDomainId },
-      });
+      ).rejects.toThrow(
+        new CompanyDomainNotFoundError(
+          `Company domain with ID ${companyDomainId} not found.`
+        )
+      );
+      expect(mockCompanyDomainRepository.findById).toHaveBeenCalledWith(
+        companyDomainId
+      );
     });
 
     it('should reject if fetching by ID fails', async () => {
       const companyDomainId = 'companyDomain1';
       const error = new Error('Database error');
-      mockPrisma.companyDomain.findUnique.mockRejectedValue(error);
+      mockCompanyDomainRepository.findById.mockRejectedValue(error);
 
       await expect(
         domainService.getCompanyDomainById(companyDomainId)
       ).rejects.toThrow(error);
-      expect(mockPrisma.companyDomain.findUnique).toHaveBeenCalledWith({
-        where: { id: companyDomainId },
-      });
+      expect(mockCompanyDomainRepository.findById).toHaveBeenCalledWith(
+        companyDomainId
+      );
     });
   });
 
@@ -453,41 +434,43 @@ describe('DomainService', () => {
           updatedAt: new Date(),
         },
       ];
-      mockPrisma.companyDomain.findMany.mockResolvedValue(companyDomains);
+      mockCompanyDomainRepository.findByCompanyId.mockResolvedValue(
+        companyDomains
+      );
 
       const result =
         await domainService.getCompanyDomainsByCompanyId(companyId);
 
-      expect(mockPrisma.companyDomain.findMany).toHaveBeenCalledWith({
-        where: { companyId },
-      });
+      expect(mockCompanyDomainRepository.findByCompanyId).toHaveBeenCalledWith(
+        companyId
+      );
       expect(result).toEqual(companyDomains);
     });
 
     it('should return an empty array if no company domains are found by company ID', async () => {
       const companyId = 'nonexistent';
-      mockPrisma.companyDomain.findMany.mockResolvedValue([]);
+      mockCompanyDomainRepository.findByCompanyId.mockResolvedValue([]);
 
       const result =
         await domainService.getCompanyDomainsByCompanyId(companyId);
 
-      expect(mockPrisma.companyDomain.findMany).toHaveBeenCalledWith({
-        where: { companyId },
-      });
+      expect(mockCompanyDomainRepository.findByCompanyId).toHaveBeenCalledWith(
+        companyId
+      );
       expect(result).toEqual([]);
     });
 
     it('should reject if fetching by company ID fails', async () => {
       const companyId = 'company1';
       const error = new Error('Database error');
-      mockPrisma.companyDomain.findMany.mockRejectedValue(error);
+      mockCompanyDomainRepository.findByCompanyId.mockRejectedValue(error);
 
       await expect(
         domainService.getCompanyDomainsByCompanyId(companyId)
       ).rejects.toThrow(error);
-      expect(mockPrisma.companyDomain.findMany).toHaveBeenCalledWith({
-        where: { companyId },
-      });
+      expect(mockCompanyDomainRepository.findByCompanyId).toHaveBeenCalledWith(
+        companyId
+      );
     });
   });
 
@@ -510,60 +493,41 @@ describe('DomainService', () => {
           updatedAt: new Date(),
         },
       ];
-      mockPrisma.companyDomain.findMany.mockResolvedValue(companyDomains);
+      mockCompanyDomainRepository.findAllByDomainId.mockResolvedValue(
+        companyDomains
+      );
 
       const result = await domainService.getCompanyDomainsByDomainId(domainId);
 
-      expect(mockPrisma.companyDomain.findMany).toHaveBeenCalledWith({
-        where: { domainId },
-      });
+      expect(
+        mockCompanyDomainRepository.findAllByDomainId
+      ).toHaveBeenCalledWith(domainId);
       expect(result).toEqual(companyDomains);
     });
 
     it('should return an empty array if no company domains are found by domain ID', async () => {
       const domainId = 'nonexistent';
-      mockPrisma.companyDomain.findMany.mockResolvedValue([]);
+      mockCompanyDomainRepository.findAllByDomainId.mockResolvedValue([]);
 
       const result = await domainService.getCompanyDomainsByDomainId(domainId);
 
-      expect(mockPrisma.companyDomain.findMany).toHaveBeenCalledWith({
-        where: { domainId },
-      });
+      expect(
+        mockCompanyDomainRepository.findAllByDomainId
+      ).toHaveBeenCalledWith(domainId);
       expect(result).toEqual([]);
     });
 
     it('should reject if fetching by domain ID fails', async () => {
       const domainId = 'domain1';
       const error = new Error('Database error');
-      mockPrisma.companyDomain.findMany.mockRejectedValue(error);
+      mockCompanyDomainRepository.findAllByDomainId.mockRejectedValue(error);
 
       await expect(
         domainService.getCompanyDomainsByDomainId(domainId)
       ).rejects.toThrow(error);
-      expect(mockPrisma.companyDomain.findMany).toHaveBeenCalledWith({
-        where: { domainId },
-      });
-    });
-    it('should throw DomainNotFoundError if domain to update is not found (P2025)', async () => {
-      const domainId = 'notfound';
-      const updateData: UpdateDomainRequest = { name: 'notfound.com' };
-
-      const prismaError = {
-        code: 'P2025',
-        message: 'Record to update not found.',
-        name: 'PrismaClientKnownRequestError',
-      };
-
-      mockPrisma.domain.update.mockRejectedValue(prismaError);
-
-      await expect(
-        domainService.updateDomain(domainId, updateData)
-      ).rejects.toThrow(`Domain with ID ${domainId} not found.`);
-
-      expect(mockPrisma.domain.update).toHaveBeenCalledWith({
-        where: { id: domainId },
-        data: updateData,
-      });
+      expect(
+        mockCompanyDomainRepository.findAllByDomainId
+      ).toHaveBeenCalledWith(domainId);
     });
   });
 
@@ -572,29 +536,31 @@ describe('DomainService', () => {
       const companyId = 'company1';
       const domainId = 'domain1';
 
-      mockPrisma.companyDomain.delete.mockResolvedValue({});
+      mockCompanyDomainRepository.delete.mockResolvedValue(undefined);
 
       await expect(
         domainService.deleteCompanyDomain(companyId, domainId)
       ).resolves.toBeUndefined();
 
-      expect(mockPrisma.companyDomain.delete).toHaveBeenCalledWith({
-        where: { companyId_domainId: { companyId, domainId } },
-      });
+      expect(mockCompanyDomainRepository.delete).toHaveBeenCalledWith(
+        companyId,
+        domainId
+      );
     });
 
     it('should reject if deletion fails', async () => {
       const companyId = 'company1';
       const domainId = 'domain1';
       const error = new Error('Database error');
-      mockPrisma.companyDomain.delete.mockRejectedValue(error);
+      mockCompanyDomainRepository.delete.mockRejectedValue(error);
 
       await expect(
         domainService.deleteCompanyDomain(companyId, domainId)
       ).rejects.toThrow(error);
-      expect(mockPrisma.companyDomain.delete).toHaveBeenCalledWith({
-        where: { companyId_domainId: { companyId, domainId } },
-      });
+      expect(mockCompanyDomainRepository.delete).toHaveBeenCalledWith(
+        companyId,
+        domainId
+      );
     });
   });
 });

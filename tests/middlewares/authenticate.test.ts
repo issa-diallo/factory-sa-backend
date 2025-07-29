@@ -1,9 +1,31 @@
-import { Request, Response, NextFunction } from 'express';
+import { Request, Response } from 'express';
 import { TokenPayload } from '../../src/types/auth';
-import { TokenService } from '../../src/services/auth/tokenService';
+import { authenticate } from '../../src/middlewares/authenticate';
+import { container } from 'tsyringe';
 
-jest.dontMock('../../src/middlewares/authenticate'); // Force Jest to not mock this module
-import { createAuthenticateMiddleware } from '../../src/middlewares/authenticate';
+jest.mock('../../src/utils/tokenUtils', () => ({
+  extractToken: jest.fn(),
+  verifySession: jest.fn(),
+  decodeToken: jest.fn(),
+}));
+
+const mockTokenServiceInstance = {
+  verifyToken: jest.fn(),
+  invalidateToken: jest.fn(),
+};
+jest.mock('../../src/services/auth/tokenService', () => ({
+  TokenService: jest.fn().mockImplementation(() => mockTokenServiceInstance),
+}));
+
+jest.mock('tsyringe', () => ({
+  container: {
+    resolve: jest.fn(),
+  },
+  inject: jest.fn(() => () => {}),
+  injectable: jest.fn(() => () => {}),
+}));
+
+import * as mockTokenUtils from '../../src/utils/tokenUtils';
 
 describe('authenticate middleware', () => {
   const mockToken = 'valid-token';
@@ -14,72 +36,49 @@ describe('authenticate middleware', () => {
     permissions: ['USER_READ'],
   };
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let req: any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let res: any;
+  let req: Request;
+  let res: Response;
   let next: jest.Mock;
-  let mockTokenService: TokenService;
-  let mockTokenUtils: {
-    extractToken: jest.Mock;
-    verifySession: jest.Mock;
-    decodeToken: jest.Mock;
-  };
-  let authenticateMiddleware: (
-    req: Request,
-    res: Response,
-    next: NextFunction
-  ) => Promise<void | Response>;
 
   beforeEach(() => {
     jest.clearAllMocks();
 
-    mockTokenService = {
-      verifyToken: jest.fn().mockResolvedValue(mockDecoded),
-    } as unknown as TokenService;
-
-    mockTokenUtils = {
-      extractToken: jest.fn(),
-      verifySession: jest.fn(),
-      decodeToken: jest.fn(),
-    };
-
-    mockTokenUtils.extractToken.mockReturnValue(mockToken);
-    mockTokenUtils.verifySession.mockResolvedValue(undefined);
-    mockTokenUtils.decodeToken.mockResolvedValue(mockDecoded);
-
-    authenticateMiddleware = createAuthenticateMiddleware(
-      mockTokenService,
-      mockTokenUtils
+    (container.resolve as jest.Mock).mockReturnValue(mockTokenServiceInstance);
+    (mockTokenServiceInstance.verifyToken as jest.Mock).mockResolvedValue(
+      mockDecoded
     );
+
+    (mockTokenUtils.extractToken as jest.Mock).mockReturnValue(mockToken);
+    (mockTokenUtils.verifySession as jest.Mock).mockResolvedValue(undefined);
+    (mockTokenUtils.decodeToken as jest.Mock).mockResolvedValue(mockDecoded);
 
     req = {
       headers: {
         authorization: `Bearer ${mockToken}`,
       },
       user: undefined,
-    };
+    } as Request;
 
     res = {
       status: jest.fn().mockReturnThis(),
       json: jest.fn(),
-    };
+    } as unknown as Response;
 
     next = jest.fn();
   });
 
   it('should attach user to req and call next()', async () => {
-    await authenticateMiddleware(req, res, next);
+    await authenticate(req, res, next);
 
     expect(req.user).toEqual(mockDecoded);
     expect(next).toHaveBeenCalled();
   });
 
   it('should return 401 if no Authorization header', async () => {
-    mockTokenUtils.extractToken.mockReturnValue(null);
+    (mockTokenUtils.extractToken as jest.Mock).mockReturnValue(null);
     req.headers = {};
 
-    await authenticateMiddleware(req, res, next);
+    await authenticate(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({
@@ -89,11 +88,11 @@ describe('authenticate middleware', () => {
   });
 
   it('should return 401 if verifySession throws', async () => {
-    mockTokenUtils.verifySession.mockRejectedValue(
+    (mockTokenUtils.verifySession as jest.Mock).mockRejectedValue(
       new Error('Invalid session')
     );
 
-    await authenticateMiddleware(req, res, next);
+    await authenticate(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ message: 'Invalid token' });
@@ -101,9 +100,11 @@ describe('authenticate middleware', () => {
   });
 
   it('should return 401 if decodeToken throws', async () => {
-    mockTokenUtils.decodeToken.mockRejectedValue(new Error('Invalid token'));
+    (mockTokenUtils.decodeToken as jest.Mock).mockRejectedValue(
+      new Error('Invalid token')
+    );
 
-    await authenticateMiddleware(req, res, next);
+    await authenticate(req, res, next);
 
     expect(res.status).toHaveBeenCalledWith(401);
     expect(res.json).toHaveBeenCalledWith({ message: 'Invalid token' });

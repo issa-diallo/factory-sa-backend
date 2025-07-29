@@ -3,7 +3,8 @@ import { faker } from '@faker-js/faker';
 import { User } from '../../src/generated/prisma/client';
 import { PasswordService } from '../../src/services/auth/passwordService';
 
-const passwordService = new PasswordService();
+import { container } from 'tsyringe';
+const passwordService = container.resolve(PasswordService);
 
 interface CreateTestUserOptions {
   email?: string;

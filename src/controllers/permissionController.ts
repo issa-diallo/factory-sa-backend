@@ -1,54 +1,38 @@
 import { Request, Response } from 'express';
-import { ZodError } from 'zod';
-import { prisma } from '../database/prismaClient';
+import { inject, injectable } from 'tsyringe';
 import { PermissionService } from '../services/permission/permissionService';
 import {
   createPermissionSchema,
   createRolePermissionSchema,
   updatePermissionSchema,
 } from '../schemas/permissionSchema';
+import { BaseController } from './baseController';
 
-const permissionService = new PermissionService(prisma);
-
-export class PermissionController {
-  static async createPermission(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
-    try {
-      const data = createPermissionSchema.parse(req.body);
-      const permission = await permissionService.createPermission(data);
-      return res.status(201).json(permission);
-    } catch (error: unknown) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Invalid validation data',
-          errors: error.issues,
-        });
-      }
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        error.code === 'P2002'
-      ) {
-        return res
-          .status(409)
-          .json({ message: 'Permission with this name already exists.' });
-      }
-      const appError =
-        error instanceof Error ? error : new Error('An unknown error occurred');
-      return res.status(500).json({ message: appError.message });
-    }
+@injectable()
+export class PermissionController extends BaseController {
+  constructor(
+    @inject(PermissionService) private permissionService: PermissionService
+  ) {
+    super();
   }
 
-  static async getPermissionById(
+  createPermission = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      const data = createPermissionSchema.parse(req.body);
+      const permission = await this.permissionService.createPermission(data);
+      return res.status(201).json(permission);
+    } catch (error: unknown) {
+      return this.handleError(res, error);
+    }
+  };
+
+  getPermissionById = async (
     req: Request,
     res: Response
-  ): Promise<Response> {
+  ): Promise<Response> => {
     try {
       const { id } = req.params;
-      const permission = await permissionService.getPermissionById(id);
+      const permission = await this.permissionService.getPermissionById(id);
 
       if (!permission) {
         return res.status(404).json({ message: 'Permission not found' });
@@ -56,123 +40,91 @@ export class PermissionController {
 
       return res.status(200).json(permission);
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return this.handleError(res, error);
     }
-  }
+  };
 
-  static async getAllPermissions(
+  getAllPermissions = async (
     req: Request,
     res: Response
-  ): Promise<Response> {
+  ): Promise<Response> => {
     try {
-      const permissions = await permissionService.getAllPermissions();
+      const permissions = await this.permissionService.getAllPermissions();
       return res.status(200).json(permissions);
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return this.handleError(res, error);
     }
-  }
+  };
 
-  static async updatePermission(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
+  updatePermission = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
       const data = updatePermissionSchema.parse(req.body);
 
-      const existingPermission = await permissionService.getPermissionById(id);
+      const existingPermission =
+        await this.permissionService.getPermissionById(id);
       if (!existingPermission) {
         return res.status(404).json({ message: 'Permission not found' });
       }
 
-      const updatedPermission = await permissionService.updatePermission(
+      const updatedPermission = await this.permissionService.updatePermission(
         id,
         data
       );
       return res.status(200).json(updatedPermission);
     } catch (error) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Invalid validation data',
-          errors: error.issues,
-        });
-      }
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return this.handleError(res, error);
     }
-  }
+  };
 
-  static async deletePermission(
-    req: Request,
-    res: Response
-  ): Promise<Response> {
+  deletePermission = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
 
-      const existingPermission = await permissionService.getPermissionById(id);
+      const existingPermission =
+        await this.permissionService.getPermissionById(id);
       if (!existingPermission) {
         return res.status(404).json({ message: 'Permission not found' });
       }
 
-      await permissionService.deletePermission(id);
+      await this.permissionService.deletePermission(id);
       return res.status(204).send();
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return this.handleError(res, error);
     }
-  }
+  };
 
-  static async createRolePermission(
+  createRolePermission = async (
     req: Request,
     res: Response
-  ): Promise<Response> {
+  ): Promise<Response> => {
     try {
       const data = createRolePermissionSchema.parse(req.body);
-      const rolePermission = await permissionService.createRolePermission(data);
+      const rolePermission =
+        await this.permissionService.createRolePermission(data);
       return res.status(201).json(rolePermission);
     } catch (error: unknown) {
-      if (error instanceof ZodError) {
-        return res.status(400).json({
-          message: 'Invalid validation data',
-          errors: error.issues,
-        });
-      }
-      if (
-        typeof error === 'object' &&
-        error !== null &&
-        'code' in error &&
-        error.code === 'P2002'
-      ) {
-        return res
-          .status(409)
-          .json({ message: 'Role permission already exists.' });
-      }
-      const appError =
-        error instanceof Error ? error : new Error('An unknown error occurred');
-      return res.status(500).json({ message: appError.message });
+      return this.handleError(res, error);
     }
-  }
+  };
 
-  static async deleteRolePermission(
+  deleteRolePermission = async (
     req: Request,
     res: Response
-  ): Promise<Response> {
+  ): Promise<Response> => {
     try {
       const { id } = req.params;
 
       const existingRolePermission =
-        await permissionService.getRolePermissionById(id);
+        await this.permissionService.getRolePermissionById(id);
       if (!existingRolePermission) {
         return res.status(404).json({ message: 'Role permission not found' });
       }
 
-      await permissionService.deleteRolePermission(id);
+      await this.permissionService.deleteRolePermission(id);
       return res.status(204).send();
     } catch (error) {
-      const appError = error as Error;
-      return res.status(500).json({ message: appError.message });
+      return this.handleError(res, error);
     }
-  }
+  };
 }

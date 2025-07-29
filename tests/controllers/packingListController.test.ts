@@ -104,7 +104,6 @@ describe('PackingListController', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Internal server error',
       message: 'Unexpected crash',
     });
   });
@@ -119,8 +118,7 @@ describe('PackingListController', () => {
 
     expect(res.status).toHaveBeenCalledWith(500);
     expect(res.json).toHaveBeenCalledWith({
-      error: 'Internal server error',
-      message: 'Unknown error',
+      message: 'Internal server error',
     });
   });
 });

@@ -1,19 +1,18 @@
+import { inject, injectable } from 'tsyringe';
 import bcrypt from 'bcrypt';
-
 import { IPasswordService } from './interfaces';
 
+@injectable()
 export class PasswordService implements IPasswordService {
-  private SALT_ROUNDS: number;
+  private readonly bcryptLib = bcrypt;
 
-  constructor(saltRounds: number = 10) {
-    this.SALT_ROUNDS = saltRounds;
-  }
+  constructor(@inject('SALT_ROUNDS') private readonly SALT_ROUNDS: number) {}
 
   /**
    * Hashes a plain password
    */
   async hash(plainPassword: string): Promise<string> {
-    return bcrypt.hash(plainPassword, this.SALT_ROUNDS);
+    return this.bcryptLib.hash(plainPassword, this.SALT_ROUNDS);
   }
 
   /**
@@ -23,6 +22,6 @@ export class PasswordService implements IPasswordService {
     plainPassword: string,
     hashedPassword: string
   ): Promise<boolean> {
-    return bcrypt.compare(plainPassword, hashedPassword);
+    return this.bcryptLib.compare(plainPassword, hashedPassword);
   }
 }

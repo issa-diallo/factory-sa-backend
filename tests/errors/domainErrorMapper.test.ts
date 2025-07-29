@@ -9,33 +9,40 @@ import {
 
 describe('mapDomainError', () => {
   // 1. ✅ Validation errors
-  it('returns ZodError directly', () => {
+  it('returns a structured error for ZodError', () => {
     const zodError = new ZodError([]);
     const result = mapDomainError(zodError);
-    expect(result).toBe(zodError);
+    expect(result).toEqual({
+      statusCode: 400,
+      message: 'Invalid validation data',
+      errors: zodError.issues,
+    });
   });
 
   // 2. ✅ Prisma P2002 - Unique constraint violation
   describe('Prisma P2002 errors (unique constraint)', () => {
-    it('returns CompanyDomainAlreadyExistsError if target includes companyId and domainId', () => {
+    it('returns a structured error for CompanyDomainAlreadyExistsError if target includes companyId and domainId', () => {
       const error = {
         code: 'P2002',
         meta: { target: ['companyId', 'domainId'] },
       };
       const result = mapDomainError(error);
-      expect(result).toBeInstanceOf(CompanyDomainAlreadyExistsError);
-      expect(result.message).toBe(
-        'Company-domain relationship already exists.'
-      );
+      expect(result).toEqual({
+        statusCode: 409,
+        message: 'Company-domain relationship already exists.',
+      });
     });
 
-    it('returns DomainAlreadyExistsError if target includes only name', () => {
+    it('returns a structured error for DomainAlreadyExistsError if target includes only name', () => {
       const error = { code: 'P2002', meta: { target: ['name'] } };
       const result = mapDomainError(error);
-      expect(result).toBeInstanceOf(DomainAlreadyExistsError);
+      expect(result).toEqual({
+        statusCode: 409,
+        message: 'Domain already exists.',
+      });
     });
 
-    it('returns DomainAlreadyExistsError with partial or unknown targets', () => {
+    it('returns a structured error for DomainAlreadyExistsError with partial or unknown targets', () => {
       const cases = [
         { code: 'P2002', meta: { target: ['companyId'] } },
         { code: 'P2002', meta: { target: ['domainId'] } },
@@ -43,34 +50,41 @@ describe('mapDomainError', () => {
       ];
       for (const error of cases) {
         const result = mapDomainError(error);
-        expect(result).toBeInstanceOf(DomainAlreadyExistsError);
+        expect(result).toEqual({
+          statusCode: 409,
+          message: 'Domain already exists.',
+        });
       }
     });
   });
 
   // 3. ✅ Prisma P2025 - Not found
   describe('Prisma P2025 errors (not found)', () => {
-    it('returns DomainNotFoundError if cause includes "Domain"', () => {
+    it('returns a structured error for DomainNotFoundError if cause includes "Domain"', () => {
       const error = {
         code: 'P2025',
         meta: { cause: 'Expected a Domain' },
       };
       const result = mapDomainError(error);
-      expect(result).toBeInstanceOf(DomainNotFoundError);
-      expect(result.message).toBe('Domain not found.');
+      expect(result).toEqual({
+        statusCode: 404,
+        message: 'Domain not found.',
+      });
     });
 
-    it('returns CompanyDomainNotFoundError if cause includes "CompanyDomain"', () => {
+    it('returns a structured error for CompanyDomainNotFoundError if cause includes "CompanyDomain"', () => {
       const error = {
         code: 'P2025',
         meta: { cause: 'Expected a CompanyDomain' },
       };
       const result = mapDomainError(error);
-      expect(result).toBeInstanceOf(CompanyDomainNotFoundError);
-      expect(result.message).toBe('Company-domain relationship not found.');
+      expect(result).toEqual({
+        statusCode: 404,
+        message: 'Company-domain relationship not found.',
+      });
     });
 
-    it('returns generic Error if cause is unknown or irrelevant', () => {
+    it('returns a structured error for generic Error if cause is unknown or irrelevant', () => {
       const cases = [
         { code: 'P2025', meta: { cause: 'Nothing to do here' } },
         { code: 'P2025', meta: {} },
@@ -78,42 +92,66 @@ describe('mapDomainError', () => {
       ];
       for (const error of cases) {
         const result = mapDomainError(error);
-        expect(result).toBeInstanceOf(Error);
-        expect(result.message).toBe('Resource not found (P2025).');
+        expect(result).toEqual({
+          statusCode: 404,
+          message: 'Resource not found (P2025).',
+        });
       }
     });
   });
 
   // 4. ✅ Known domain errors
-  it('returns DomainNotFoundError if passed directly', () => {
-    const error = new DomainNotFoundError('Missing domain');
+  it('returns a structured error for DomainAlreadyExistsError if passed directly', () => {
+    const error = new DomainAlreadyExistsError('Domain already exists');
     const result = mapDomainError(error);
-    expect(result).toBe(error);
+    expect(result).toEqual({ statusCode: 409, message: error.message });
   });
 
-  it('returns CompanyDomainNotFoundError if passed directly', () => {
+  it('returns a structured error for CompanyDomainAlreadyExistsError if passed directly', () => {
+    const error = new CompanyDomainAlreadyExistsError(
+      'Company-domain already exists'
+    );
+    const result = mapDomainError(error);
+    expect(result).toEqual({ statusCode: 409, message: error.message });
+  });
+
+  it('returns a structured error for DomainNotFoundError if passed directly', () => {
+    const error = new DomainNotFoundError('Missing domain');
+    const result = mapDomainError(error);
+    expect(result).toEqual({ statusCode: 404, message: error.message });
+  });
+
+  it('returns a structured error for CompanyDomainNotFoundError if passed directly', () => {
     const error = new CompanyDomainNotFoundError('Missing company domain');
     const result = mapDomainError(error);
-    expect(result).toBe(error);
+    expect(result).toEqual({ statusCode: 404, message: error.message });
   });
 
   // 5. ✅ Generic error and unknown cases
-  it('returns generic Error if input is already an Error instance', () => {
+  it('returns a structured error for generic Error if input is already an Error instance', () => {
     const error = new Error('Generic error');
     const result = mapDomainError(error);
-    expect(result).toBe(error);
+    expect(result).toEqual({ statusCode: 500, message: error.message });
   });
 
-  it('returns unknown Error for non-error objects', () => {
+  it('returns a structured error for unknown non-error objects', () => {
     const result = mapDomainError({ some: 'value' });
-    expect(result).toBeInstanceOf(Error);
-    expect(result.message).toBe('An unknown error occurred');
+    expect(result).toEqual({
+      statusCode: 500,
+      message: 'An unknown error occurred',
+    });
   });
 
-  it('returns unknown Error for null and undefined', () => {
+  it('returns a structured error for null and undefined', () => {
     const result1 = mapDomainError(null);
     const result2 = mapDomainError(undefined);
-    expect(result1.message).toBe('An unknown error occurred');
-    expect(result2.message).toBe('An unknown error occurred');
+    expect(result1).toEqual({
+      statusCode: 500,
+      message: 'An unknown error occurred',
+    });
+    expect(result2).toEqual({
+      statusCode: 500,
+      message: 'An unknown error occurred',
+    });
   });
 });

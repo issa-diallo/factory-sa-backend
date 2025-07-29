@@ -1,41 +1,32 @@
 import { Request, Response, NextFunction } from 'express';
-import { prisma } from '../database/prismaClient';
 import { TokenService } from '../services/auth/tokenService';
 import * as tokenUtils from '../utils/tokenUtils';
+import { container } from 'tsyringe';
 
-export const createAuthenticateMiddleware = (
-  tokenServiceInstance: TokenService,
-  tokenUtilsModule: typeof tokenUtils
+export const authenticate = async (
+  req: Request,
+  res: Response,
+  next: NextFunction
 ) => {
-  return async (req: Request, res: Response, next: NextFunction) => {
-    try {
-      const token = tokenUtilsModule.extractToken(req.headers.authorization);
-      if (!token) {
-        return res.status(401).json({ message: 'Authentication required' });
-      }
-
-      await tokenUtilsModule.verifySession(token);
-      const decoded = await tokenUtilsModule.decodeToken(
-        tokenServiceInstance,
-        token
-      );
-
-      req.user = {
-        userId: decoded.userId,
-        companyId: decoded.companyId,
-        roleId: decoded.roleId,
-        permissions: decoded.permissions,
-      };
-
-      next();
-    } catch {
-      return res.status(401).json({ message: 'Invalid token' });
+  const tokenService = container.resolve(TokenService);
+  try {
+    const token = tokenUtils.extractToken(req.headers.authorization);
+    if (!token) {
+      return res.status(401).json({ message: 'Authentication required' });
     }
-  };
-};
 
-const tokenService = new TokenService(prisma);
-export const authenticate = createAuthenticateMiddleware(
-  tokenService,
-  tokenUtils
-);
+    await tokenUtils.verifySession(token);
+    const decoded = await tokenUtils.decodeToken(tokenService, token);
+
+    req.user = {
+      userId: decoded.userId,
+      companyId: decoded.companyId,
+      roleId: decoded.roleId,
+      permissions: decoded.permissions,
+    };
+
+    next();
+  } catch {
+    return res.status(401).json({ message: 'Invalid token' });
+  }
+};

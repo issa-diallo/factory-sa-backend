@@ -1,52 +1,59 @@
-import {
-  TOKEN_EXPIRATION_DURATION_MS,
-  TOKEN_EXPIRATION_STRING,
-} from '../../src/constants';
-import { PrismaClient } from '../../src/generated/prisma';
-import { TokenService } from '../../src/services/auth/tokenService';
-import jwt from 'jsonwebtoken';
-
+// ✅ Mock JWT avant tout import
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(),
   verify: jest.fn(),
 }));
 
-jest.mock('../../src/generated/prisma', () => ({
-  PrismaClient: jest.fn().mockImplementation(() => ({
-    session: {
-      create: jest.fn(),
-      findUnique: jest.fn(),
-      update: jest.fn(),
-    },
-  })),
-}));
+import 'reflect-metadata';
+import jwt from 'jsonwebtoken';
+import {
+  TOKEN_EXPIRATION_DURATION_MS,
+  TOKEN_EXPIRATION_STRING,
+} from '../../src/constants';
+import { IPrismaService } from '../../src/database/interfaces';
+import { TokenService } from '../../src/services/auth/tokenService';
+import { Prisma, Session } from '../../src/generated/prisma';
+
+const mockPrismaService = {
+  session: {
+    create: jest.fn(),
+    findUnique: jest.fn(),
+    update: jest.fn(),
+  },
+};
+
+// Cast pour Jest uniquement là où nécessaire
+const mockFindUnique = mockPrismaService.session.findUnique as jest.Mock<
+  Promise<Session | null>,
+  [Prisma.SessionFindUniqueArgs]
+>;
+
+const mockCreate = mockPrismaService.session.create as jest.Mock;
+const mockUpdate = mockPrismaService.session.update as jest.Mock;
+
+let tokenService: TokenService;
+let DynamicTokenService: typeof import('../../src/services/auth/tokenService').TokenService;
 
 describe('TokenService', () => {
-  let tokenService: TokenService;
-  let prisma: PrismaClient;
   const JWT_SECRET = 'test_secret';
   const MOCK_DATE = new Date('2023-01-01T00:00:00Z');
 
   beforeAll(() => {
-    jest.useFakeTimers();
-    jest.setSystemTime(MOCK_DATE);
+    jest.useFakeTimers().setSystemTime(MOCK_DATE);
   });
 
-  beforeEach(() => {
-    process.env.JWT_SECRET = JWT_SECRET; // Set for each test
-    prisma = new PrismaClient();
-    tokenService = new TokenService(prisma);
+  beforeEach(async () => {
+    jest.resetModules();
     jest.clearAllMocks();
 
-    // Mock par défaut pour findUnique afin d'éviter les erreurs inattendues
-    (prisma.session.findUnique as jest.Mock).mockResolvedValue({
-      token: 'any_token',
-      isActive: true,
-    });
-  });
+    process.env.JWT_SECRET = JWT_SECRET;
 
-  afterEach(() => {
-    delete process.env.JWT_SECRET; // Clean up after each test
+    const module = await import('../../src/services/auth/tokenService');
+    DynamicTokenService = module.TokenService;
+    tokenService = new DynamicTokenService(
+      mockPrismaService as unknown as IPrismaService,
+      jwt
+    );
   });
 
   afterAll(() => {
@@ -54,36 +61,35 @@ describe('TokenService', () => {
   });
 
   describe('constructor', () => {
-    it('should throw an error if JWT_SECRET is not defined', async () => {
-      const originalJwtSecret = process.env.JWT_SECRET;
-      const originalJwtSecretDev = process.env.JWT_SECRET_DEVELOPPEMENT;
-
+    it('should throw if JWT_SECRET is missing', async () => {
       delete process.env.JWT_SECRET;
       delete process.env.JWT_SECRET_DEVELOPPEMENT;
 
-      jest.resetModules();
-      const { TokenService: NewTokenService } = await import(
-        '../../src/services/auth/tokenService'
-      );
+      const module = await import('../../src/services/auth/tokenService');
+      const UnsafeTokenService = module.TokenService;
 
-      expect(() => new NewTokenService(prisma)).toThrow(
+      expect(
+        () =>
+          new UnsafeTokenService(
+            mockPrismaService as unknown as IPrismaService,
+            jwt
+          )
+      ).toThrow(
         'JWT_SECRET or JWT_SECRET_DEVELOPPEMENT is not defined in environment variables'
       );
-
-      process.env.JWT_SECRET = originalJwtSecret;
-      process.env.JWT_SECRET_DEVELOPPEMENT = originalJwtSecretDev;
     });
   });
 
   describe('generateToken', () => {
-    it('should generate a token and create a session', async () => {
+    it('should generate token and create session', async () => {
       const payload = {
         userId: 'user123',
         companyId: 'company123',
         roleId: 'role123',
         permissions: ['read', 'write'],
       };
-      const mockToken = 'mocked_jwt_token';
+
+      const mockToken = 'mocked_token';
       (jwt.sign as jest.Mock).mockReturnValue(mockToken);
 
       const result = await tokenService.generateToken(payload);
@@ -91,7 +97,8 @@ describe('TokenService', () => {
       expect(jwt.sign).toHaveBeenCalledWith(payload, JWT_SECRET, {
         expiresIn: TOKEN_EXPIRATION_STRING,
       });
-      expect(prisma.session.create).toHaveBeenCalledWith({
+
+      expect(mockCreate).toHaveBeenCalledWith({
         data: {
           userId: payload.userId,
           token: mockToken,
@@ -101,118 +108,108 @@ describe('TokenService', () => {
           isActive: true,
         },
       });
+
       expect(result).toBe(mockToken);
     });
   });
 
   describe('verifyToken', () => {
-    it('should verify a valid token and return the payload', async () => {
+    it('should return payload if token is valid and session active', async () => {
+      const token = 'valid_token';
       const payload = {
         userId: 'user123',
         companyId: 'company123',
         roleId: 'role123',
-        permissions: ['read', 'write'],
+        permissions: ['read'],
       };
-      const validToken = 'valid_jwt_token';
+
       (jwt.verify as jest.Mock).mockReturnValue(payload);
-      (prisma.session.findUnique as jest.Mock).mockResolvedValue({
-        token: validToken,
+      mockFindUnique.mockResolvedValue({
+        token,
         isActive: true,
-      });
+      } as Session);
 
-      const result = await tokenService.verifyToken(validToken);
+      const result = await tokenService.verifyToken(token);
 
-      expect(jwt.verify).toHaveBeenCalledWith(validToken, JWT_SECRET);
-      expect(prisma.session.findUnique).toHaveBeenCalledWith({
-        where: { token: validToken },
-      });
+      expect(jwt.verify).toHaveBeenCalledWith(token, JWT_SECRET);
+      expect(mockFindUnique).toHaveBeenCalledWith({ where: { token } });
       expect(result).toEqual(payload);
     });
 
-    it('should throw an error for an invalid or expired token', async () => {
-      const invalidToken = 'invalid_jwt_token';
+    it('should throw if token is invalid', async () => {
       (jwt.verify as jest.Mock).mockImplementation(() => {
-        throw new Error('Invalid or expired token');
+        throw new Error('Invalid');
       });
 
-      await expect(tokenService.verifyToken(invalidToken)).rejects.toThrow(
-        'Invalid or expired token'
-      );
-      expect(jwt.verify).toHaveBeenCalledWith(invalidToken, JWT_SECRET);
-    });
-
-    it('should throw an error if decoded token is a string or has no userId', async () => {
-      const token = 'token_without_userid';
-      (jwt.verify as jest.Mock).mockReturnValue('some_string'); // Simulate string return
-      await expect(tokenService.verifyToken(token)).rejects.toThrow(
-        'Invalid or expired token'
-      );
-
-      (jwt.verify as jest.Mock).mockReturnValue({ someOtherProp: 'value' }); // Simulate object without userId
-      await expect(tokenService.verifyToken(token)).rejects.toThrow(
+      await expect(tokenService.verifyToken('invalid')).rejects.toThrow(
         'Invalid or expired token'
       );
     });
 
-    it('should throw an error if session is not found', async () => {
-      const token = 'token_not_found';
+    it('should throw if decoded token is a string', async () => {
+      (jwt.verify as jest.Mock).mockReturnValue('invalid');
+
+      await expect(tokenService.verifyToken('abc')).rejects.toThrow(
+        'Invalid or expired token'
+      );
+    });
+
+    it('should throw if decoded token has no userId', async () => {
+      (jwt.verify as jest.Mock).mockReturnValue({ roleId: 'r1' });
+
+      await expect(tokenService.verifyToken('abc')).rejects.toThrow(
+        'Invalid or expired token'
+      );
+    });
+
+    it('should throw if session not found', async () => {
       (jwt.verify as jest.Mock).mockReturnValue({ userId: 'user123' });
-      (prisma.session.findUnique as jest.Mock).mockResolvedValue(null);
+      mockFindUnique.mockResolvedValue(null);
 
-      await expect(tokenService.verifyToken(token)).rejects.toThrow(
+      await expect(tokenService.verifyToken('abc')).rejects.toThrow(
         'Invalid or expired token'
       );
-      expect(prisma.session.findUnique).toHaveBeenCalledWith({
-        where: { token },
-      });
     });
 
-    it('should throw an error if session is inactive', async () => {
-      const token = 'inactive_token';
+    it('should throw if session is inactive', async () => {
       (jwt.verify as jest.Mock).mockReturnValue({ userId: 'user123' });
-      (prisma.session.findUnique as jest.Mock).mockResolvedValue({
+      mockFindUnique.mockResolvedValue({
+        token: 'abc',
         isActive: false,
-      });
+      } as Session);
 
-      await expect(tokenService.verifyToken(token)).rejects.toThrow(
+      await expect(tokenService.verifyToken('abc')).rejects.toThrow(
         'Invalid or expired token'
       );
-      expect(prisma.session.findUnique).toHaveBeenCalledWith({
-        where: { token },
-      });
     });
   });
 
   describe('invalidateToken', () => {
-    it('should update the session to inactive', async () => {
-      const tokenToInvalidate = 'token_to_invalidate';
-      (prisma.session.findUnique as jest.Mock).mockResolvedValue({
-        token: tokenToInvalidate,
+    it('should mark session as inactive', async () => {
+      const token = 'valid_token';
+
+      mockFindUnique.mockResolvedValue({
+        token,
         isActive: true,
-      });
+      } as Session);
 
-      await tokenService.invalidateToken(tokenToInvalidate);
+      await tokenService.invalidateToken(token);
 
-      expect(prisma.session.findUnique).toHaveBeenCalledWith({
-        where: { token: tokenToInvalidate },
-      });
-      expect(prisma.session.update).toHaveBeenCalledWith({
-        where: { token: tokenToInvalidate },
+      expect(mockFindUnique).toHaveBeenCalledWith({ where: { token } });
+      expect(mockUpdate).toHaveBeenCalledWith({
+        where: { token },
         data: { isActive: false },
       });
     });
 
-    it('should throw an error if the token is not found', async () => {
-      const tokenToInvalidate = 'non_existent_token';
-      (prisma.session.findUnique as jest.Mock).mockResolvedValue(null);
+    it('should throw if session not found', async () => {
+      mockFindUnique.mockResolvedValue(null);
 
-      await expect(
-        tokenService.invalidateToken(tokenToInvalidate)
-      ).rejects.toThrow('Invalid token');
-      expect(prisma.session.findUnique).toHaveBeenCalledWith({
-        where: { token: tokenToInvalidate },
-      });
-      expect(prisma.session.update).not.toHaveBeenCalled();
+      await expect(tokenService.invalidateToken('unknown')).rejects.toThrow(
+        'Invalid token'
+      );
+
+      expect(mockUpdate).not.toHaveBeenCalled();
     });
   });
 });

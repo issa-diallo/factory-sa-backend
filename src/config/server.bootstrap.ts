@@ -1,6 +1,9 @@
-import { prisma } from '../database/prismaClient';
+import { container } from 'tsyringe';
+import { IPrismaService } from '../database/interfaces';
 import { startServer } from '../server';
 import { getServerConfig } from './server.config';
+
+const prisma = container.resolve<IPrismaService>('IPrismaService');
 
 export function startApplication() {
   const server = startServer();
@@ -23,9 +26,4 @@ export function startApplication() {
   process.on('SIGTERM', shutdown);
 
   return server;
-}
-
-// Do not execute in a test context
-if (process.env.NODE_ENV !== 'test') {
-  startApplication();
 }

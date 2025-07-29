@@ -3,6 +3,7 @@ import {
   DomainAlreadyExistsError,
   DomainNotFoundError,
   CompanyDomainNotFoundError,
+  CompanyDomainAlreadyExistsError,
 } from '../../src/errors/customErrors';
 
 describe('Custom Error Classes', () => {
@@ -62,6 +63,21 @@ describe('Custom Error Classes', () => {
     it('should create an instance with a custom message', () => {
       const msg = 'No company-domain relation found';
       const error = new CompanyDomainNotFoundError(msg);
+      expect(error.message).toBe(msg);
+    });
+  });
+
+  describe('CompanyDomainAlreadyExistsError', () => {
+    it('should create an instance with the default message', () => {
+      const error = new CompanyDomainAlreadyExistsError();
+      expect(error).toBeInstanceOf(CompanyDomainAlreadyExistsError);
+      expect(error.name).toBe('CompanyDomainAlreadyExistsError');
+      expect(error.message).toBe('Company-domain relationship already exists.');
+    });
+
+    it('should create an instance with a custom message', () => {
+      const msg = 'Custom company-domain exists message';
+      const error = new CompanyDomainAlreadyExistsError(msg);
       expect(error.message).toBe(msg);
     });
   });
