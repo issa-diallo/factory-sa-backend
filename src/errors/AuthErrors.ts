@@ -32,3 +32,10 @@ export class UserNotActiveError extends Error {
     this.name = 'UserNotActiveError';
   }
 }
+
+export class DomainNotActiveError extends Error {
+  constructor() {
+    super('Domain is not active');
+    this.name = 'DomainNotActiveError';
+  }
+}

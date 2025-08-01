@@ -10,6 +10,7 @@ import {
   UserNotFoundError,
   CompanyNotFoundError,
   UserNotActiveError,
+  DomainNotActiveError,
 } from '../../src/errors/AuthErrors';
 import { IUserRepository } from '../../src/repositories/user/IUserRepository';
 import { IDomainRepository } from '../../src/repositories/domain/IDomainRepository';
@@ -315,6 +316,18 @@ describe('AuthService', () => {
           );
         },
         errorClass: NoRoleInCompanyError,
+      },
+      {
+        description: 'inactive domain',
+        setup: () => {
+          mockUserRepository.findByEmail.mockResolvedValue(mockData.user);
+          mockPasswordService.verify.mockResolvedValue(true);
+          mockDomainRepository.findByDomainName.mockResolvedValue({
+            ...mockData.domain,
+            isActive: false,
+          });
+        },
+        errorClass: DomainNotActiveError,
       },
     ])('should throw an error for $description', ({ setup, errorClass }) => {
       it(`→ throws ${errorClass.name}`, async () => {
