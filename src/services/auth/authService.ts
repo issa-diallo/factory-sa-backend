@@ -17,6 +17,7 @@ import {
   UserNotFoundError,
   CompanyNotFoundError,
   UserNotActiveError,
+  DomainNotActiveError,
 } from '../../errors/AuthErrors';
 import { IUserRepository } from '../../repositories/user/IUserRepository';
 import { IDomainRepository } from '../../repositories/domain/IDomainRepository';
@@ -112,6 +113,10 @@ export class AuthService implements IAuthService {
 
     if (!domainEntity) {
       throw new UserNotFoundError();
+    }
+
+    if (!domainEntity.isActive) {
+      throw new DomainNotActiveError();
     }
 
     return domainEntity;
