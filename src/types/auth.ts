@@ -19,7 +19,9 @@ export interface TokenPayload {
   userId: string;
   companyId: string;
   roleId: string;
+  roleName: string;
   permissions: string[];
+  isSystemAdmin: boolean;
 }
 
 export interface AppError extends Error {

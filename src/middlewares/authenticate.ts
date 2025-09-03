@@ -22,7 +22,9 @@ export const authenticate = async (
       userId: decoded.userId,
       companyId: decoded.companyId,
       roleId: decoded.roleId,
+      roleName: decoded.roleName,
       permissions: decoded.permissions,
+      isSystemAdmin: decoded.isSystemAdmin,
     };
 
     next();

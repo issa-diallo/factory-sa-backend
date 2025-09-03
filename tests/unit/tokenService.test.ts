@@ -86,7 +86,9 @@ describe('TokenService', () => {
         userId: 'user123',
         companyId: 'company123',
         roleId: 'role123',
+        roleName: 'USER',
         permissions: ['read', 'write'],
+        isSystemAdmin: false,
       };
 
       const mockToken = 'mocked_token';

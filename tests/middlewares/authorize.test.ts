@@ -21,7 +21,9 @@ describe('authorize middleware', () => {
       userId: 'test-user-id',
       companyId: 'test-company-id',
       roleId: 'test-role-id',
+      roleName: 'USER',
       permissions: ['USER_READ', 'USER_WRITE'],
+      isSystemAdmin: false,
     };
 
     const middleware = authorize(['USER_READ']);
@@ -47,7 +49,9 @@ describe('authorize middleware', () => {
       userId: 'test-user-id',
       companyId: 'test-company-id',
       roleId: 'test-role-id',
+      roleName: 'USER',
       permissions: [], // permissions is empty
+      isSystemAdmin: false,
     };
 
     const middleware = authorize(['USER_READ']);
@@ -65,7 +69,9 @@ describe('authorize middleware', () => {
       userId: 'test-user-id',
       companyId: 'test-company-id',
       roleId: 'test-role-id',
+      roleName: 'USER',
       permissions: ['USER_READ'], // does not have USER_WRITE
+      isSystemAdmin: false,
     };
 
     const middleware = authorize(['USER_WRITE']);
@@ -83,7 +89,9 @@ describe('authorize middleware', () => {
       userId: 'test-user-id',
       companyId: 'test-company-id',
       roleId: 'test-role-id',
+      roleName: 'USER',
       permissions: ['USER_WRITE'],
+      isSystemAdmin: false,
     };
 
     const middleware = authorize(['USER_READ', 'USER_WRITE']);
