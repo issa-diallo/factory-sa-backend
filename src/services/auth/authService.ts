@@ -24,6 +24,7 @@ import { IDomainRepository } from '../../repositories/domain/IDomainRepository';
 import { ICompanyDomainRepository } from '../../repositories/companyDomain/ICompanyDomainRepository';
 import { IUserRoleRepository } from '../../repositories/userRole/IUserRoleRepository';
 import { IRolePermissionRepository } from '../../repositories/rolePermission/IRolePermissionRepository';
+import { ADMIN } from '../../constants';
 
 @injectable()
 export class AuthService implements IAuthService {
@@ -81,7 +82,7 @@ export class AuthService implements IAuthService {
       companyDomain.companyId
     );
 
-    const isSystemAdmin = userRole.role.name === 'ADMIN';
+    const isSystemAdmin = userRole.role.name === ADMIN;
 
     const token = await this.tokenService.generateToken({
       userId: user.id,
