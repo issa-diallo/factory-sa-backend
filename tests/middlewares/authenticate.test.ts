@@ -33,7 +33,9 @@ describe('authenticate middleware', () => {
     userId: 'user-id',
     companyId: 'company-id',
     roleId: 'role-id',
+    roleName: 'USER',
     permissions: ['USER_READ'],
+    isSystemAdmin: false,
   };
 
   let req: Request;

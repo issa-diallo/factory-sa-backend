@@ -81,11 +81,15 @@ export class AuthService implements IAuthService {
       companyDomain.companyId
     );
 
+    const isSystemAdmin = userRole.role.name === 'ADMIN';
+
     const token = await this.tokenService.generateToken({
       userId: user.id,
       companyId: companyDomain.companyId,
       roleId: userRole.roleId,
+      roleName: userRole.role.name,
       permissions,
+      isSystemAdmin,
     });
 
     await this.updateLastLogin(user.id, req);
@@ -151,7 +155,7 @@ export class AuthService implements IAuthService {
   private async getUserRoleAndPermissions(
     userId: string,
     companyId: string
-  ): Promise<{ userRole: UserRole; permissions: string[] }> {
+  ): Promise<{ userRole: UserRole & { role: Role }; permissions: string[] }> {
     const userRole: (UserRole & { role: Role }) | null =
       await this.userRoleRepository.findUserRoleByUserIdAndCompanyId(
         userId,
