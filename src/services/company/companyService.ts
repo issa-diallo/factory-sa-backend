@@ -34,8 +34,8 @@ export class CompanyService implements ICompanyRepository {
     return this.companyRepository.getCompanyByName(name);
   }
 
-  async getAllCompanies(): Promise<Company[]> {
-    return this.companyRepository.getAllCompanies();
+  async getAllCompanies(filter?: { companyId?: string }): Promise<Company[]> {
+    return this.companyRepository.getAllCompanies(filter);
   }
 
   async updateCompany(
@@ -47,5 +47,24 @@ export class CompanyService implements ICompanyRepository {
 
   async deleteCompany(id: string): Promise<Company> {
     return this.companyRepository.deleteCompany(id);
+  }
+
+  async getCompaniesByUser(
+    userId: string,
+    isSystemAdmin: boolean
+  ): Promise<Company[]> {
+    return this.companyRepository.getCompaniesByUser(userId, isSystemAdmin);
+  }
+
+  async canUserAccessCompany(
+    companyId: string,
+    userId: string,
+    isSystemAdmin: boolean
+  ): Promise<boolean> {
+    return this.companyRepository.canUserAccessCompany(
+      companyId,
+      userId,
+      isSystemAdmin
+    );
   }
 }

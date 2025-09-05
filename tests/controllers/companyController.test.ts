@@ -25,6 +25,8 @@ describe('CompanyController with mocked service', () => {
       updateCompany: jest.fn(),
       deleteCompany: jest.fn(),
       getCompanyByName: jest.fn(),
+      getCompaniesByUser: jest.fn(),
+      canUserAccessCompany: jest.fn(),
     };
     controller = new CompanyController(mockService);
     res = createMockResponse();

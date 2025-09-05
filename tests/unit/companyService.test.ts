@@ -15,6 +15,8 @@ const mockCompanyRepository: jest.Mocked<ICompanyRepository> = {
   getAllCompanies: jest.fn(),
   updateCompany: jest.fn(),
   deleteCompany: jest.fn(),
+  getCompaniesByUser: jest.fn(),
+  canUserAccessCompany: jest.fn(),
 };
 
 describe('CompanyService', () => {
@@ -233,7 +235,9 @@ describe('CompanyService', () => {
 
       const result = await companyService.getAllCompanies();
 
-      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith();
+      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith(
+        undefined
+      );
       expect(result).toEqual(companies);
     });
 
@@ -242,7 +246,9 @@ describe('CompanyService', () => {
 
       const result = await companyService.getAllCompanies();
 
-      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith();
+      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith(
+        undefined
+      );
       expect(result).toEqual([]);
     });
 
@@ -251,7 +257,9 @@ describe('CompanyService', () => {
       mockCompanyRepository.getAllCompanies.mockRejectedValue(error);
 
       await expect(companyService.getAllCompanies()).rejects.toThrow(error);
-      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith();
+      expect(mockCompanyRepository.getAllCompanies).toHaveBeenCalledWith(
+        undefined
+      );
     });
   });
 
