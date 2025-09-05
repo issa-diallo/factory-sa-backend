@@ -49,6 +49,29 @@ export class CompanyController extends BaseController {
     }
   };
 
+  getCurrentCompany = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      if (!req.user?.companyId) {
+        return res.status(400).json({ message: 'User company not found' });
+      }
+
+      const company = await this.companyService.getCompanyById(
+        req.user.companyId
+      );
+
+      if (!company) {
+        return res.status(404).json({ message: 'Company not found' });
+      }
+
+      return res.status(200).json(company);
+    } catch (error: unknown) {
+      return this.handleError(res, error, mapCompanyError);
+    }
+  };
+
   updateCompany = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
