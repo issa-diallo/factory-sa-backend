@@ -4,6 +4,9 @@ declare global {
   namespace Express {
     interface Request {
       user?: TokenPayload; // Make user property optional again
+      companyFilter?: {
+        companyId?: string;
+      };
     }
   }
 }
