@@ -42,7 +42,9 @@ export class CompanyController extends BaseController {
 
   getAllCompanies = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const companies = await this.companyService.getAllCompanies();
+      const companies = await this.companyService.getAllCompanies(
+        req.companyFilter
+      );
       return res.status(200).json(companies);
     } catch (error: unknown) {
       return this.handleError(res, error, mapCompanyError);
