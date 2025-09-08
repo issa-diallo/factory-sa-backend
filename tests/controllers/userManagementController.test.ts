@@ -76,6 +76,7 @@ describe('UserManagementController', () => {
       const body: CreateUserRequest = {
         email: 'test@example.com',
         password: 'pw1234',
+        roleId: 'role-user-id',
       };
       const user: UserResponse = {
         id: '1',
@@ -87,11 +88,36 @@ describe('UserManagementController', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
+
+      // Mock authenticated user (manager)
+      mockRequest.user = {
+        userId: 'manager-1',
+        companyId: 'company-123',
+        roleId: 'role-manager',
+        roleName: 'MANAGER',
+        permissions: ['user:create'],
+        isSystemAdmin: false,
+      };
       mockRequest.body = body;
+
       mockUserService.createUser.mockResolvedValue(user);
+      mockUserService.createUserRole.mockResolvedValue({
+        id: 'user-role-1',
+        userId: '1',
+        companyId: 'company-123',
+        roleId: 'role-user-id',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
       await controller.createUser(mockRequest, mockResponse);
 
+      expect(mockUserService.createUser).toHaveBeenCalledWith(body);
+      expect(mockUserService.createUserRole).toHaveBeenCalledWith({
+        userId: '1',
+        companyId: 'company-123',
+        roleId: 'role-user-id',
+      });
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith(user);
     });

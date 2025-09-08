@@ -45,6 +45,9 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   delete: jest.fn(),
   findAll: jest.fn(),
   updateUserLastLogin: jest.fn(),
+  findUsersByCompany: jest.fn(),
+  isUserInCompany: jest.fn(),
+  getUserCompanyId: jest.fn(),
 };
 
 const mockDomainRepository: jest.Mocked<IDomainRepository> = {

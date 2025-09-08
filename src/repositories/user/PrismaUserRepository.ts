@@ -43,4 +43,34 @@ export class PrismaUserRepository implements IUserRepository {
       },
     });
   }
+
+  async findUsersByCompany(companyId: string): Promise<User[]> {
+    return this.prisma.user.findMany({
+      where: {
+        userRoles: {
+          some: {
+            companyId: companyId,
+          },
+        },
+      },
+    });
+  }
+
+  async isUserInCompany(userId: string, companyId: string): Promise<boolean> {
+    const userRole = await this.prisma.userRole.findFirst({
+      where: {
+        userId,
+        companyId,
+      },
+    });
+    return userRole !== null;
+  }
+
+  async getUserCompanyId(userId: string): Promise<string | null> {
+    const userRole = await this.prisma.userRole.findFirst({
+      where: { userId },
+      select: { companyId: true },
+    });
+    return userRole?.companyId || null;
+  }
 }
