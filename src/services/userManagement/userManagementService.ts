@@ -47,7 +47,12 @@ export class UserManagementService implements IUserManagementService {
     return this.userRepository.findByEmail(normalizeEmail(email));
   }
 
-  async getAllUsers(): Promise<Omit<User, 'password'>[]> {
+  async getAllUsers(companyFilter?: {
+    companyId?: string;
+  }): Promise<Omit<User, 'password'>[]> {
+    if (companyFilter?.companyId) {
+      return this.userRepository.findUsersByCompany(companyFilter.companyId);
+    }
     return this.userRepository.findAll();
   }
 

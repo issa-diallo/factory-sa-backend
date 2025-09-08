@@ -11,4 +11,9 @@ export interface IUserRepository {
     userId: string,
     lastLoginIp: string | undefined
   ): Promise<void>;
+
+  // Nouvelles méthodes pour le filtrage par entreprise
+  findUsersByCompany(companyId: string): Promise<User[]>;
+  isUserInCompany(userId: string, companyId: string): Promise<boolean>;
+  getUserCompanyId(userId: string): Promise<string | null>;
 }

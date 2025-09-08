@@ -3,6 +3,8 @@ export interface CreateUserRequest {
   password: string;
   firstName?: string;
   lastName?: string;
+  roleId: string;
+  companyId?: string; // Optionnel - seulement pour System Admin
   isActive?: boolean;
 }
 

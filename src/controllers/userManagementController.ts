@@ -6,6 +6,8 @@ import {
   createUserRoleSchema,
   createUserSchema,
   updateUserSchema,
+  updateOwnProfileSchema,
+  changePasswordSchema,
 } from '../schemas/userManagementSchema';
 import { BaseController } from './baseController';
 
@@ -23,6 +25,23 @@ export class UserManagementController extends BaseController {
     try {
       const data = createUserSchema.parse(req.body);
       const user = await this.userManagementService.createUser(data);
+
+      // 2. Determine the company assignment
+      const companyId = req.user?.isSystemAdmin
+        ? data.companyId || req.user.companyId // Admin can specify or use their own
+        : req.user?.companyId; // Manager must use their own
+
+      if (!companyId) {
+        return res.status(400).json({ message: 'Company ID is required' });
+      }
+
+      // 3. Automatically assign to the company with the specified role
+      await this.userManagementService.createUserRole({
+        userId: user.id,
+        companyId,
+        roleId: data.roleId,
+      });
+
       return res.status(201).json(user);
     } catch (error) {
       return this.handleError(res, error);
@@ -46,7 +65,9 @@ export class UserManagementController extends BaseController {
 
   getAllUsers = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const users = await this.userManagementService.getAllUsers();
+      const users = await this.userManagementService.getAllUsers(
+        req.companyFilter
+      );
       return res.status(200).json(users);
     } catch (error) {
       return this.handleError(res, error);
@@ -124,6 +145,83 @@ export class UserManagementController extends BaseController {
 
       await this.userManagementService.deleteUserRole(id);
       return res.status(204).send();
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  // Methods for self-modification
+  getCurrentUser = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(400).json({ message: 'User ID not found' });
+      }
+
+      const user = await this.userManagementService.getUserById(
+        req.user.userId
+      );
+
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      return res.status(200).json(user);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  updateOwnProfile = async (req: Request, res: Response): Promise<Response> => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(400).json({ message: 'User ID not found' });
+      }
+
+      const data = updateOwnProfileSchema.parse(req.body);
+      const updatedUser = await this.userManagementService.updateUser(
+        req.user.userId,
+        data
+      );
+
+      return res.status(200).json(updatedUser);
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  changeOwnPassword = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      if (!req.user?.userId) {
+        return res.status(400).json({ message: 'User ID not found' });
+      }
+
+      const data = changePasswordSchema.parse(req.body);
+
+      // Verify the old password
+      const user = await this.userManagementService.getUserByEmail(
+        req.user.userId
+      );
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const isOldPasswordValid = await this.passwordService.verify(
+        data.oldPassword,
+        user.password
+      );
+      if (!isOldPasswordValid) {
+        return res.status(400).json({ message: 'Invalid old password' });
+      }
+
+      // Change the password
+      await this.userManagementService.updateUser(req.user.userId, {
+        password: data.newPassword,
+      });
+
+      return res.status(200).json({ message: 'Password changed successfully' });
     } catch (error) {
       return this.handleError(res, error);
     }

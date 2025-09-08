@@ -22,6 +22,9 @@ const mockUserRepository: jest.Mocked<IUserRepository> = {
   update: jest.fn(),
   delete: jest.fn(),
   updateUserLastLogin: jest.fn(),
+  findUsersByCompany: jest.fn(),
+  isUserInCompany: jest.fn(),
+  getUserCompanyId: jest.fn(),
 };
 
 const mockUserRoleRepository: jest.Mocked<IUserRoleRepository> = {
@@ -68,6 +71,7 @@ describe('UserManagementService', () => {
         password: 'password123',
         firstName: 'Test',
         lastName: 'User',
+        roleId: 'role-user-id',
       });
 
       expect(mockPasswordService.hash).toHaveBeenCalledWith('password123');
@@ -91,6 +95,7 @@ describe('UserManagementService', () => {
         password: 'password123',
         firstName: 'Test',
         lastName: 'User',
+        roleId: 'role-user-id',
         isActive: false,
       });
 
@@ -114,6 +119,7 @@ describe('UserManagementService', () => {
         password: 'password123',
         firstName: 'Test',
         lastName: 'User',
+        roleId: 'role-user-id',
         isActive: true,
       });
 
