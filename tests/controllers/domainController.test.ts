@@ -34,6 +34,9 @@ describe('DomainController with dependency injection', () => {
       getCompanyDomainsByCompanyId: jest.fn(),
       getCompanyDomainsByDomainId: jest.fn(),
       deleteCompanyDomain: jest.fn(),
+      getDomainsByCompanyId: jest.fn(),
+      getDomainsByCompanyIdWithPagination: jest.fn(),
+      searchDomainsByCompanyId: jest.fn(),
     };
     controller = new DomainController(mockService);
     res = createMockResponse();

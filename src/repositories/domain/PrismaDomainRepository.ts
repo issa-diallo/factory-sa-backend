@@ -30,4 +30,32 @@ export class PrismaDomainRepository implements IDomainRepository {
   async findAll(): Promise<Domain[]> {
     return this.prisma.domain.findMany();
   }
+
+  async findDomainsByCompany(companyId: string): Promise<Domain[]> {
+    return this.prisma.domain.findMany({
+      where: {
+        companyDomains: {
+          some: {
+            companyId,
+          },
+        },
+      },
+    });
+  }
+
+  async findDomainWithCompanyValidation(
+    domainId: string,
+    companyId: string
+  ): Promise<Domain | null> {
+    return this.prisma.domain.findFirst({
+      where: {
+        id: domainId,
+        companyDomains: {
+          some: {
+            companyId,
+          },
+        },
+      },
+    });
+  }
 }

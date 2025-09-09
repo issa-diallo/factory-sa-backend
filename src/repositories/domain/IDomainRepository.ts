@@ -7,4 +7,10 @@ export interface IDomainRepository {
   update(id: string, data: Prisma.DomainUpdateInput): Promise<Domain>;
   delete(id: string): Promise<Domain>;
   findAll(): Promise<Domain[]>;
+
+  findDomainsByCompany(companyId: string): Promise<Domain[]>;
+  findDomainWithCompanyValidation(
+    domainId: string,
+    companyId: string
+  ): Promise<Domain | null>;
 }

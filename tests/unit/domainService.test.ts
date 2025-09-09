@@ -12,7 +12,6 @@ import {
   CompanyDomainNotFoundError,
 } from '../../src/errors/customErrors';
 
-// Mock des dépôts
 const mockDomainRepository: jest.Mocked<IDomainRepository> = {
   create: jest.fn(),
   findById: jest.fn(),
@@ -20,6 +19,8 @@ const mockDomainRepository: jest.Mocked<IDomainRepository> = {
   findAll: jest.fn(),
   update: jest.fn(),
   delete: jest.fn(),
+  findDomainsByCompany: jest.fn(),
+  findDomainWithCompanyValidation: jest.fn(),
 };
 
 const mockCompanyDomainRepository: jest.Mocked<ICompanyDomainRepository> = {
@@ -29,7 +30,7 @@ const mockCompanyDomainRepository: jest.Mocked<ICompanyDomainRepository> = {
   delete: jest.fn(),
   findByCompanyId: jest.fn(),
   findAllByDomainId: jest.fn(),
-  findById: jest.fn(), // Ajout de la méthode findById
+  findById: jest.fn(),
 };
 
 describe('DomainService', () => {

@@ -57,6 +57,8 @@ const mockDomainRepository: jest.Mocked<IDomainRepository> = {
   update: jest.fn(),
   delete: jest.fn(),
   findAll: jest.fn(),
+  findDomainsByCompany: jest.fn(),
+  findDomainWithCompanyValidation: jest.fn(),
 };
 
 const mockCompanyDomainRepository: jest.Mocked<ICompanyDomainRepository> = {
