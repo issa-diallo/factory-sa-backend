@@ -105,4 +105,38 @@ export class DomainService implements IDomainService {
   ): Promise<void> {
     await this.companyDomainRepository.delete(companyId, domainId);
   }
+
+  async getDomainsByCompanyId(companyId: string): Promise<Domain[]> {
+    return this.domainRepository.findDomainsByCompany(companyId);
+  }
+
+  async getDomainsByCompanyIdWithPagination(
+    companyId: string,
+    page: number,
+    limit: number
+  ): Promise<{ domains: Domain[]; total: number }> {
+    const skip = (page - 1) * limit;
+    const domains = await this.domainRepository.findDomainsByCompany(companyId);
+
+    // For simple pagination, we manually filter
+    // In a real implementation, we would use Prisma with skip/take
+    const paginatedDomains = domains.slice(skip, skip + limit);
+
+    return {
+      domains: paginatedDomains,
+      total: domains.length,
+    };
+  }
+
+  async searchDomainsByCompanyId(
+    companyId: string,
+    searchTerm: string
+  ): Promise<Domain[]> {
+    const domains = await this.domainRepository.findDomainsByCompany(companyId);
+
+    // Simple filtering by domain name
+    return domains.filter(domain =>
+      domain.name.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+  }
 }

@@ -31,3 +31,10 @@ export class CompanyDomainAlreadyExistsError extends Error {
     this.name = 'CompanyDomainAlreadyExistsError';
   }
 }
+
+export class ForbiddenError extends Error {
+  constructor(message = 'Access forbidden') {
+    super(message);
+    this.name = 'ForbiddenError';
+  }
+}
