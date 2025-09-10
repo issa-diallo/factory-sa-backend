@@ -37,7 +37,15 @@ export class RoleController extends BaseController {
 
   getAllRoles = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const roles = await this.roleService.getAllRoles();
+      const { companyId, isSystemAdmin } = req.user!;
+
+      let roles;
+      if (isSystemAdmin) {
+        roles = await this.roleService.getAllRoles();
+      } else {
+        roles = await this.roleService.getAllRolesForCompany(companyId);
+      }
+
       return res.status(200).json(roles);
     } catch (error) {
       return this.handleError(res, error);
