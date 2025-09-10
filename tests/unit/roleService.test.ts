@@ -15,6 +15,11 @@ describe('RoleService', () => {
       findAll: jest.fn(),
       update: jest.fn(),
       delete: jest.fn(),
+      findSystemRoles: jest.fn(),
+      findCustomRolesByCompany: jest.fn(),
+      findAllRolesForCompany: jest.fn(),
+      isSystemRole: jest.fn(),
+      findRoleWithCompanyValidation: jest.fn(),
     };
 
     roleService = new RoleService(mockRoleRepository);

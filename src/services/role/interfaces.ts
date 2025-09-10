@@ -8,4 +8,14 @@ export interface IRoleService {
   getAllRoles(): Promise<Role[]>;
   updateRole(id: string, data: UpdateRoleRequest): Promise<Role>;
   deleteRole(id: string): Promise<Role>;
+
+  getAllRolesForCompany(companyId: string): Promise<Role[]>;
+  getSystemRoles(): Promise<Role[]>;
+  getCustomRolesByCompany(companyId: string): Promise<Role[]>;
+  canModifyRole(
+    roleId: string,
+    companyId: string,
+    isSystemAdmin: boolean
+  ): Promise<boolean>;
+  validateRoleCreation(roleName: string, isSystemAdmin: boolean): Promise<void>;
 }

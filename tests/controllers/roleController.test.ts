@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import 'reflect-metadata';
 import { Request, Response } from 'express';
 import { ZodError } from 'zod';
@@ -8,7 +7,6 @@ import {
   createRoleSchema,
   updateRoleSchema,
 } from '../../src/schemas/roleSchema';
-import { BaseController } from '../../src/controllers/baseController';
 
 jest.mock('../../src/schemas/roleSchema', () => ({
   createRoleSchema: { parse: jest.fn() },
@@ -18,9 +16,15 @@ jest.mock('../../src/schemas/roleSchema', () => ({
 const mockRoleService = {
   createRole: jest.fn(),
   getRoleById: jest.fn(),
+  getRoleByName: jest.fn(),
   getAllRoles: jest.fn(),
   updateRole: jest.fn(),
   deleteRole: jest.fn(),
+  getAllRolesForCompany: jest.fn(),
+  getSystemRoles: jest.fn(),
+  getCustomRolesByCompany: jest.fn(),
+  canModifyRole: jest.fn(),
+  validateRoleCreation: jest.fn(),
 };
 
 const mockRequest = {} as Request;
@@ -68,7 +72,7 @@ describe('RoleController', () => {
       });
 
       mockRequest.body = { name: 123 };
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
 
       await controller.createRole(mockRequest, mockResponse);
 
@@ -82,7 +86,7 @@ describe('RoleController', () => {
       const dbError = { code: 'P2002' };
       mockRoleService.createRole.mockRejectedValue(dbError);
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.createRole(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, dbError);
@@ -95,7 +99,7 @@ describe('RoleController', () => {
       const internal = new Error('Internal server error');
       mockRoleService.createRole.mockRejectedValue(internal);
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.createRole(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, internal);
@@ -132,7 +136,7 @@ describe('RoleController', () => {
       const internal = new Error('Database error');
       mockRoleService.getRoleById.mockRejectedValue(internal);
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.getRoleById(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, internal);
@@ -141,8 +145,16 @@ describe('RoleController', () => {
   });
 
   describe('getAllRoles', () => {
-    it('should return all roles with status 200', async () => {
+    it('should return all roles for System Admin', async () => {
       const list = [{ id: '1', name: 'ADMIN' }];
+      mockRequest.user = {
+        userId: '1',
+        companyId: 'company-1',
+        roleId: 'role-admin',
+        roleName: 'ADMIN',
+        permissions: [],
+        isSystemAdmin: true,
+      };
       mockRoleService.getAllRoles.mockResolvedValue(list);
 
       await controller.getAllRoles(mockRequest, mockResponse);
@@ -152,11 +164,43 @@ describe('RoleController', () => {
       expect(mockResponse.json).toHaveBeenCalledWith(list);
     });
 
-    it('should call handleError on exception', async () => {
-      const internal = new Error('Network error');
-      mockRoleService.getAllRoles.mockRejectedValue(internal);
+    it('should return filtered roles for Manager', async () => {
+      const list = [
+        { id: '1', name: 'MANAGER' },
+        { id: '2', name: 'CUSTOM_SUPERVISOR' },
+      ];
+      mockRequest.user = {
+        userId: '1',
+        companyId: 'company-1',
+        roleId: 'role-manager',
+        roleName: 'MANAGER',
+        permissions: [],
+        isSystemAdmin: false,
+      };
+      mockRoleService.getAllRolesForCompany.mockResolvedValue(list);
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      await controller.getAllRoles(mockRequest, mockResponse);
+
+      expect(mockRoleService.getAllRolesForCompany).toHaveBeenCalledWith(
+        'company-1'
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(list);
+    });
+
+    it('should call handleError on exception', async () => {
+      mockRequest.user = {
+        userId: '1',
+        companyId: 'company-1',
+        roleId: 'role-manager',
+        roleName: 'MANAGER',
+        permissions: [],
+        isSystemAdmin: false,
+      };
+      const internal = new Error('Network error');
+      mockRoleService.getAllRolesForCompany.mockRejectedValue(internal);
+
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.getAllRoles(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, internal);
@@ -213,7 +257,7 @@ describe('RoleController', () => {
       mockRequest.params = { id: '1' };
       mockRequest.body = { name: 123 };
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.updateRole(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, error);
@@ -228,7 +272,7 @@ describe('RoleController', () => {
       const internal = new Error('Update failed');
       mockRoleService.updateRole.mockRejectedValue(internal);
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.updateRole(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, internal);
@@ -267,7 +311,7 @@ describe('RoleController', () => {
       const internal = new Error('Delete failed');
       mockRoleService.deleteRole.mockRejectedValue(internal);
 
-      const spy = jest.spyOn(BaseController.prototype as any, 'handleError');
+      const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.deleteRole(mockRequest, mockResponse);
 
       expect(spy).toHaveBeenCalledWith(mockResponse, internal);
