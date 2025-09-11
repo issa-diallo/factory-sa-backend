@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { container } from 'tsyringe';
 import { IPrismaService } from '../database/interfaces';
 import { startServer } from '../server';

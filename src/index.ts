@@ -1,5 +1,7 @@
 import express, { Application } from 'express';
 import cors from 'cors';
+import { setupSwagger } from './swagger/swaggerConfig';
+
 import packingListRouter from './routes/api/v1/packingList';
 import authRouter from './routes/api/v1/auth';
 import companyRouter from './routes/api/v1/company';
@@ -12,6 +14,8 @@ const app: Application = express();
 
 app.use(cors());
 app.use(express.json());
+
+setupSwagger(app);
 
 app.use('/api/v1/packing-list', packingListRouter);
 app.use('/api/v1/auth', authRouter);
