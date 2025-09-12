@@ -17,27 +17,27 @@ router.post(
   authenticate,
   authorize(['company:create']),
   validateCompanyAccessInBody(),
-  companyController.create
+  companyController.create.bind(companyController)
 );
 router.get(
   '/',
   authenticate,
   authorize(['company:read']),
   requireOwnCompanyOrSystemAdmin(),
-  companyController.getAllCompanies
+  companyController.getAllCompanies.bind(companyController)
 );
 router.get(
   '/current',
   authenticate,
   authorize(['company:read']),
-  companyController.getCurrentCompany
+  companyController.getCurrentCompany.bind(companyController)
 );
 router.get(
   '/:id',
   authenticate,
   authorize(['company:read']),
   validateCompanyAccess(),
-  companyController.getCompanyById
+  companyController.getCompanyById.bind(companyController)
 );
 router.put(
   '/:id',
@@ -45,14 +45,14 @@ router.put(
   authorize(['company:update']),
   validateCompanyAccess(),
   validateCompanyAccessInBody(),
-  companyController.updateCompany
+  companyController.updateCompany.bind(companyController)
 );
 router.delete(
   '/:id',
   authenticate,
   authorize(['company:delete']),
   validateCompanyAccess(),
-  companyController.deleteCompany
+  companyController.deleteCompany.bind(companyController)
 );
 
 export default router;
