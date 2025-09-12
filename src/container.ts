@@ -1,5 +1,5 @@
 import { container } from 'tsyringe';
-import * as jwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { PackingListService } from './services/packingList/packingListService';
 import { IPackingListService } from './services/packingList/interfaces';
 import { CompanyService } from './services/company/companyService';

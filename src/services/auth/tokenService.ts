@@ -1,4 +1,4 @@
-import * as defaultJwt from 'jsonwebtoken';
+import jwt from 'jsonwebtoken';
 import { inject, injectable } from 'tsyringe';
 import { ITokenService } from './interfaces';
 import { TokenPayload } from '../../types/auth';
@@ -13,11 +13,11 @@ export class TokenService implements ITokenService {
   private readonly JWT_SECRET: string;
   private readonly TOKEN_EXPIRATION = TOKEN_EXPIRATION_STRING;
   private prisma: IPrismaService;
-  private jwt: typeof defaultJwt;
+  private jwt: typeof jwt;
 
   constructor(
     @inject('IPrismaService') prisma: IPrismaService,
-    @inject('JWT') jwtImpl: typeof defaultJwt
+    @inject('JWT') jwtImpl: typeof jwt
   ) {
     this.prisma = prisma;
     this.jwt = jwtImpl;
