@@ -36,7 +36,9 @@ paths:
       tags:
         - Authentication
       summary: User logout
-      description: Logs out the user by invalidating the token
+      description: |
+        Logs out the user by invalidating the token and session.
+        Requires a valid JWT token in the Authorization header with the format: "Bearer <token>"
       security:
         - bearerAuth: []
       responses:
@@ -46,8 +48,39 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/LogoutResponse'
+              example:
+                message: 'Logout successful'
+        '400':
+          description: Missing or malformed Authorization header
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              example:
+                message: 'Missing token'
         '401':
-          description: Invalid token
+          description: Authentication failed - invalid or expired token
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+              examples:
+                invalid_token:
+                  summary: Invalid token
+                  value:
+                    message: 'Invalid token'
+                auth_required:
+                  summary: Authentication required
+                  value:
+                    message: 'Authentication required'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+              example:
+                message: 'Internal server error'
 
 components:
   schemas:
@@ -81,6 +114,24 @@ components:
         message:
           type: string
           example: 'Logout successful'
+
+    ErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          description: Message d'erreur descriptif
+
+    AuthErrorResponse:
+      type: object
+      properties:
+        message:
+          type: string
+          enum:
+            - 'Authentication required'
+            - 'Invalid token'
+            - 'Missing token'
+          description: Message d'erreur d'authentification
 
     User:
       type: object
