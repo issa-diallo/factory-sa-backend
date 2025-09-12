@@ -6,7 +6,11 @@ import { container } from 'tsyringe';
 const router: Router = Router();
 const authController = container.resolve(AuthController);
 
-router.post('/login', authController.login);
-router.post('/logout', authenticate, authController.logout);
+router.post('/login', authController.login.bind(authController));
+router.post(
+  '/logout',
+  authenticate,
+  authController.logout.bind(authController)
+);
 
 export default router;
