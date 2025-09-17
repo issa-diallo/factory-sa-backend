@@ -1,5 +1,44 @@
+# Development configuration with automatic DB initialization
 services:
+  # Database initialization service
+  db-init:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    command: sh -c "sleep 5 && pnpm prisma migrate deploy && pnpm db:seed"
+    environment:
+      - NODE_ENV=development
+      - NODE_PATH=/app/src
+    env_file:
+      - .env.local
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    restart: "no"
+
+  # Prisma Studio service
+  prisma-studio:
+    build: .
+    depends_on:
+      - db-init
+    command: pnpm prisma studio --port 5555 --hostname 0.0.0.0
+    ports:
+      - "5555:5555"
+    environment:
+      - NODE_ENV=development
+      - NODE_PATH=/app/src
+    env_file:
+      - .env.local
+    volumes:
+      - ./:/app
+      - /app/node_modules
+    restart: unless-stopped
+
+  # Main backend service
   backend:
+    depends_on:
+      - db-init
     environment:
       - NODE_ENV=development
       - NODE_PATH=/app/src
@@ -9,5 +48,3 @@ services:
       - ./:/app
       - /app/node_modules
     command: pnpm dev
-    ports:
-      - "5555:5555"

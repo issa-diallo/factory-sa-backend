@@ -79,67 +79,58 @@ To set up the project locally, follow these steps for manual installation:
 
 ## 🐳 Docker Installation
 
-To run the application using Docker Compose, make sure you have Docker Desktop (or Docker Engine) installed on your machine.
+To launch the application with automatic database initialization:
 
-1.  **Clone the repository** (if not already done):
+1. **Clone the repository**:
 
-    ```bash
-    git clone git@github.com:issa-diallo/factory-sa-backend.git
-    cd factory-sa-backend
-    ```
+   ```bash
+   git clone git@github.com:issa-diallo/factory-sa-backend.git
+   cd factory-sa-backend
+   ```
 
-2.  **Launch the application with Docker Compose**:
-    This command will build the Docker image (if it doesn't exist or if the `Dockerfile` has been modified) and start the container.
+2. **Start all services**:
 
-    ```bash
-    docker compose up --build
-    ```
+   ```bash
+   docker compose up --build
+   ```
 
-    The application will be accessible at `http://localhost:3001`.
+   This command will:
+   - Start the PostgreSQL database
+   - Run Prisma migrations
+   - Populate the database with test data
+   - Launch Prisma Studio at http://localhost:5555
+   - Start the backend server
 
-3.  **Run in background (detached mode)**:
-    To run the application in the background and free up your terminal:
-
-    ```bash
-    docker compose up -d
-    ```
-
-4.  **Stop the application**:
-    To stop and remove the containers:
-    ```bash
-    docker compose down
-    ```
-    If you just want to stop the containers without removing them:
-    ```bash
-    docker compose stop
-    ```
+3. **Access the services**:
+   - Backend: http://localhost:3001
+   - Prisma Studio: http://localhost:5555
+   - Database: port 5432
 
 ## 🛠️ Development Configuration
 
-To set up your development environment with Docker Compose:
+1. **Copy the development configuration file**:
 
-1.  **Copy the override example file**:
-    This file contains development-specific configurations that override default settings.
+   ```bash
+   cp docker-compose.override.yml.example docker-compose.override.yml
+   ```
 
-    ```bash
-    cp docker-compose.override.yml.example docker-compose.override.yml
-    ```
+   The file now includes:
+   - A database initialization service
+   - Integrated Prisma Studio
+   - Hot-reload for code changes
 
-2.  **Launch the application in development mode**:
-    Docker Compose will automatically detect the `docker-compose.override.yml` file and apply development configurations.
+2. **Useful commands**:
 
-    ```bash
-    docker-compose up
-    ```
+   ```bash
+   # Restart a specific service
+   docker compose restart backend
 
-    The application will be accessible at `http://localhost:3001` and code changes will be hot-reloaded.
+   # View logs
+   docker compose logs -f
 
-3.  **For Production**:
-    If you wish to run the application in production mode (e.g., for a local test deployment), ensure that the `docker-compose.override.yml` file is not present or rename it. Then, use the standard command:
-
-    ```bash
-    docker-compose up
-    ```
+   # Clean everything
+   docker compose down -v
+   ```
 
 ## 📜 Available Scripts
 
