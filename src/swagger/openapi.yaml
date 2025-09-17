@@ -1,508 +1,334 @@
----
-openapi: 3.0.0
-info:
-  title: Factory Backend API
-  version: 1.0.0
-servers:
-  - url: http://localhost:3001
-    description: Development server
-
-paths:
-  /api/v1/company:
-    post:
-      tags:
-        - Company
-      summary: Create a new company
-      description: |
-        Creates a new company.
-        Requires appropriate administrative permissions.
-      security:
-        - bearerAuth: []
-      requestBody:
-        required: true
+/api/v1/domain:
+  post:
+    tags:
+      - Domain
+    summary: Create a new domain
+    description: |
+      Creates a new domain.
+      Requires appropriate administrative permissions.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateDomainRequest'
+    responses:
+      '201':
+        description: Domain created successfully
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateCompanyRequest'
-      responses:
-        '201':
-          description: Company created successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompanyResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    get:
-      tags:
-        - Company
-      summary: Get companies
-      description: |
-        Retrieves companies based on user permissions.
-        Access restrictions apply based on user role.
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Companies retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompanyListResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/company/current:
-    get:
-      tags:
-        - Company
-      summary: Get current user's company
-      description: |
-        Retrieves the company associated with the current user.
-        Requires appropriate access permissions.
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Company retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompanyResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Insufficient permissions
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Company not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/company/{id}:
-    get:
-      tags:
-        - Company
-      summary: Get company by ID
-      description: |
-        Retrieves a specific company by its ID.
-        Requires appropriate access permissions.
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Company ID
-      responses:
-        '200':
-          description: Company retrieved successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompanyResponse'
-        '401':
-          description: Authentication required
-          content:
-            journalication/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Insufficient permissions or access denied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Company not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    put:
-      tags:
-        - Company
-      summary: Update a company
-      description: |
-        Updates an existing company.
-        Requires appropriate administrative permissions.
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Company ID
-      requestBody:
-        required: true
+              $ref: '#/components/schemas/DomainResponse'
+      '400':
+        description: Invalid request data
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/UpdateCompanyRequest'
-      responses:
-        '200':
-          description: Company updated successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/CompanyResponse'
-        '400':
-          description: Invalid request data
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Insufficient permissions or access denied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Company not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-    delete:
-      tags:
-        - Company
-      summary: Delete a company
-      description: |
-        Deletes a company.
-        Requires appropriate administrative permissions.
-      security:
-        - bearerAuth: []
-      parameters:
-        - name: id
-          in: path
-          required: true
-          schema:
-            type: string
-          description: Company ID
-      responses:
-        '200':
-          description: Company deleted successfully
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                message: 'Company deleted successfully'
-        '401':
-          description: Authentication required
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-        '403':
-          description: Insufficient permissions or access denied
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '404':
-          description: Company not found
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-
-  /api/v1/auth/login:
-    post:
-      tags:
-        - Authentication
-      summary: User login
-      description: Authenticates a user with email/password
-      requestBody:
-        required: true
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Authentication required
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/LoginRequest'
-      responses:
-        '200':
-          description: Login successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LoginResponse'
-        '401':
-          description: Invalid credentials
-        '400':
-          description: Invalid data
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 
-  /api/v1/auth/logout:
-    post:
-      tags:
-        - Authentication
-      summary: User logout
-      description: |
-        Logs out the user by invalidating the token and session.
-        Requires a valid JWT token in the Authorization header with the format:
-        "Bearer <token>"
-      security:
-        - bearerAuth: []
-      responses:
-        '200':
-          description: Logout successful
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/LogoutResponse'
-              example:
-                message: 'Logout successful'
-        '400':
-          description: Missing or malformed Authorization header
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-              example:
-                message: 'Missing token'
-        '401':
-          description: Authentication failed - invalid or expired token
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/AuthErrorResponse'
-              examples:
-                invalid_token:
-                  summary: Invalid token
-                  value:
-                    message: 'Invalid token'
-                auth_required:
-                  summary: Authentication required
-                  value:
-                    message: 'Authentication required'
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ErrorResponse'
-              example:
-                message: 'Internal server error'
+  get:
+    tags:
+      - Domain
+    summary: Retrieve all domains
+    description: |
+      Retrieves all available domains.
+      Access restrictions apply based on the user's role.
+    security:
+      - bearerAuth: []
+    responses:
+      '200':
+        description: Domains retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainListResponse'
+      '401':
+        description: Authentication required
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 
-components:
-  schemas:
-    LoginRequest:
-      type: object
-      required:
-        - email
-        - password
-      properties:
-        email:
+/api/v1/domain/{id}:
+  get:
+    tags:
+      - Domain
+    summary: Retrieve a domain by ID
+    description: |
+      Retrieves a specific domain by its ID.
+      Requires appropriate access permissions.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
           type: string
-          format: email
-          description: User's email address
-        password:
-          type: string
-          minLength: 6
-          description: Password (minimum 6 characters)
+        description: Domain ID
+    responses:
+      '200':
+        description: Domain retrieved successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainResponse'
+      '401':
+        description: Authentication required
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions or access denied
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Domain not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 
-    LoginResponse:
-      type: object
-      properties:
-        token:
+  put:
+    tags:
+      - Domain
+    summary: Update a domain
+    description: |
+      Updates an existing domain.
+      Requires appropriate administrative permissions.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
           type: string
-          description: Authentication JWT token
-        user:
-          $ref: '#/components/schemas/User'
+        description: Domain ID
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/UpdateDomainRequest'
+    responses:
+      '200':
+        description: Domain updated successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DomainResponse'
+      '400':
+        description: Invalid request data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Authentication required
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions or access denied
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Domain not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 
-    LogoutResponse:
-      type: object
-      properties:
-        message:
+  delete:
+    tags:
+      - Domain
+    summary: Delete a domain
+    description: |
+      Deletes a domain.
+      Requires appropriate administrative permissions.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: id
+        in: path
+        required: true
+        schema:
           type: string
-          example: 'Logout successful'
+        description: Domain ID
+    responses:
+      '204':
+        description: Domain deleted successfully
+      '401':
+        description: Authentication required
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions or access denied
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Domain not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 
-    ErrorResponse:
-      type: object
-      properties:
-        message:
-          type: string
-          description: Message d'erreur descriptif
+/api/v1/domain/company-domain:
+  post:
+    tags:
+      - Domain
+    summary: Create a company-domain association
+    description: |
+      Creates an association between a company and a domain.
+      Requires appropriate administrative permissions.
+    security:
+      - bearerAuth: []
+    requestBody:
+      required: true
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/CreateCompanyDomainRequest'
+    responses:
+      '201':
+        description: Association created successfully
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CompanyDomainResponse'
+      '400':
+        description: Invalid request data
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '401':
+        description: Authentication required
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
 
-    AuthErrorResponse:
-      type: object
-      properties:
-        message:
+/api/v1/domain/company/{companyId}/domain/{domainId}:
+  delete:
+    tags:
+      - Domain
+    summary: Delete a company-domain association
+    description: |
+      Deletes an association between a company and a domain.
+      Requires appropriate administrative permissions.
+    security:
+      - bearerAuth: []
+    parameters:
+      - name: companyId
+        in: path
+        required: true
+        schema:
           type: string
-          enum:
-            - 'Authentication required'
-            - 'Invalid token'
-            - 'Missing token'
-          description: Message d'erreur d'authentification
-
-    User:
-      type: object
-      properties:
-        id:
+        description: Company ID
+      - name: domainId
+        in: path
+        required: true
+        schema:
           type: string
-          description: Unique identifier of the user
-        email:
-          type: string
-          format: email
-          description: User's email address
-        firstName:
-          type: string
-          nullable: true
-          description: User's first name
-        lastName:
-          type: string
-          nullable: true
-          description: User's last name
-
-    CreateCompanyRequest:
-      type: object
-      required:
-        - name
-      properties:
-        name:
-          type: string
-          minLength: 1
-          description: Company name
-        description:
-          type: string
-          nullable: true
-          description: Company description
-        isActive:
-          type: boolean
-          default: true
-          description: Whether the company is active
-
-    UpdateCompanyRequest:
-      type: object
-      properties:
-        name:
-          type: string
-          minLength: 1
-          description: Company name
-        description:
-          type: string
-          nullable: true
-          description: Company description
-        isActive:
-          type: boolean
-          description: Whether the company is active
-
-    CompanyResponse:
-      type: object
-      properties:
-        id:
-          type: string
-          description: Unique identifier of the company
-        name:
-          type: string
-          description: Company name
-        description:
-          type: string
-          nullable: true
-          description: Company description
-        isActive:
-          type: boolean
-          description: Whether the company is active
-        createdAt:
-          type: string
-          format: date-time
-          description: Creation timestamp
-        updatedAt:
-          type: string
-          format: date-time
-          description: Last update timestamp
-
-    CompanyListResponse:
-      type: array
-      items:
-        $ref: '#/components/schemas/CompanyResponse'
-
-  securitySchemes:
-    bearerAuth:
-      type: http
-      scheme: bearer
-      bearerFormat: JWT
+        description: Domain ID
+    responses:
+      '204':
+        description: Association deleted successfully
+      '401':
+        description: Authentication required
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AuthErrorResponse'
+      '403':
+        description: Insufficient permissions or access denied
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '404':
+        description: Association not found
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
+      '500':
+        description: Internal server error
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ErrorResponse'
