@@ -51,7 +51,7 @@ export class AuthController extends BaseController {
       return this.handleError(res, error, (err: unknown) => {
         const authError = err as Error;
         if (authError.message === 'Invalid token') {
-          return { statusCode: 401, message: 'Invalid token' };
+          return { statusCode: 200, message: 'Logout successful' };
         }
         return { statusCode: 500, message: authError.message };
       });

@@ -109,15 +109,15 @@ describe('AuthController', () => {
       expect(res.body).toEqual({ message: 'Missing token' });
     });
 
-    it('should return 401 if token is invalid', async () => {
+    it('should return 200 even if token is invalid (graceful logout)', async () => {
       mockLogout.mockRejectedValue(new Error('Invalid token'));
 
       const res = await request(app)
         .post('/logout')
         .set('Authorization', 'Bearer invalid');
 
-      expect(res.status).toBe(401);
-      expect(res.body).toEqual({ message: 'Invalid token' });
+      expect(res.status).toBe(200);
+      expect(res.body).toEqual({ message: 'Logout successful' });
     });
 
     it('should return 500 for unexpected errors', async () => {

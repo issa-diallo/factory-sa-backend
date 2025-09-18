@@ -1,4 +1,4 @@
-// ✅ Mock JWT avant tout import
+// Mock JWT before any import
 jest.mock('jsonwebtoken', () => ({
   sign: jest.fn(),
   verify: jest.fn(),
@@ -22,7 +22,6 @@ const mockPrismaService = {
   },
 };
 
-// Cast pour Jest uniquement là où nécessaire
 const mockFindUnique = mockPrismaService.session.findUnique as jest.Mock<
   Promise<Session | null>,
   [Prisma.SessionFindUniqueArgs]
@@ -204,12 +203,12 @@ describe('TokenService', () => {
       });
     });
 
-    it('should throw if session not found', async () => {
+    it('should not throw if session not found (graceful invalidation)', async () => {
       mockFindUnique.mockResolvedValue(null);
 
-      await expect(tokenService.invalidateToken('unknown')).rejects.toThrow(
-        'Invalid token'
-      );
+      await expect(
+        tokenService.invalidateToken('unknown')
+      ).resolves.not.toThrow();
 
       expect(mockUpdate).not.toHaveBeenCalled();
     });

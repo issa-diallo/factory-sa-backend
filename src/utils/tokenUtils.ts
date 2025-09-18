@@ -12,10 +12,10 @@ export function extractToken(authHeader?: string): string | null {
 export async function verifySession(token: string) {
   const prisma = container.resolve<IPrismaService>('IPrismaService');
   const session = await prisma.session.findUnique({
-    where: { token, isActive: true },
+    where: { token },
   });
 
-  if (!session || new Date() > session.expiresAt) {
+  if (!session || !session.isActive || new Date() > session.expiresAt) {
     throw new Error('Session expired or invalid');
   }
 
