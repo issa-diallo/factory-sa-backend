@@ -76,7 +76,7 @@ export class TokenService implements ITokenService {
     });
 
     if (!existingSession) {
-      throw new Error('Invalid token');
+      return;
     }
 
     await this.prisma.session.update({
