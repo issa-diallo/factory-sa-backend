@@ -26,6 +26,7 @@ export default {
     '^@database/(.*)$': '<rootDir>/src/database/$1',
     '^@prisma/(.*)$': '<rootDir>/prisma/$1',
   },
+  transformIgnorePatterns: ['node_modules/(?!(@faker-js|@jest)/)'],
   testPathIgnorePatterns: [
     '/node_modules/',
     '/tests/schemas/packingListSchema.prod.test.ts',
