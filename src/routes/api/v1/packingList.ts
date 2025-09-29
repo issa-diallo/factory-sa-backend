@@ -10,7 +10,7 @@ const packingListController = container.resolve(PackingListController);
 packingListRouter.post(
   '/',
   authenticate,
-  authorize(['packingList:create']),
+  authorize(['packing_list:create']),
   packingListController.handlePackingList
 );
 

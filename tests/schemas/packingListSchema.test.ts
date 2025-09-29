@@ -115,7 +115,7 @@ describe('PackingList Schema Validation', () => {
       let result = validatePackingListData(dataWithUndefined);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data[0]['QTY ALLOC']).toBe(null);
+        expect(result.data[0]['QTY ALLOC']).toBeNull();
       }
 
       // Test with null
@@ -128,7 +128,7 @@ describe('PackingList Schema Validation', () => {
       result = validatePackingListData(dataWithNull);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data[0]['QTY ALLOC']).toBe(null);
+        expect(result.data[0]['QTY ALLOC']).toBeNull();
       }
 
       // Test with field completely absent
@@ -137,7 +137,7 @@ describe('PackingList Schema Validation', () => {
       result = validatePackingListData(dataWithoutField);
       expect(result.success).toBe(true);
       if (result.success) {
-        expect(result.data[0]['QTY ALLOC']).toBe(null);
+        expect(result.data[0]['QTY ALLOC']).toBeNull();
       }
     });
 
