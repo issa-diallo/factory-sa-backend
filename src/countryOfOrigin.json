@@ -1,0 +1,940 @@
+{
+  "countries": [
+    {
+      "name": "United States",
+      "acronym": "US"
+    },
+    {
+      "name": "Aland Islands",
+      "acronym": "AX"
+    },
+    {
+      "name": "Albania",
+      "acronym": "AL"
+    },
+    {
+      "name": "Algeria",
+      "acronym": "DZ"
+    },
+    {
+      "name": "American Samoa",
+      "acronym": "AS"
+    },
+    {
+      "name": "Andorra",
+      "acronym": "AD"
+    },
+    {
+      "name": "Angola",
+      "acronym": "AO"
+    },
+    {
+      "name": "Anguilla",
+      "acronym": "AI"
+    },
+    {
+      "name": "Antarctica",
+      "acronym": "AQ"
+    },
+    {
+      "name": "Antigua and Barbuda",
+      "acronym": "AG"
+    },
+    {
+      "name": "Argentina",
+      "acronym": "AR"
+    },
+    {
+      "name": "Armenia",
+      "acronym": "AM"
+    },
+    {
+      "name": "Aruba",
+      "acronym": "AW"
+    },
+    {
+      "name": "Australia",
+      "acronym": "AU"
+    },
+    {
+      "name": "Austria",
+      "acronym": "AT"
+    },
+    {
+      "name": "Azerbaijan",
+      "acronym": "AZ"
+    },
+    {
+      "name": "Bahamas",
+      "acronym": "BS"
+    },
+    {
+      "name": "Bahrain",
+      "acronym": "BH"
+    },
+    {
+      "name": "Bangladesh",
+      "acronym": "BD"
+    },
+    {
+      "name": "Barbados",
+      "acronym": "BB"
+    },
+    {
+      "name": "Belarus",
+      "acronym": "BY"
+    },
+    {
+      "name": "Belgium",
+      "acronym": "BE"
+    },
+    {
+      "name": "Belize",
+      "acronym": "BZ"
+    },
+    {
+      "name": "Benin",
+      "acronym": "BJ"
+    },
+    {
+      "name": "Bermuda",
+      "acronym": "BM"
+    },
+    {
+      "name": "Bhutan",
+      "acronym": "BT"
+    },
+    {
+      "name": "Bolivia",
+      "acronym": "BO"
+    },
+    {
+      "name": "Bosnia and Herzegovina",
+      "acronym": "BA"
+    },
+    {
+      "name": "Botswana",
+      "acronym": "BW"
+    },
+    {
+      "name": "Bouvet Island",
+      "acronym": "BV"
+    },
+    {
+      "name": "Brazil",
+      "acronym": "BR"
+    },
+    {
+      "name": "British Indian Ocean Territory",
+      "acronym": "IO"
+    },
+    {
+      "name": "Brunei Darussalam",
+      "acronym": "BN"
+    },
+    {
+      "name": "Bulgaria",
+      "acronym": "BG"
+    },
+    {
+      "name": "Burkina Faso",
+      "acronym": "BF"
+    },
+    {
+      "name": "Burundi",
+      "acronym": "BI"
+    },
+    {
+      "name": "Cambodia",
+      "acronym": "KH"
+    },
+    {
+      "name": "Cameroon",
+      "acronym": "CM"
+    },
+    {
+      "name": "Canada",
+      "acronym": "CA"
+    },
+    {
+      "name": "Cape Verde",
+      "acronym": "CV"
+    },
+    {
+      "name": "Cayman Islands",
+      "acronym": "KY"
+    },
+    {
+      "name": "Central African Republic",
+      "acronym": "CF"
+    },
+    {
+      "name": "Chad",
+      "acronym": "TD"
+    },
+    {
+      "name": "Chile",
+      "acronym": "CL"
+    },
+    {
+      "name": "China",
+      "acronym": "CN"
+    },
+    {
+      "name": "Christmas Island",
+      "acronym": "CX"
+    },
+    {
+      "name": "Cocos (Keeling) Islands",
+      "acronym": "CC"
+    },
+    {
+      "name": "Colombia",
+      "acronym": "CO"
+    },
+    {
+      "name": "Comoros",
+      "acronym": "KM"
+    },
+    {
+      "name": "Congo",
+      "acronym": "CG"
+    },
+    {
+      "name": "Congo, The Democratic Republic of The",
+      "acronym": "CD"
+    },
+    {
+      "name": "Cook Islands",
+      "acronym": "CK"
+    },
+    {
+      "name": "Costa Rica",
+      "acronym": "CR"
+    },
+    {
+      "name": "Cote D'ivoire",
+      "acronym": "CI"
+    },
+    {
+      "name": "Croatia",
+      "acronym": "HR"
+    },
+    {
+      "name": "Cyprus",
+      "acronym": "CY"
+    },
+    {
+      "name": "Czech Republic",
+      "acronym": "CZ"
+    },
+    {
+      "name": "Denmark",
+      "acronym": "DK"
+    },
+    {
+      "name": "Djibouti",
+      "acronym": "DJ"
+    },
+    {
+      "name": "Dominica",
+      "acronym": "DM"
+    },
+    {
+      "name": "Dominican Republic",
+      "acronym": "DO"
+    },
+    {
+      "name": "Ecuador",
+      "acronym": "EC"
+    },
+    {
+      "name": "Egypt",
+      "acronym": "EG"
+    },
+    {
+      "name": "El Salvador",
+      "acronym": "SV"
+    },
+    {
+      "name": "Equatorial Guinea",
+      "acronym": "GQ"
+    },
+    {
+      "name": "Eritrea",
+      "acronym": "ER"
+    },
+    {
+      "name": "Estonia",
+      "acronym": "EE"
+    },
+    {
+      "name": "Ethiopia",
+      "acronym": "ET"
+    },
+    {
+      "name": "Falkland Islands (Malvinas)",
+      "acronym": "FK"
+    },
+    {
+      "name": "Faroe Islands",
+      "acronym": "FO"
+    },
+    {
+      "name": "Fiji",
+      "acronym": "FJ"
+    },
+    {
+      "name": "Finland",
+      "acronym": "FI"
+    },
+    {
+      "name": "France",
+      "acronym": "FR"
+    },
+    {
+      "name": "French Guiana",
+      "acronym": "GF"
+    },
+    {
+      "name": "French Polynesia",
+      "acronym": "PF"
+    },
+    {
+      "name": "French Southern Territories",
+      "acronym": "TF"
+    },
+    {
+      "name": "Gabon",
+      "acronym": "GA"
+    },
+    {
+      "name": "Gambia",
+      "acronym": "GM"
+    },
+    {
+      "name": "Georgia",
+      "acronym": "GE"
+    },
+    {
+      "name": "Germany",
+      "acronym": "DE"
+    },
+    {
+      "name": "Ghana",
+      "acronym": "GH"
+    },
+    {
+      "name": "Gibraltar",
+      "acronym": "GI"
+    },
+    {
+      "name": "Greece",
+      "acronym": "GR"
+    },
+    {
+      "name": "Greenland",
+      "acronym": "GL"
+    },
+    {
+      "name": "Grenada",
+      "acronym": "GD"
+    },
+    {
+      "name": "Guadeloupe",
+      "acronym": "GP"
+    },
+    {
+      "name": "Guam",
+      "acronym": "GU"
+    },
+    {
+      "name": "Guatemala",
+      "acronym": "GT"
+    },
+    {
+      "name": "Guernsey",
+      "acronym": "GG"
+    },
+    {
+      "name": "Guinea",
+      "acronym": "GN"
+    },
+    {
+      "name": "Guinea-bissau",
+      "acronym": "GW"
+    },
+    {
+      "name": "Guyana",
+      "acronym": "GY"
+    },
+    {
+      "name": "Haiti",
+      "acronym": "HT"
+    },
+    {
+      "name": "Heard Island and Mcdonald Islands",
+      "acronym": "HM"
+    },
+    {
+      "name": "Holy See (Vatican City State)",
+      "acronym": "VA"
+    },
+    {
+      "name": "Honduras",
+      "acronym": "HN"
+    },
+    {
+      "name": "Hong Kong",
+      "acronym": "HK"
+    },
+    {
+      "name": "Hungary",
+      "acronym": "HU"
+    },
+    {
+      "name": "Iceland",
+      "acronym": "IS"
+    },
+    {
+      "name": "India",
+      "acronym": "IN"
+    },
+    {
+      "name": "Indonesia",
+      "acronym": "ID"
+    },
+    {
+      "name": "Ireland",
+      "acronym": "IE"
+    },
+    {
+      "name": "Isle of Man",
+      "acronym": "IM"
+    },
+    {
+      "name": "Israel",
+      "acronym": "IL"
+    },
+    {
+      "name": "Italy",
+      "acronym": "IT"
+    },
+    {
+      "name": "Jamaica",
+      "acronym": "JM"
+    },
+    {
+      "name": "Japan",
+      "acronym": "JP"
+    },
+    {
+      "name": "Jersey",
+      "acronym": "JE"
+    },
+    {
+      "name": "Jordan",
+      "acronym": "JO"
+    },
+    {
+      "name": "Kazakhstan",
+      "acronym": "KZ"
+    },
+    {
+      "name": "Kenya",
+      "acronym": "KE"
+    },
+    {
+      "name": "Kiribati",
+      "acronym": "KI"
+    },
+    {
+      "name": "Korea, Republic of",
+      "acronym": "KR"
+    },
+    {
+      "name": "Kuwait",
+      "acronym": "KW"
+    },
+    {
+      "name": "Kyrgyzstan",
+      "acronym": "KG"
+    },
+    {
+      "name": "Lao People's Democratic Republic",
+      "acronym": "LA"
+    },
+    {
+      "name": "Latvia",
+      "acronym": "LV"
+    },
+    {
+      "name": "Lebanon",
+      "acronym": "LB"
+    },
+    {
+      "name": "Lesotho",
+      "acronym": "LS"
+    },
+    {
+      "name": "Liberia",
+      "acronym": "LR"
+    },
+    {
+      "name": "Liechtenstein",
+      "acronym": "LI"
+    },
+    {
+      "name": "Lithuania",
+      "acronym": "LT"
+    },
+    {
+      "name": "Luxembourg",
+      "acronym": "LU"
+    },
+    {
+      "name": "Macao",
+      "acronym": "MO"
+    },
+    {
+      "name": "Macedonia, The Former Yugoslav Republic of",
+      "acronym": "MK"
+    },
+    {
+      "name": "Madagascar",
+      "acronym": "MG"
+    },
+    {
+      "name": "Malawi",
+      "acronym": "MW"
+    },
+    {
+      "name": "Malaysia",
+      "acronym": "MY"
+    },
+    {
+      "name": "Maldives",
+      "acronym": "MV"
+    },
+    {
+      "name": "Mali",
+      "acronym": "ML"
+    },
+    {
+      "name": "Malta",
+      "acronym": "MT"
+    },
+    {
+      "name": "Marshall Islands",
+      "acronym": "MH"
+    },
+    {
+      "name": "Martinique",
+      "acronym": "MQ"
+    },
+    {
+      "name": "Mauritania",
+      "acronym": "MR"
+    },
+    {
+      "name": "Mauritius",
+      "acronym": "MU"
+    },
+    {
+      "name": "Mayotte",
+      "acronym": "YT"
+    },
+    {
+      "name": "Mexico",
+      "acronym": "MX"
+    },
+    {
+      "name": "Micronesia, Federated States of",
+      "acronym": "FM"
+    },
+    {
+      "name": "Moldova, Republic of",
+      "acronym": "MD"
+    },
+    {
+      "name": "Monaco",
+      "acronym": "MC"
+    },
+    {
+      "name": "Mongolia",
+      "acronym": "MN"
+    },
+    {
+      "name": "Montenegro",
+      "acronym": "ME"
+    },
+    {
+      "name": "Montserrat",
+      "acronym": "MS"
+    },
+    {
+      "name": "Morocco",
+      "acronym": "MA"
+    },
+    {
+      "name": "Mozambique",
+      "acronym": "MZ"
+    },
+    {
+      "name": "Myanmar",
+      "acronym": "MM"
+    },
+    {
+      "name": "Namibia",
+      "acronym": "NA"
+    },
+    {
+      "name": "Nauru",
+      "acronym": "NR"
+    },
+    {
+      "name": "Nepal",
+      "acronym": "NP"
+    },
+    {
+      "name": "Netherlands",
+      "acronym": "NL"
+    },
+    {
+      "name": "Netherlands Antilles",
+      "acronym": "AN"
+    },
+    {
+      "name": "New Caledonia",
+      "acronym": "NC"
+    },
+    {
+      "name": "New Zealand",
+      "acronym": "NZ"
+    },
+    {
+      "name": "Nicaragua",
+      "acronym": "NI"
+    },
+    {
+      "name": "Niger",
+      "acronym": "NE"
+    },
+    {
+      "name": "Nigeria",
+      "acronym": "NG"
+    },
+    {
+      "name": "Niue",
+      "acronym": "NU"
+    },
+    {
+      "name": "Norfolk Island",
+      "acronym": "NF"
+    },
+    {
+      "name": "Northern Mariana Islands",
+      "acronym": "MP"
+    },
+    {
+      "name": "Norway",
+      "acronym": "NO"
+    },
+    {
+      "name": "Oman",
+      "acronym": "OM"
+    },
+    {
+      "name": "Pakistan",
+      "acronym": "PK"
+    },
+    {
+      "name": "Palau",
+      "acronym": "PW"
+    },
+    {
+      "name": "Panama",
+      "acronym": "PA"
+    },
+    {
+      "name": "Papua New Guinea",
+      "acronym": "PG"
+    },
+    {
+      "name": "Paraguay",
+      "acronym": "PY"
+    },
+    {
+      "name": "Peru",
+      "acronym": "PE"
+    },
+    {
+      "name": "Philippines",
+      "acronym": "PH"
+    },
+    {
+      "name": "Pitcairn",
+      "acronym": "PN"
+    },
+    {
+      "name": "Poland",
+      "acronym": "PL"
+    },
+    {
+      "name": "Portugal",
+      "acronym": "PT"
+    },
+    {
+      "name": "Puerto Rico",
+      "acronym": "PR"
+    },
+    {
+      "name": "Qatar",
+      "acronym": "QA"
+    },
+    {
+      "name": "Reunion",
+      "acronym": "RE"
+    },
+    {
+      "name": "Romania",
+      "acronym": "RO"
+    },
+    {
+      "name": "Russian Federation",
+      "acronym": "RU"
+    },
+    {
+      "name": "Rwanda",
+      "acronym": "RW"
+    },
+    {
+      "name": "Saint Helena",
+      "acronym": "SH"
+    },
+    {
+      "name": "Saint Kitts and Nevis",
+      "acronym": "KN"
+    },
+    {
+      "name": "Saint Lucia",
+      "acronym": "LC"
+    },
+    {
+      "name": "Saint Pierre and Miquelon",
+      "acronym": "PM"
+    },
+    {
+      "name": "Saint Vincent and The Grenadines",
+      "acronym": "VC"
+    },
+    {
+      "name": "Samoa",
+      "acronym": "WS"
+    },
+    {
+      "name": "San Marino",
+      "acronym": "SM"
+    },
+    {
+      "name": "Sao Tome and Principe",
+      "acronym": "ST"
+    },
+    {
+      "name": "Senegal",
+      "acronym": "SN"
+    },
+    {
+      "name": "Serbia",
+      "acronym": "RS"
+    },
+    {
+      "name": "Seychelles",
+      "acronym": "SC"
+    },
+    {
+      "name": "Singapore",
+      "acronym": "SG"
+    },
+    {
+      "name": "Slovakia",
+      "acronym": "SK"
+    },
+    {
+      "name": "Slovenia",
+      "acronym": "SI"
+    },
+    {
+      "name": "Solomon Islands",
+      "acronym": "SB"
+    },
+    {
+      "name": "Somalia",
+      "acronym": "SO"
+    },
+    {
+      "name": "South Africa",
+      "acronym": "ZA"
+    },
+    {
+      "name": "South Georgia and The South Sandwich Islands",
+      "acronym": "GS"
+    },
+    {
+      "name": "Spain",
+      "acronym": "ES"
+    },
+    {
+      "name": "Sri Lanka",
+      "acronym": "LK"
+    },
+    {
+      "name": "Sudan",
+      "acronym": "SD"
+    },
+    {
+      "name": "Suriname",
+      "acronym": "SR"
+    },
+    {
+      "name": "Svalbard and Jan Mayen",
+      "acronym": "SJ"
+    },
+    {
+      "name": "Swaziland",
+      "acronym": "SZ"
+    },
+    {
+      "name": "Sweden",
+      "acronym": "SE"
+    },
+    {
+      "name": "Switzerland",
+      "acronym": "CH"
+    },
+    {
+      "name": "Taiwan",
+      "acronym": "TW"
+    },
+    {
+      "name": "Tajikistan",
+      "acronym": "TJ"
+    },
+    {
+      "name": "Tanzania, United Republic of",
+      "acronym": "TZ"
+    },
+    {
+      "name": "Thailand",
+      "acronym": "TH"
+    },
+    {
+      "name": "Timor-leste",
+      "acronym": "TL"
+    },
+    {
+      "name": "Togo",
+      "acronym": "TG"
+    },
+    {
+      "name": "Tokelau",
+      "acronym": "TK"
+    },
+    {
+      "name": "Tonga",
+      "acronym": "TO"
+    },
+    {
+      "name": "Trinidad and Tobago",
+      "acronym": "TT"
+    },
+    {
+      "name": "Tunisia",
+      "acronym": "TN"
+    },
+    {
+      "name": "Turkey",
+      "acronym": "TR"
+    },
+    {
+      "name": "Turkmenistan",
+      "acronym": "TM"
+    },
+    {
+      "name": "Turks and Caicos Islands",
+      "acronym": "TC"
+    },
+    {
+      "name": "Tuvalu",
+      "acronym": "TV"
+    },
+    {
+      "name": "Uganda",
+      "acronym": "UG"
+    },
+    {
+      "name": "Ukraine",
+      "acronym": "UA"
+    },
+    {
+      "name": "United Arab Emirates",
+      "acronym": "AE"
+    },
+    {
+      "name": "United Kingdom",
+      "acronym": "GB"
+    },
+    {
+      "name": "Afghanistan",
+      "acronym": "AF"
+    },
+    {
+      "name": "United States Minor Outlying Islands",
+      "acronym": "UM"
+    },
+    {
+      "name": "Uruguay",
+      "acronym": "UY"
+    },
+    {
+      "name": "Uzbekistan",
+      "acronym": "UZ"
+    },
+    {
+      "name": "Vanuatu",
+      "acronym": "VU"
+    },
+    {
+      "name": "Venezuela",
+      "acronym": "VE"
+    },
+    {
+      "name": "Viet Nam",
+      "acronym": "VN"
+    },
+    {
+      "name": "Virgin Islands, British",
+      "acronym": "VG"
+    },
+    {
+      "name": "Virgin Islands, U.S.",
+      "acronym": "VI"
+    },
+    {
+      "name": "Wallis and Futuna",
+      "acronym": "WF"
+    },
+    {
+      "name": "Western Sahara",
+      "acronym": "EH"
+    },
+    {
+      "name": "Zambia",
+      "acronym": "ZM"
+    },
+    {
+      "name": "Zimbabwe",
+      "acronym": "ZW"
+    }
+  ]
+}
