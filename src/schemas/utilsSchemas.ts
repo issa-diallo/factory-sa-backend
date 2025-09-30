@@ -31,7 +31,7 @@ export const BaseItemSchema = z.object({
 export const ProcessedItemSchema = z.object({
   description: z.string(),
   model: z.string(),
-  origin: z.string().optional(),
+  coo: z.string().optional(),
   ctn: z.number().int().positive(),
   qty: z.number().int().positive(),
   totalQty: z.number().int().positive(),

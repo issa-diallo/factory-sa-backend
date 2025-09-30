@@ -4,6 +4,7 @@ import {
   BaseItemSchema,
   ProcessedItemArraySchema,
 } from '../schemas/utilsSchemas';
+import { getCountryAcronym } from './getCountryAcronym';
 
 type BaseItem = Pick<ProcessedItem, 'description' | 'model'>;
 
@@ -35,6 +36,13 @@ export function extractCtnBlocksFromRow(
   const validatedRow = row;
   const validatedBase = baseValidation.data;
   const result: ProcessedItem[] = [];
+
+  // Calculate COO from ORIGIN if available
+  let coo: string | undefined;
+  if (validatedRow.ORIGIN && String(validatedRow.ORIGIN).trim()) {
+    const acronym = getCountryAcronym(String(validatedRow.ORIGIN));
+    coo = acronym || 'N/A';
+  }
 
   const keys = Object.keys(validatedRow);
 
@@ -100,6 +108,7 @@ export function extractCtnBlocksFromRow(
       for (const ctn of ctnResult.data) {
         result.push({
           ...validatedBase,
+          coo,
           ctn,
           qty,
           totalQty: qty,
