@@ -27,12 +27,6 @@ export const BaseItemSchema = z.object({
   model: z.string().min(1, 'Model cannot be empty'),
 });
 
-// Schema for row data
-export const RowDataSchema = z.record(
-  z.string(),
-  z.union([z.string(), z.number()])
-);
-
 // Schema for ProcessedItem
 export const ProcessedItemSchema = z.object({
   description: z.string(),
