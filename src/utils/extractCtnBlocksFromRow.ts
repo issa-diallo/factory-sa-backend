@@ -1,7 +1,6 @@
 import { ProcessedItem, Result, createSuccess, createError } from '../types';
 import { expandCtnRange } from './expandCtnRange';
 import {
-  RowDataSchema,
   BaseItemSchema,
   ProcessedItemArraySchema,
 } from '../schemas/utilsSchemas';
@@ -19,15 +18,12 @@ export function extractCtnBlocksFromRow(
   row: Record<string, string | number>,
   base: BaseItem
 ): Result<ProcessedItem[]> {
-  // Validate inputs with Zod
-  const rowValidation = RowDataSchema.safeParse(row);
-  if (!rowValidation.success) {
-    return createError(
-      'Invalid row data: ' + rowValidation.error.issues[0]?.message,
-      'INVALID_ROW_DATA'
-    );
+  // Basic validation for row (already validated by controller, but handle edge cases)
+  if (!row || typeof row !== 'object') {
+    return createError('Invalid row data', 'INVALID_ROW_DATA');
   }
 
+  // Validate base object with Zod
   const baseValidation = BaseItemSchema.safeParse(base);
   if (!baseValidation.success) {
     return createError(
@@ -36,7 +32,7 @@ export function extractCtnBlocksFromRow(
     );
   }
 
-  const validatedRow = rowValidation.data;
+  const validatedRow = row;
   const validatedBase = baseValidation.data;
   const result: ProcessedItem[] = [];
 
