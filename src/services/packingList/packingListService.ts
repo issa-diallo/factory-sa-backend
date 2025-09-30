@@ -8,6 +8,7 @@ import {
   Result,
 } from '../../types';
 import { extractCtnBlocksFromRow } from '../../utils/extractCtnBlocksFromRow';
+import { sortPackingListItems } from '../../utils/sortPackingListItems';
 
 import { IPackingListService } from './interfaces';
 
@@ -68,10 +69,13 @@ export class PackingListService implements IPackingListService {
 
       const totalPcs = result.reduce((sum, item) => sum + item.qty, 0);
 
+      // Sorting the results using the utility function
+      const sortedResult = sortPackingListItems(result);
+
       return createSuccess({
-        data: result,
+        data: sortedResult,
         summary: {
-          processedRows: result.length,
+          processedRows: sortedResult.length,
           totalPcs,
         },
       });
