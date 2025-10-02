@@ -42,6 +42,7 @@ describe('PackingListController', () => {
       Description: item.description,
       COO: undefined,
       Pal: undefined,
+      'Number of Ctns': '1',
     }));
 
     const req: Partial<Request> = { body: fixture };
