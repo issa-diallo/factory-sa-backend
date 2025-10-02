@@ -109,7 +109,7 @@ export function extractCtnBlocksFromRow(
         result.push({
           ...validatedBase,
           coo,
-          ctn,
+          ctns: ctn,
           qty,
           totalQty: qty,
           pal,

@@ -32,7 +32,7 @@ export const ProcessedItemSchema = z.object({
   description: z.string(),
   category: z.string(),
   coo: z.string().optional(),
-  ctn: z.number().int().positive(),
+  ctns: z.number().int().positive(),
   qty: z.number().int().positive(),
   totalQty: z.number().int().positive(),
   pal: z.number().int().positive().optional(),

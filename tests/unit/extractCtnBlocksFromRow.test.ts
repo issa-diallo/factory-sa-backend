@@ -21,7 +21,7 @@ describe('extractCtnBlocksFromRow', () => {
         expect(result.data).toHaveLength(1);
         expect(result.data[0]).toEqual({
           ...validBase,
-          ctn: 100,
+          ctns: 100,
           qty: 50,
           totalQty: 50,
           pal: 1,
@@ -40,9 +40,9 @@ describe('extractCtnBlocksFromRow', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toHaveLength(3);
-        expect(result.data[0].ctn).toBe(100);
-        expect(result.data[1].ctn).toBe(101);
-        expect(result.data[2].ctn).toBe(102);
+        expect(result.data[0].ctns).toBe(100);
+        expect(result.data[1].ctns).toBe(101);
+        expect(result.data[2].ctns).toBe(102);
         expect(result.data[0].qty).toBe(25);
         expect(result.data[0].pal).toBe(2);
       }
@@ -66,18 +66,18 @@ describe('extractCtnBlocksFromRow', () => {
         // First block
         expect(result.data[0]).toEqual({
           ...validBase,
-          ctn: 100,
+          ctns: 100,
           qty: 50,
           totalQty: 50,
           pal: 1,
         });
 
         // Second block
-        expect(result.data[1].ctn).toBe(200);
+        expect(result.data[1].ctns).toBe(200);
         expect(result.data[1].qty).toBe(30);
         expect(result.data[1].pal).toBe(2);
 
-        expect(result.data[2].ctn).toBe(201);
+        expect(result.data[2].ctns).toBe(201);
         expect(result.data[2].qty).toBe(30);
         expect(result.data[2].pal).toBe(2);
       }
@@ -108,7 +108,7 @@ describe('extractCtnBlocksFromRow', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toHaveLength(1);
-        expect(result.data[0].ctn).toBe(100);
+        expect(result.data[0].ctns).toBe(100);
         expect(result.data[0].qty).toBe(50);
         expect(result.data[0].pal).toBe(1);
       }
@@ -242,8 +242,8 @@ describe('extractCtnBlocksFromRow', () => {
       expect(result.success).toBe(true);
       if (result.success) {
         expect(result.data).toHaveLength(2); // Only CTN and CTN_3 blocks
-        expect(result.data[0].ctn).toBe(100);
-        expect(result.data[1].ctn).toBe(300);
+        expect(result.data[0].ctns).toBe(100);
+        expect(result.data[1].ctns).toBe(300);
       }
     });
 

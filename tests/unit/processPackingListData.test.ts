@@ -103,7 +103,7 @@ describe('PackingListService', () => {
       .mockReturnValueOnce(
         createSuccess([
           {
-            ctn: 1,
+            ctns: 1,
             qty: 10,
             totalQty: 10,
             description: 'Desc1',
@@ -111,7 +111,7 @@ describe('PackingListService', () => {
             origin: 'O',
           },
           {
-            ctn: 2,
+            ctns: 2,
             qty: 10,
             totalQty: 10,
             description: 'Desc1',
@@ -123,7 +123,7 @@ describe('PackingListService', () => {
       .mockReturnValueOnce(
         createSuccess([
           {
-            ctn: 3,
+            ctns: 3,
             qty: 20,
             totalQty: 20,
             description: 'Desc2',
@@ -131,7 +131,7 @@ describe('PackingListService', () => {
             origin: 'O',
           },
           {
-            ctn: 4,
+            ctns: 4,
             qty: 20,
             totalQty: 20,
             description: 'Desc2',
@@ -234,7 +234,7 @@ describe('PackingListService', () => {
     mockExtractCtnBlocksFromRow.mockReturnValueOnce(
       createSuccess([
         {
-          ctn: 1,
+          ctns: 1,
           qty: 10,
           totalQty: 10,
           description: 'Desc1',
@@ -242,7 +242,7 @@ describe('PackingListService', () => {
           origin: 'Origin1',
         },
         {
-          ctn: 2,
+          ctns: 2,
           qty: 10,
           totalQty: 10,
           description: 'Desc1',
@@ -250,7 +250,7 @@ describe('PackingListService', () => {
           origin: 'Origin1',
         },
         {
-          ctn: 3,
+          ctns: 3,
           qty: 10,
           totalQty: 10,
           description: 'Desc1',
@@ -299,7 +299,7 @@ describe('PackingListService', () => {
     mockExtractCtnBlocksFromRow.mockReturnValueOnce(
       createSuccess([
         {
-          ctn: 1,
+          ctns: 1,
           qty: 20,
           totalQty: 20,
           description: 'Desc2',
@@ -307,7 +307,7 @@ describe('PackingListService', () => {
           origin: 'Origin2',
         },
         {
-          ctn: 2,
+          ctns: 2,
           qty: 20,
           totalQty: 20,
           description: 'Desc2',
