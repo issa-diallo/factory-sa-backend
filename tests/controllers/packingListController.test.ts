@@ -26,7 +26,7 @@ describe('PackingListController', () => {
   it('should return 200 with processed data when input is valid', async () => {
     const fixture = generateValidPackingList(2);
 
-    const processed = fixture.map(item => ({
+    const internalProcessed = fixture.map(item => ({
       ctns: Number(item.CTN),
       qty: item.QTY,
       totalQty: item.QTY,
@@ -34,10 +34,20 @@ describe('PackingListController', () => {
       description: item['DESCRIPTION MIN'],
     }));
 
+    const apiResponseProcessed = internalProcessed.map(item => ({
+      Ctns: item.ctns,
+      'Qty Per Box': item.qty,
+      'Total Qty': item.totalQty,
+      Category: item.category,
+      Description: item.description,
+      COO: undefined,
+      Pal: undefined,
+    }));
+
     const req: Partial<Request> = { body: fixture };
 
     const result: ProcessingResult = {
-      data: processed,
+      data: internalProcessed,
       summary: {
         processedRows: fixture.length,
         totalPcs: fixture.reduce((acc, item) => acc + item.QTY, 0),
@@ -51,7 +61,7 @@ describe('PackingListController', () => {
     expect(res.status).toHaveBeenCalledWith(200);
     expect(res.json).toHaveBeenCalledWith({
       success: true,
-      data: processed,
+      data: apiResponseProcessed,
       summary: {
         totalRows: expect.any(Number),
         processedRows: fixture.length,
