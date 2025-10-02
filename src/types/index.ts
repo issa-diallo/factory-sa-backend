@@ -26,14 +26,14 @@ export interface ProcessedItem {
 }
 
 export interface ProcessedItemResponse {
-  Description: string;
-  Category: string;
-  COO?: string;
-  Ctns: number;
-  'Qty Per Box': number;
-  'Total Qty': number;
   Pal?: number;
+  Ctns: number;
+  Category: string;
+  Description: string;
+  'Qty Per Box': number;
   'Number of Ctns': string;
+  'Total Qty': number;
+  COO?: string;
 }
 
 export interface ProcessingSummary {

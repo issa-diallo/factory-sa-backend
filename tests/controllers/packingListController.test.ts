@@ -36,13 +36,13 @@ describe('PackingListController', () => {
 
     const apiResponseProcessed = internalProcessed.map(item => ({
       Ctns: item.ctns,
-      'Qty Per Box': item.qty,
-      'Total Qty': item.totalQty,
       Category: item.category,
       Description: item.description,
+      'Qty Per Box': item.qty,
+      'Number of Ctns': '1',
+      'Total Qty': item.totalQty,
       COO: undefined,
       Pal: undefined,
-      'Number of Ctns': '1',
     }));
 
     const req: Partial<Request> = { body: fixture };
@@ -131,5 +131,49 @@ describe('PackingListController', () => {
     expect(res.json).toHaveBeenCalledWith({
       message: 'Internal server error',
     });
+  });
+
+  it('should return properties in the correct order: Pal (if exists), Ctns, Category, Description, Qty Per Box, Number of Ctns, Total Qty, COO', async () => {
+    const fixture = generateValidPackingList(1);
+    const req: Partial<Request> = { body: fixture };
+
+    const internalProcessed = fixture.map(item => ({
+      ctns: Number(item.CTN),
+      qty: item.QTY,
+      totalQty: item.QTY,
+      category: item.MODEL,
+      description: item['DESCRIPTION MIN'],
+      coo: 'FR',
+      pal: 123,
+    }));
+
+    const result: ProcessingResult = {
+      data: internalProcessed,
+      summary: {
+        processedRows: fixture.length,
+        totalPcs: fixture.reduce((acc, item) => acc + item.QTY, 0),
+      },
+    };
+
+    mockService.processData.mockResolvedValue(createSuccess(result));
+
+    await controller.handlePackingList(req as Request, res as Response);
+
+    expect(res.status).toHaveBeenCalledWith(200);
+
+    // Verify the exact order of properties
+    const responseData = (res.json as jest.Mock).mock.calls[0][0].data[0];
+    const propertyKeys = Object.keys(responseData);
+
+    expect(propertyKeys).toEqual([
+      'Pal',
+      'Ctns',
+      'Category',
+      'Description',
+      'Qty Per Box',
+      'Number of Ctns',
+      'Total Qty',
+      'COO',
+    ]);
   });
 });

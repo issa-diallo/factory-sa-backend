@@ -12,16 +12,25 @@ import { ProcessedItem, ProcessedItemResponse } from '../types';
 function transformProcessedItemForAPI(
   item: ProcessedItem
 ): ProcessedItemResponse {
-  return {
-    Description: item.description,
-    Category: item.category,
-    COO: item.coo,
+  const response: ProcessedItemResponse = {
     Ctns: item.ctns,
+    Category: item.category,
+    Description: item.description,
     'Qty Per Box': item.qty,
-    'Total Qty': item.totalQty,
-    Pal: item.pal,
     'Number of Ctns': item.numberOfCtns || '1',
+    'Total Qty': item.totalQty,
+    COO: item.coo,
   };
+
+  // Add Pal as the first property if it exists
+  if (item.pal !== undefined) {
+    return {
+      Pal: item.pal,
+      ...response,
+    };
+  }
+
+  return response;
 }
 
 @injectable()
