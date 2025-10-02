@@ -7,6 +7,21 @@ import {
 import { inject, injectable } from 'tsyringe';
 import { IPackingListService } from '../services/packingList/interfaces';
 import { BaseController } from './baseController';
+import { ProcessedItem, ProcessedItemResponse } from '../types';
+
+function transformProcessedItemForAPI(
+  item: ProcessedItem
+): ProcessedItemResponse {
+  return {
+    Description: item.description,
+    Category: item.category,
+    COO: item.coo,
+    Ctns: item.ctns,
+    'Qty Per Box': item.qty,
+    'Total Qty': item.totalQty,
+    Pal: item.pal,
+  };
+}
 
 @injectable()
 export class PackingListController extends BaseController {
@@ -63,7 +78,7 @@ export class PackingListController extends BaseController {
 
       return res.status(200).json({
         success: true,
-        data: processResult.data.data,
+        data: processResult.data.data.map(transformProcessedItemForAPI),
         summary: {
           totalRows: cleanedData.length,
           processedRows: processResult.data.summary.processedRows,

@@ -24,6 +24,16 @@ export interface ProcessedItem {
   pal?: number;
 }
 
+export interface ProcessedItemResponse {
+  Description: string;
+  Category: string;
+  COO?: string;
+  Ctns: number;
+  'Qty Per Box': number;
+  'Total Qty': number;
+  Pal?: number;
+}
+
 export interface ProcessingSummary {
   processedRows: number;
   totalPcs: number;
