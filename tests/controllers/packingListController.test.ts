@@ -27,7 +27,7 @@ describe('PackingListController', () => {
     const fixture = generateValidPackingList(2);
 
     const processed = fixture.map(item => ({
-      ctn: Number(item.CTN),
+      ctns: Number(item.CTN),
       qty: item.QTY,
       totalQty: item.QTY,
       category: item.MODEL,

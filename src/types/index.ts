@@ -18,7 +18,7 @@ export interface ProcessedItem {
   description: string;
   category: string;
   coo?: string;
-  ctn: number;
+  ctns: number;
   qty: number;
   totalQty: number;
   pal?: number;

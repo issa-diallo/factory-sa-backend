@@ -18,7 +18,7 @@ export function sortPackingListItems(items: ProcessedItem[]): ProcessedItem[] {
 
     // If neither has a `pal`, sort by `ctn`
     if (a.pal === undefined && b.pal === undefined) {
-      return a.ctn - b.ctn;
+      return a.ctns - b.ctns;
     }
 
     // Prioritize items with `pal` (they come first)
