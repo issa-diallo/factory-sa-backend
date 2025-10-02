@@ -12,7 +12,7 @@ describe('extractCtnBlocksFromRow - COO functionality', () => {
 
     const base = {
       description: 'Test product',
-      model: 'Test model',
+      category: 'Test model',
     };
 
     const result = extractCtnBlocksFromRow(row, base);
@@ -34,7 +34,7 @@ describe('extractCtnBlocksFromRow - COO functionality', () => {
 
     const base = {
       description: 'Test product',
-      model: 'Test model',
+      category: 'Test model',
     };
 
     const result = extractCtnBlocksFromRow(row, base);
@@ -55,7 +55,7 @@ describe('extractCtnBlocksFromRow - COO functionality', () => {
 
     const base = {
       description: 'Test product',
-      model: 'Test model',
+      category: 'Test model',
     };
 
     const result = extractCtnBlocksFromRow(row, base);
@@ -77,7 +77,7 @@ describe('extractCtnBlocksFromRow - COO functionality', () => {
 
     const base = {
       description: 'Test product',
-      model: 'Test model',
+      category: 'Test model',
     };
 
     const result = extractCtnBlocksFromRow(row, base);
@@ -99,7 +99,7 @@ describe('extractCtnBlocksFromRow - COO functionality', () => {
 
     const base = {
       description: 'Test product',
-      model: 'Test model',
+      category: 'Test model',
     };
 
     const result = extractCtnBlocksFromRow(row, base);
@@ -124,7 +124,7 @@ describe('extractCtnBlocksFromRow - COO functionality', () => {
 
     const base = {
       description: 'Test product',
-      model: 'Test model',
+      category: 'Test model',
     };
 
     const result = extractCtnBlocksFromRow(row, base);

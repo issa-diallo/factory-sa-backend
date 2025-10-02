@@ -6,13 +6,13 @@ import {
 } from '../schemas/utilsSchemas';
 import { getCountryAcronym } from './getCountryAcronym';
 
-type BaseItem = Pick<ProcessedItem, 'description' | 'model'>;
+type BaseItem = Pick<ProcessedItem, 'description' | 'category'>;
 
 /**
  * Extracts CTN blocks from a row of data and creates ProcessedItem array.
  *
  * @param row - The row data containing CTN, QTY, and PAL information
- * @param base - Base item information (description, model, origin)
+ * @param base - Base item information (description, category, origin)
  * @returns Result object with success/error status and data/error details
  */
 export function extractCtnBlocksFromRow(

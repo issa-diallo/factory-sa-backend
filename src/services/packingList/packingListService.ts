@@ -42,11 +42,11 @@ export class PackingListService implements IPackingListService {
 
       const base = {
         description: String(row['DESCRIPTION MIN'] || ''),
-        model: String(row['MODEL'] || ''),
+        category: String(row['MODEL'] || ''),
       };
 
-      if (!base.description.trim() || !base.model.trim()) {
-        errors.push(`Line ${i + 1}: missing base data (description, model)`);
+      if (!base.description.trim() || !base.category.trim()) {
+        errors.push(`Line ${i + 1}: missing base data (description, category)`);
         continue;
       }
 

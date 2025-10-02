@@ -107,7 +107,7 @@ describe('PackingListService', () => {
             qty: 10,
             totalQty: 10,
             description: 'Desc1',
-            model: 'Model1',
+            category: 'Model1',
             origin: 'O',
           },
           {
@@ -115,7 +115,7 @@ describe('PackingListService', () => {
             qty: 10,
             totalQty: 10,
             description: 'Desc1',
-            model: 'Model1',
+            category: 'Model1',
             origin: 'O',
           },
         ])
@@ -127,7 +127,7 @@ describe('PackingListService', () => {
             qty: 20,
             totalQty: 20,
             description: 'Desc2',
-            model: 'Model2',
+            category: 'Model2',
             origin: 'O',
           },
           {
@@ -135,7 +135,7 @@ describe('PackingListService', () => {
             qty: 20,
             totalQty: 20,
             description: 'Desc2',
-            model: 'Model2',
+            category: 'Model2',
             origin: 'O',
           },
         ])
@@ -238,7 +238,7 @@ describe('PackingListService', () => {
           qty: 10,
           totalQty: 10,
           description: 'Desc1',
-          model: 'Model1',
+          category: 'Model1',
           origin: 'Origin1',
         },
         {
@@ -246,7 +246,7 @@ describe('PackingListService', () => {
           qty: 10,
           totalQty: 10,
           description: 'Desc1',
-          model: 'Model1',
+          category: 'Model1',
           origin: 'Origin1',
         },
         {
@@ -254,7 +254,7 @@ describe('PackingListService', () => {
           qty: 10,
           totalQty: 10,
           description: 'Desc1',
-          model: 'Model1',
+          category: 'Model1',
           origin: 'Origin1',
         },
       ])
@@ -303,7 +303,7 @@ describe('PackingListService', () => {
           qty: 20,
           totalQty: 20,
           description: 'Desc2',
-          model: 'Model2',
+          category: 'Model2',
           origin: 'Origin2',
         },
         {
@@ -311,7 +311,7 @@ describe('PackingListService', () => {
           qty: 20,
           totalQty: 20,
           description: 'Desc2',
-          model: 'Model2',
+          category: 'Model2',
           origin: 'Origin2',
         },
       ])
@@ -321,7 +321,7 @@ describe('PackingListService', () => {
     expect(result.success).toBe(true);
     expect(consoleWarnSpy).toHaveBeenCalledWith(
       'Errors while processing some rows:',
-      ['Line 1: missing base data (description, model)']
+      ['Line 1: missing base data (description, category)']
     );
     if (result.success) {
       expect(result.data.data.length).toBe(2);

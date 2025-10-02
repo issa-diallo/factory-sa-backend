@@ -4,7 +4,7 @@ import { RANGE_SEPARATORS } from '../../src/constants';
 describe('extractCtnBlocksFromRow', () => {
   const validBase = {
     description: 'Test Product',
-    model: 'MODEL-123',
+    category: 'MODEL-123',
   };
 
   describe('Valid inputs', () => {
@@ -131,7 +131,7 @@ describe('extractCtnBlocksFromRow', () => {
       const row = { CTN: '100', QTY: '50' };
       const invalidBase = {
         description: '',
-        model: 'MODEL-123',
+        category: 'MODEL-123',
         origin: 'China',
       };
 
