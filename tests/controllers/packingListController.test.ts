@@ -30,7 +30,7 @@ describe('PackingListController', () => {
       ctn: Number(item.CTN),
       qty: item.QTY,
       totalQty: item.QTY,
-      model: item.MODEL,
+      category: item.MODEL,
       description: item['DESCRIPTION MIN'],
     }));
 

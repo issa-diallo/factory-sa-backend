@@ -16,7 +16,7 @@ export interface PackingListItem {
 
 export interface ProcessedItem {
   description: string;
-  model: string;
+  category: string;
   coo?: string;
   ctn: number;
   qty: number;

@@ -24,13 +24,13 @@ export const CtnRangeOutputSchema = z.array(
 // Schema for BaseItem
 export const BaseItemSchema = z.object({
   description: z.string().min(1, 'Description cannot be empty'),
-  model: z.string().min(1, 'Model cannot be empty'),
+  category: z.string().min(1, 'Category cannot be empty'),
 });
 
 // Schema for ProcessedItem
 export const ProcessedItemSchema = z.object({
   description: z.string(),
-  model: z.string(),
+  category: z.string(),
   coo: z.string().optional(),
   ctn: z.number().int().positive(),
   qty: z.number().int().positive(),

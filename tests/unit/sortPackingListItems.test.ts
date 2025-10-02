@@ -9,17 +9,53 @@ describe('sortPackingListItems', () => {
 
   it('should sort by ctn when no items have pal', () => {
     const items: ProcessedItem[] = [
-      { description: 'Item A', model: 'Model A', ctn: 3, qty: 1, totalQty: 1 },
-      { description: 'Item B', model: 'Model B', ctn: 1, qty: 2, totalQty: 2 },
-      { description: 'Item C', model: 'Model C', ctn: 2, qty: 3, totalQty: 3 },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 3,
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        description: 'Item B',
+        category: 'Model B',
+        ctn: 1,
+        qty: 2,
+        totalQty: 2,
+      },
+      {
+        description: 'Item C',
+        category: 'Model C',
+        ctn: 2,
+        qty: 3,
+        totalQty: 3,
+      },
     ];
 
     const result = sortPackingListItems(items);
 
     expect(result).toEqual([
-      { description: 'Item B', model: 'Model B', ctn: 1, qty: 2, totalQty: 2 },
-      { description: 'Item C', model: 'Model C', ctn: 2, qty: 3, totalQty: 3 },
-      { description: 'Item A', model: 'Model A', ctn: 3, qty: 1, totalQty: 1 },
+      {
+        description: 'Item B',
+        category: 'Model B',
+        ctn: 1,
+        qty: 2,
+        totalQty: 2,
+      },
+      {
+        description: 'Item C',
+        category: 'Model C',
+        ctn: 2,
+        qty: 3,
+        totalQty: 3,
+      },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 3,
+        qty: 1,
+        totalQty: 1,
+      },
     ]);
   });
 
@@ -27,7 +63,7 @@ describe('sortPackingListItems', () => {
     const items: ProcessedItem[] = [
       {
         description: 'Item A',
-        model: 'Model A',
+        category: 'Model A',
         ctn: 3,
         pal: 2,
         qty: 1,
@@ -35,7 +71,7 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item B',
-        model: 'Model B',
+        category: 'Model B',
         ctn: 1,
         pal: 3,
         qty: 2,
@@ -43,7 +79,7 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item C',
-        model: 'Model C',
+        category: 'Model C',
         ctn: 2,
         pal: 1,
         qty: 3,
@@ -56,7 +92,7 @@ describe('sortPackingListItems', () => {
     expect(result).toEqual([
       {
         description: 'Item C',
-        model: 'Model C',
+        category: 'Model C',
         ctn: 2,
         pal: 1,
         qty: 3,
@@ -64,7 +100,7 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item A',
-        model: 'Model A',
+        category: 'Model A',
         ctn: 3,
         pal: 2,
         qty: 1,
@@ -72,7 +108,7 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item B',
-        model: 'Model B',
+        category: 'Model B',
         ctn: 1,
         pal: 3,
         qty: 2,
@@ -83,16 +119,28 @@ describe('sortPackingListItems', () => {
 
   it('should prioritize items with pal over items without pal', () => {
     const items: ProcessedItem[] = [
-      { description: 'Item A', model: 'Model A', ctn: 3, qty: 1, totalQty: 1 },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 3,
+        qty: 1,
+        totalQty: 1,
+      },
       {
         description: 'Item B',
-        model: 'Model B',
+        category: 'Model B',
         ctn: 1,
         pal: 2,
         qty: 2,
         totalQty: 2,
       },
-      { description: 'Item C', model: 'Model C', ctn: 2, qty: 3, totalQty: 3 },
+      {
+        description: 'Item C',
+        category: 'Model C',
+        ctn: 2,
+        qty: 3,
+        totalQty: 3,
+      },
     ];
 
     const result = sortPackingListItems(items);
@@ -100,23 +148,41 @@ describe('sortPackingListItems', () => {
     expect(result).toEqual([
       {
         description: 'Item B',
-        model: 'Model B',
+        category: 'Model B',
         ctn: 1,
         pal: 2,
         qty: 2,
         totalQty: 2,
       },
-      { description: 'Item C', model: 'Model C', ctn: 2, qty: 3, totalQty: 3 },
-      { description: 'Item A', model: 'Model A', ctn: 3, qty: 1, totalQty: 1 },
+      {
+        description: 'Item C',
+        category: 'Model C',
+        ctn: 2,
+        qty: 3,
+        totalQty: 3,
+      },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 3,
+        qty: 1,
+        totalQty: 1,
+      },
     ]);
   });
 
   it('should sort mixed items correctly (pal priority + ctn sorting)', () => {
     const items: ProcessedItem[] = [
-      { description: 'Item A', model: 'Model A', ctn: 5, qty: 1, totalQty: 1 },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 5,
+        qty: 1,
+        totalQty: 1,
+      },
       {
         description: 'Item B',
-        model: 'Model B',
+        category: 'Model B',
         ctn: 2,
         pal: 3,
         qty: 2,
@@ -124,16 +190,22 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item C',
-        model: 'Model C',
+        category: 'Model C',
         ctn: 3,
         pal: 1,
         qty: 3,
         totalQty: 3,
       },
-      { description: 'Item D', model: 'Model D', ctn: 1, qty: 4, totalQty: 4 },
+      {
+        description: 'Item D',
+        category: 'Model D',
+        ctn: 1,
+        qty: 4,
+        totalQty: 4,
+      },
       {
         description: 'Item E',
-        model: 'Model E',
+        category: 'Model E',
         ctn: 4,
         pal: 2,
         qty: 5,
@@ -146,7 +218,7 @@ describe('sortPackingListItems', () => {
     expect(result).toEqual([
       {
         description: 'Item C',
-        model: 'Model C',
+        category: 'Model C',
         ctn: 3,
         pal: 1,
         qty: 3,
@@ -154,7 +226,7 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item E',
-        model: 'Model E',
+        category: 'Model E',
         ctn: 4,
         pal: 2,
         qty: 5,
@@ -162,21 +234,45 @@ describe('sortPackingListItems', () => {
       },
       {
         description: 'Item B',
-        model: 'Model B',
+        category: 'Model B',
         ctn: 2,
         pal: 3,
         qty: 2,
         totalQty: 2,
       },
-      { description: 'Item D', model: 'Model D', ctn: 1, qty: 4, totalQty: 4 },
-      { description: 'Item A', model: 'Model A', ctn: 5, qty: 1, totalQty: 1 },
+      {
+        description: 'Item D',
+        category: 'Model D',
+        ctn: 1,
+        qty: 4,
+        totalQty: 4,
+      },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 5,
+        qty: 1,
+        totalQty: 1,
+      },
     ]);
   });
 
   it('should not mutate the original array', () => {
     const originalItems: ProcessedItem[] = [
-      { description: 'Item A', model: 'Model A', ctn: 3, qty: 1, totalQty: 1 },
-      { description: 'Item B', model: 'Model B', ctn: 1, qty: 2, totalQty: 2 },
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctn: 3,
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        description: 'Item B',
+        category: 'Model B',
+        ctn: 1,
+        qty: 2,
+        totalQty: 2,
+      },
     ];
 
     const itemsCopy = [...originalItems];
