@@ -20,6 +20,7 @@ function transformProcessedItemForAPI(
     'Qty Per Box': item.qty,
     'Total Qty': item.totalQty,
     Pal: item.pal,
+    'Number of Ctns': item.numberOfCtns || '1',
   };
 }
 

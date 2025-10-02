@@ -9,6 +9,7 @@ import {
 } from '../../types';
 import { extractCtnBlocksFromRow } from '../../utils/extractCtnBlocksFromRow';
 import { sortPackingListItems } from '../../utils/sortPackingListItems';
+import { calculateNumberOfCtns } from '../../utils/calculateNumberOfCtns';
 
 import { IPackingListService } from './interfaces';
 
@@ -72,10 +73,13 @@ export class PackingListService implements IPackingListService {
       // Sorting the results using the utility function
       const sortedResult = sortPackingListItems(result);
 
+      // Calculate "Number of Ctns" values
+      const resultWithNumberOfCtns = calculateNumberOfCtns(sortedResult);
+
       return createSuccess({
-        data: sortedResult,
+        data: resultWithNumberOfCtns,
         summary: {
-          processedRows: sortedResult.length,
+          processedRows: resultWithNumberOfCtns.length,
           totalPcs,
         },
       });

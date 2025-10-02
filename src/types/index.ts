@@ -22,6 +22,7 @@ export interface ProcessedItem {
   qty: number;
   totalQty: number;
   pal?: number;
+  numberOfCtns?: string;
 }
 
 export interface ProcessedItemResponse {
@@ -32,6 +33,7 @@ export interface ProcessedItemResponse {
   'Qty Per Box': number;
   'Total Qty': number;
   Pal?: number;
+  'Number of Ctns': string;
 }
 
 export interface ProcessingSummary {
