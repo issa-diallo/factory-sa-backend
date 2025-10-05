@@ -1,4 +1,5 @@
 import { Role, Prisma } from '../../generated/prisma';
+import { RoleWithPermissionsResponse } from '../../types/role';
 
 export interface IRoleRepository {
   create(data: Prisma.RoleCreateInput): Promise<Role>;
@@ -8,6 +9,9 @@ export interface IRoleRepository {
   update(id: string, data: Prisma.RoleUpdateInput): Promise<Role>;
   delete(id: string): Promise<Role>;
 
+  findByIdWithPermissions(
+    id: string
+  ): Promise<RoleWithPermissionsResponse | null>;
   findSystemRoles(): Promise<Role[]>;
   findCustomRolesByCompany(companyId: string): Promise<Role[]>;
   findAllRolesForCompany(companyId: string): Promise<Role[]>;
