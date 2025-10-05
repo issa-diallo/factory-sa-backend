@@ -1,6 +1,10 @@
 import { IRoleService } from './interfaces';
 import { Role } from '../../generated/prisma';
-import { CreateRoleRequest, UpdateRoleRequest } from '../../types/role';
+import {
+  CreateRoleRequest,
+  UpdateRoleRequest,
+  RoleWithPermissionsResponse,
+} from '../../types/role';
 import { injectable, inject } from 'tsyringe';
 import { IRoleRepository } from '../../repositories/role/IRoleRepository';
 import { ForbiddenError } from '../../errors/customErrors';
@@ -19,6 +23,12 @@ export class RoleService implements IRoleService {
 
   async getRoleById(id: string): Promise<Role | null> {
     return this.roleRepository.findById(id);
+  }
+
+  async getRoleByIdWithPermissions(
+    id: string
+  ): Promise<RoleWithPermissionsResponse | null> {
+    return this.roleRepository.findByIdWithPermissions(id);
   }
 
   async getRoleByName(name: string): Promise<Role | null> {

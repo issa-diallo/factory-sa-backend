@@ -11,6 +11,7 @@ describe('RoleService', () => {
     mockRoleRepository = {
       create: jest.fn(),
       findById: jest.fn(),
+      findByIdWithPermissions: jest.fn(),
       findByName: jest.fn(),
       findAll: jest.fn(),
       update: jest.fn(),
@@ -159,6 +160,51 @@ describe('RoleService', () => {
         name: 'SuperAdmin',
       });
       expect(result).toEqual(updatedRole);
+    });
+  });
+
+  describe('getRoleByIdWithPermissions', () => {
+    it('should return a role with permissions by ID', async () => {
+      const mockRole = {
+        id: '1',
+        name: 'Admin',
+        description: 'Administrator',
+        createdAt: now,
+        updatedAt: now,
+        permissions: [
+          {
+            id: 'perm-1',
+            roleId: '1',
+            permissionId: 'p1',
+            createdAt: now,
+            updatedAt: now,
+            permission: {
+              id: 'p1',
+              name: 'admin:read',
+              description: 'Can read admin data',
+            },
+          },
+        ],
+      };
+      mockRoleRepository.findByIdWithPermissions.mockResolvedValue(mockRole);
+
+      const result = await roleService.getRoleByIdWithPermissions('1');
+
+      expect(mockRoleRepository.findByIdWithPermissions).toHaveBeenCalledWith(
+        '1'
+      );
+      expect(result).toEqual(mockRole);
+    });
+
+    it('should return null if role is not found by ID', async () => {
+      mockRoleRepository.findByIdWithPermissions.mockResolvedValue(null);
+
+      const result = await roleService.getRoleByIdWithPermissions('99');
+
+      expect(mockRoleRepository.findByIdWithPermissions).toHaveBeenCalledWith(
+        '99'
+      );
+      expect(result).toBeNull();
     });
   });
 

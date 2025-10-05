@@ -23,7 +23,7 @@ export class RoleController extends BaseController {
   getRoleById = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
-      const role = await this.roleService.getRoleById(id);
+      const role = await this.roleService.getRoleByIdWithPermissions(id);
 
       if (!role) {
         return res.status(404).json({ message: 'Role not found' });

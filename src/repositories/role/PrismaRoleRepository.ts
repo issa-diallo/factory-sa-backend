@@ -2,6 +2,7 @@ import { injectable, inject } from 'tsyringe';
 import { Role, Prisma } from '../../generated/prisma';
 import { IRoleRepository } from './IRoleRepository';
 import { IPrismaService } from '../../database/interfaces';
+import { RoleWithPermissionsResponse } from '../../types/role';
 
 @injectable()
 export class PrismaRoleRepository implements IRoleRepository {
@@ -13,6 +14,28 @@ export class PrismaRoleRepository implements IRoleRepository {
 
   async findById(id: string): Promise<Role | null> {
     return this.prisma.role.findUnique({ where: { id } });
+  }
+
+  async findByIdWithPermissions(
+    id: string
+  ): Promise<RoleWithPermissionsResponse | null> {
+    const role = await this.prisma.role.findUnique({
+      where: { id },
+      include: {
+        rolePermissions: {
+          include: {
+            permission: true,
+          },
+        },
+      },
+    });
+
+    if (!role) return null;
+
+    return {
+      ...role,
+      permissions: role.rolePermissions || [],
+    };
   }
 
   async findByName(name: string): Promise<Role | null> {

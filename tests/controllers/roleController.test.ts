@@ -16,6 +16,7 @@ jest.mock('../../src/schemas/roleSchema', () => ({
 const mockRoleService = {
   createRole: jest.fn(),
   getRoleById: jest.fn(),
+  getRoleByIdWithPermissions: jest.fn(),
   getRoleByName: jest.fn(),
   getAllRoles: jest.fn(),
   updateRole: jest.fn(),
@@ -108,21 +109,43 @@ describe('RoleController', () => {
   });
 
   describe('getRoleById', () => {
-    it('should return role and status 200 when found', async () => {
-      const role = { id: '1', name: 'ADMIN' };
+    it('should return role with permissions and status 200 when found', async () => {
+      const role = {
+        id: '1',
+        name: 'ADMIN',
+        description: 'Administrator role',
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        permissions: [
+          {
+            id: 'perm-1',
+            roleId: '1',
+            permissionId: 'p1',
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            permission: {
+              id: 'p1',
+              name: 'admin:read',
+              description: 'Can read admin data',
+            },
+          },
+        ],
+      };
       mockRequest.params = { id: '1' };
-      mockRoleService.getRoleById.mockResolvedValue(role);
+      mockRoleService.getRoleByIdWithPermissions.mockResolvedValue(role);
 
       await controller.getRoleById(mockRequest, mockResponse);
 
-      expect(mockRoleService.getRoleById).toHaveBeenCalledWith('1');
+      expect(mockRoleService.getRoleByIdWithPermissions).toHaveBeenCalledWith(
+        '1'
+      );
       expect(mockResponse.status).toHaveBeenCalledWith(200);
       expect(mockResponse.json).toHaveBeenCalledWith(role);
     });
 
     it('should return 404 when role not found', async () => {
       mockRequest.params = { id: '999' };
-      mockRoleService.getRoleById.mockResolvedValue(null);
+      mockRoleService.getRoleByIdWithPermissions.mockResolvedValue(null);
 
       await controller.getRoleById(mockRequest, mockResponse);
 
@@ -134,7 +157,7 @@ describe('RoleController', () => {
 
     it('should call handleError on exception', async () => {
       const internal = new Error('Database error');
-      mockRoleService.getRoleById.mockRejectedValue(internal);
+      mockRoleService.getRoleByIdWithPermissions.mockRejectedValue(internal);
 
       const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
       await controller.getRoleById(mockRequest, mockResponse);

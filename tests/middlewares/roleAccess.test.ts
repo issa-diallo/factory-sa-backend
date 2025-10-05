@@ -14,6 +14,7 @@ import { ForbiddenError } from '../../src/errors/customErrors';
 const mockRoleRepository: jest.Mocked<IRoleRepository> = {
   create: jest.fn(),
   findById: jest.fn(),
+  findByIdWithPermissions: jest.fn(),
   findByName: jest.fn(),
   findAll: jest.fn(),
   update: jest.fn(),
