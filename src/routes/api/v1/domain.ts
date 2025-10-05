@@ -44,6 +44,12 @@ router.post(
   authorize(['companyDomain:create']),
   domainController.createCompanyDomain
 );
+router.get(
+  '/company/:companyId/domains',
+  authenticate,
+  authorize(['domain:read']),
+  domainController.getCompanyDomainsByCompanyId
+);
 router.delete(
   '/company/:companyId/domain/:domainId',
   authenticate,

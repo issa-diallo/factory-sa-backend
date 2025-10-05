@@ -89,4 +89,18 @@ export class DomainController extends BaseController {
       return this.handleError(res, error, mapDomainError);
     }
   };
+
+  getCompanyDomainsByCompanyId = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      const { companyId } = req.params;
+      const companyDomains =
+        await this.domainService.getCompanyDomainsByCompanyId(companyId);
+      return res.status(200).json(companyDomains);
+    } catch (error) {
+      return this.handleError(res, error, mapDomainError);
+    }
+  };
 }
