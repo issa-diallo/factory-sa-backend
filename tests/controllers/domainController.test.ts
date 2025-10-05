@@ -469,4 +469,73 @@ describe('DomainController with dependency injection', () => {
       );
     });
   });
+
+  describe('getCompanyDomainsByCompanyId', () => {
+    it('should return all company-domains for a specific company', async () => {
+      const companyId = faker.string.uuid();
+      const companyDomains = [
+        {
+          id: faker.string.uuid(),
+          companyId,
+          domainId: faker.string.uuid(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: faker.string.uuid(),
+          companyId,
+          domainId: faker.string.uuid(),
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      const req = { params: { companyId } } as unknown as Request;
+      mockService.getCompanyDomainsByCompanyId.mockResolvedValueOnce(
+        companyDomains
+      );
+
+      await controller.getCompanyDomainsByCompanyId(req, res);
+
+      expect(mockService.getCompanyDomainsByCompanyId).toHaveBeenCalledWith(
+        companyId
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.arrayContaining(companyDomains)
+      );
+      expect((res.json as jest.Mock).mock.calls[0][0]).toHaveLength(2);
+    });
+
+    it('should return empty array if no company-domains found', async () => {
+      const companyId = faker.string.uuid();
+      const req = { params: { companyId } } as unknown as Request;
+      mockService.getCompanyDomainsByCompanyId.mockResolvedValueOnce([]);
+
+      await controller.getCompanyDomainsByCompanyId(req, res);
+
+      expect(mockService.getCompanyDomainsByCompanyId).toHaveBeenCalledWith(
+        companyId
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith([]);
+    });
+
+    it('should return 500 if an unexpected error occurs', async () => {
+      const companyId = faker.string.uuid();
+      const req = { params: { companyId } } as unknown as Request;
+      mockService.getCompanyDomainsByCompanyId.mockRejectedValueOnce(
+        new Error('Database error')
+      );
+
+      await controller.getCompanyDomainsByCompanyId(req, res);
+
+      expect(mockService.getCompanyDomainsByCompanyId).toHaveBeenCalledWith(
+        companyId
+      );
+      expect(res.status).toHaveBeenCalledWith(500);
+      expect(res.json).toHaveBeenCalledWith(
+        expect.objectContaining({ message: 'Database error' })
+      );
+    });
+  });
 });
