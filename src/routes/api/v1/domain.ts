@@ -1,6 +1,10 @@
 import { Router } from 'express';
 import { authenticate } from '../../../middlewares/authenticate';
 import { authorize } from '../../../middlewares/authorize';
+import {
+  validateCompanyAccess,
+  validateCompanyAccessInBody,
+} from '../../../middlewares/companyAccess';
 import { DomainController } from '../../../controllers/domainController';
 import { container } from 'tsyringe';
 
@@ -42,18 +46,21 @@ router.post(
   '/company-domain',
   authenticate,
   authorize(['companyDomain:create']),
+  validateCompanyAccessInBody(),
   domainController.createCompanyDomain
 );
 router.get(
   '/company/:companyId/domains',
   authenticate,
   authorize(['domain:read']),
+  validateCompanyAccess(),
   domainController.getCompanyDomainsByCompanyId
 );
 router.delete(
   '/company/:companyId/domain/:domainId',
   authenticate,
   authorize(['companyDomain:delete']),
+  validateCompanyAccess(),
   domainController.deleteCompanyDomain
 );
 
