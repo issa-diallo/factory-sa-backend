@@ -1317,6 +1317,9 @@ paths:
       description: |
         Creates a new user with automatic company assignment.
         Requires appropriate administrative permissions.
+
+        **Role Assignment Security**: Only system administrators (users with isSystemAdmin: true)
+        can create users with the ADMIN role. Company managers cannot assign ADMIN privileges.
       security:
         - bearerAuth: []
       requestBody:
@@ -1345,7 +1348,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/AuthErrorResponse'
         '403':
-          description: Insufficient permissions
+          description: Insufficient permissions OR attempting to assign ADMIN role without system administrator privileges
           content:
             application/json:
               schema:

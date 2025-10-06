@@ -2,8 +2,10 @@ import { UserManagementService } from '../../src/services/userManagement/userMan
 import { IPasswordService } from '../../src/services/auth/interfaces';
 import { IUserRepository } from '../../src/repositories/user/IUserRepository';
 import { IUserRoleRepository } from '../../src/repositories/userRole/IUserRoleRepository';
+import { IRoleRepository } from '../../src/repositories/role/IRoleRepository';
 import { normalizeEmail } from '../../src/utils/normalizeEmail';
 import { User, UserRole } from '../../src/generated/prisma';
+import { ForbiddenError } from '../../src/errors/customErrors';
 
 jest.mock('../../src/utils/normalizeEmail', () => ({
   normalizeEmail: jest.fn((email: string) => email.toLowerCase()),
@@ -37,6 +39,21 @@ const mockUserRoleRepository: jest.Mocked<IUserRoleRepository> = {
   findUserRoleByUserIdAndCompanyId: jest.fn(),
 };
 
+const mockRoleRepository: jest.Mocked<IRoleRepository> = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByName: jest.fn(),
+  findAll: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+  findAllRolesForCompany: jest.fn(),
+  findSystemRoles: jest.fn(),
+  findCustomRolesByCompany: jest.fn(),
+  findByIdWithPermissions: jest.fn(),
+  isSystemRole: jest.fn(),
+  findRoleWithCompanyValidation: jest.fn(),
+};
+
 describe('UserManagementService', () => {
   let userManagementService: UserManagementService;
 
@@ -44,6 +61,7 @@ describe('UserManagementService', () => {
     userManagementService = new UserManagementService(
       mockUserRepository,
       mockUserRoleRepository,
+      mockRoleRepository,
       mockPasswordService
     );
     jest.clearAllMocks();
@@ -387,6 +405,70 @@ describe('UserManagementService', () => {
 
       expect(mockUserRoleRepository.delete).toHaveBeenCalledWith('ur1');
       expect(result).toEqual(userRole);
+    });
+  });
+
+  describe('validateUserRoleCreation', () => {
+    it('should succeed when role is not ADMIN', async () => {
+      const mockRole = {
+        id: 'role-manager-id',
+        name: 'MANAGER',
+        description: 'Manager role',
+        companyId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockRoleRepository.findById.mockResolvedValue(mockRole);
+
+      await expect(
+        userManagementService.validateUserRoleCreation('role-manager-id', false)
+      ).resolves.not.toThrow();
+    });
+
+    it('should succeed when role is ADMIN and user is system admin', async () => {
+      const mockRole = {
+        id: 'role-admin-id',
+        name: 'ADMIN',
+        description: 'Admin role',
+        companyId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockRoleRepository.findById.mockResolvedValue(mockRole);
+
+      await expect(
+        userManagementService.validateUserRoleCreation('role-admin-id', true)
+      ).resolves.not.toThrow();
+    });
+
+    it('should throw ForbiddenError when role is ADMIN and user is not system admin', async () => {
+      const mockRole = {
+        id: 'role-admin-id',
+        name: 'ADMIN',
+        description: 'Admin role',
+        companyId: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockRoleRepository.findById.mockResolvedValue(mockRole);
+
+      await expect(
+        userManagementService.validateUserRoleCreation('role-admin-id', false)
+      ).rejects.toThrow(ForbiddenError);
+
+      await expect(
+        userManagementService.validateUserRoleCreation('role-admin-id', false)
+      ).rejects.toThrow(
+        'Only system administrators can create users with ADMIN role'
+      );
+    });
+
+    it('should succeed when role is null (should not happen in practice)', async () => {
+      mockRoleRepository.findById.mockResolvedValue(null);
+
+      await expect(
+        userManagementService.validateUserRoleCreation('invalid-role-id', false)
+      ).resolves.not.toThrow();
     });
   });
 });

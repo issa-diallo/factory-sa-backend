@@ -31,6 +31,7 @@ type MockUserManagementService = {
   createUserRole: jest.Mock<Promise<UserRoleResponse>, [CreateUserRoleRequest]>;
   getUserRoleById: jest.Mock<Promise<UserRoleResponse | null>, [string]>;
   deleteUserRole: jest.Mock<Promise<UserRole>, [string]>;
+  validateUserRoleCreation: jest.Mock<Promise<void>, [string, boolean]>;
 };
 
 type MockPasswordService = {
@@ -47,6 +48,7 @@ const mockUserService: MockUserManagementService = {
   createUserRole: jest.fn(),
   getUserRoleById: jest.fn(),
   deleteUserRole: jest.fn(),
+  validateUserRoleCreation: jest.fn(),
 };
 
 const mockPasswordService: MockPasswordService = {
@@ -100,6 +102,7 @@ describe('UserManagementController', () => {
       };
       mockRequest.body = body;
 
+      mockUserService.validateUserRoleCreation.mockResolvedValue(undefined);
       mockUserService.createUser.mockResolvedValue(user);
       mockUserService.createUserRole.mockResolvedValue({
         id: 'user-role-1',
@@ -112,6 +115,10 @@ describe('UserManagementController', () => {
 
       await controller.createUser(mockRequest, mockResponse);
 
+      expect(mockUserService.validateUserRoleCreation).toHaveBeenCalledWith(
+        'role-user-id',
+        false
+      );
       expect(mockUserService.createUser).toHaveBeenCalledWith(body);
       expect(mockUserService.createUserRole).toHaveBeenCalledWith({
         userId: '1',

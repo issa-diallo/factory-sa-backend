@@ -24,6 +24,13 @@ export class UserManagementController extends BaseController {
   createUser = async (req: Request, res: Response): Promise<Response> => {
     try {
       const data = createUserSchema.parse(req.body);
+
+      // 1. Validate role assignment permissions
+      await this.userManagementService.validateUserRoleCreation(
+        data.roleId,
+        req.user?.isSystemAdmin ?? false
+      );
+
       const user = await this.userManagementService.createUser(data);
 
       // 2. Determine the company assignment
