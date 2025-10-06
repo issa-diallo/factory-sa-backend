@@ -83,20 +83,28 @@ export class RoleService implements IRoleService {
 
   async validateRoleCreation(
     roleName: string,
+    companyId: string | undefined,
     isSystemAdmin: boolean
   ): Promise<void> {
-    if (isSystemAdmin) {
-      return;
+    if (!companyId && !isSystemAdmin) {
+      throw new ForbiddenError('Only system admins can create system roles');
     }
 
-    // Prevent the creation of system roles by non-System Admins
-    if (['ADMIN', 'MANAGER', 'USER'].includes(roleName)) {
+    const systemRoleNames = ['ADMIN', 'MANAGER', 'USER'];
+    if (systemRoleNames.includes(roleName) && !isSystemAdmin) {
       throw new ForbiddenError('Cannot create system roles');
     }
 
     const existingRole = await this.roleRepository.findByName(roleName);
     if (existingRole) {
-      throw new ForbiddenError('Role already exists');
+      if (!existingRole.companyId) {
+        throw new ForbiddenError('A system role with this name already exists');
+      }
+      if (existingRole.companyId === companyId) {
+        throw new ForbiddenError(
+          'A role with this name already exists in your company'
+        );
+      }
     }
   }
 }

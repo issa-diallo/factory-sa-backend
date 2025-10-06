@@ -415,8 +415,9 @@ paths:
         - Domain
       summary: Retrieve all domains
       description: |
-        Retrieves all available domains.
-        Access restrictions apply based on the user's role.
+        Retrieves all available domains filtered by user role.
+        - System Admin (isSystemAdmin: true): sees ALL domains in the system
+        - Manager (isSystemAdmin: false): sees ONLY domains associated with their company
       security:
         - bearerAuth: []
       responses:

@@ -4,28 +4,28 @@ import { IRoleRepository } from '../repositories/role/IRoleRepository';
 import { ForbiddenError } from '../errors/customErrors';
 
 /**
- * Middleware pour valider l'accès à un rôle spécifique
- * Vérifie que le rôle appartient à l'entreprise de l'utilisateur
- * ou que l'utilisateur est un System Admin
+ * Middleware to validate access to a specific role
+ * Checks that the role belongs to the user's company
+ * or that the user is a System Admin
  */
 export const validateRoleCompanyAccess = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id: roleId } = req.params;
 
-      // Vérifier si l'utilisateur est authentifié
+      // Check if the user is authenticated
       if (!req.user) {
         throw new ForbiddenError('User not authenticated');
       }
 
       const { companyId, isSystemAdmin } = req.user;
 
-      // Les System Admins ont accès à tous les rôles
+      // System Admins have access to all roles
       if (isSystemAdmin) {
         return next();
       }
 
-      // Valider que le rôle est accessible par l'entreprise de l'utilisateur
+      // Validate that the role is accessible by the user's company
       const roleRepository =
         container.resolve<IRoleRepository>('IRoleRepository');
 
@@ -46,27 +46,27 @@ export const validateRoleCompanyAccess = () => {
 };
 
 /**
- * Middleware pour protéger les rôles système contre la modification
- * Seuls les System Admins peuvent modifier les rôles ADMIN, MANAGER, USER
+ * Middleware to protect system roles against modification
+ * Only System Admins can modify ADMIN, MANAGER, USER roles
  */
 export const protectSystemRoles = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
       const { id: roleId } = req.params;
 
-      // Vérifier si l'utilisateur est authentifié
+      // Check if the user is authenticated
       if (!req.user) {
         throw new ForbiddenError('User not authenticated');
       }
 
       const { isSystemAdmin } = req.user;
 
-      // Les System Admins peuvent modifier tous les rôles
+      // System Admins can modify all roles
       if (isSystemAdmin) {
         return next();
       }
 
-      // Vérifier si c'est un rôle système
+      // Check if it's a system role
       const roleRepository =
         container.resolve<IRoleRepository>('IRoleRepository');
       const isSystem = await roleRepository.isSystemRole(roleId);
@@ -83,8 +83,8 @@ export const protectSystemRoles = () => {
 };
 
 /**
- * Middleware pour valider l'accès aux rôles via le body
- * Vérifie que les rôles dans le body appartiennent à l'entreprise de l'utilisateur
+ * Middleware to validate access to roles via the body
+ * Checks that roles in the body belong to the user's company
  */
 export const validateRoleCompanyAccessInBody = (
   roleIdField: string = 'roleId'
@@ -94,22 +94,22 @@ export const validateRoleCompanyAccessInBody = (
       const roleId = req.body[roleIdField];
 
       if (!roleId) {
-        return next(); // Pas de rôle à valider
+        return next(); // No role to validate
       }
 
-      // Vérifier si l'utilisateur est authentifié
+      // Check if the user is authenticated
       if (!req.user) {
         throw new ForbiddenError('User not authenticated');
       }
 
       const { companyId, isSystemAdmin } = req.user;
 
-      // Les System Admins ont accès à tous les rôles
+      // System Admins have access to all roles
       if (isSystemAdmin) {
         return next();
       }
 
-      // Valider que le rôle est accessible par l'entreprise de l'utilisateur
+      // Validate that the role is accessible by the user's company
       const roleRepository =
         container.resolve<IRoleRepository>('IRoleRepository');
 
@@ -130,27 +130,32 @@ export const validateRoleCompanyAccessInBody = (
 };
 
 /**
- * Middleware pour valider la création de rôles personnalisés
- * Empêche la création de rôles système et valide les permissions
+ * Middleware to validate creation of custom roles
+ * Prevents creation of system roles and validates permissions
  */
 export const validateRoleCreation = () => {
   return async (req: Request, res: Response, next: NextFunction) => {
     try {
-      const { name } = req.body;
+      const { name, companyId } = req.body;
 
-      // Vérifier si l'utilisateur est authentifié
+      // Check if the user is authenticated
       if (!req.user) {
         throw new ForbiddenError('User not authenticated');
       }
 
-      const { isSystemAdmin } = req.user;
+      const { isSystemAdmin, companyId: userCompanyId } = req.user;
 
-      // Les System Admins peuvent créer tous types de rôles
+      // If a companyId is provided but the user is not a system admin
+      if (companyId && !isSystemAdmin && companyId !== userCompanyId) {
+        throw new ForbiddenError('Cannot create role for another company');
+      }
+
+      // System Admins can create all types of roles
       if (isSystemAdmin) {
         return next();
       }
 
-      // Empêcher la création de rôles système par les non-System Admins
+      // Prevent creation of system roles by non-System Admins
       if (['ADMIN', 'MANAGER', 'USER'].includes(name)) {
         throw new ForbiddenError('Cannot create system roles');
       }

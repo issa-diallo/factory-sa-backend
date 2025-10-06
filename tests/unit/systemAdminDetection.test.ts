@@ -120,9 +120,10 @@ describe('System Admin Detection', () => {
     };
 
     const mockRole: Role = {
-      id: 'role-1',
+      id: '1',
       name: 'ADMIN',
-      description: 'System Administrator',
+      description: 'Administrator role',
+      companyId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -229,6 +230,7 @@ describe('System Admin Detection', () => {
       id: 'role-2',
       name: 'USER',
       description: 'Regular User',
+      companyId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };
@@ -335,6 +337,7 @@ describe('System Admin Detection', () => {
       id: 'role-3',
       name: 'MANAGER',
       description: 'Company Manager',
+      companyId: null,
       createdAt: new Date(),
       updatedAt: new Date(),
     };

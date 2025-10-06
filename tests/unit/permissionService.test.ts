@@ -19,6 +19,22 @@ const mockRolePermissionRepository: jest.Mocked<IRolePermissionRepository> = {
   delete: jest.fn(),
 };
 
+/* eslint-disable @typescript-eslint/no-explicit-any */
+const mockRoleRepository = {
+  create: jest.fn(),
+  findById: jest.fn(),
+  findByIdWithPermissions: jest.fn(),
+  findByName: jest.fn(),
+  findAll: jest.fn(),
+  findAllRolesForCompany: jest.fn(),
+  findRoleWithCompanyValidation: jest.fn(),
+  findSystemRoles: jest.fn(),
+  findCustomRolesByCompany: jest.fn(),
+  isSystemRole: jest.fn(),
+  update: jest.fn(),
+  delete: jest.fn(),
+};
+
 describe('PermissionService', () => {
   let permissionService: PermissionService;
 
@@ -26,7 +42,8 @@ describe('PermissionService', () => {
     jest.clearAllMocks();
     permissionService = new PermissionService(
       mockPermissionRepository,
-      mockRolePermissionRepository
+      mockRolePermissionRepository,
+      mockRoleRepository as any
     );
   });
 

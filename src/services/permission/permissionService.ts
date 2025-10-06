@@ -8,20 +8,25 @@ import {
 import { injectable, inject } from 'tsyringe';
 import { IPermissionRepository } from '../../repositories/permission/IPermissionRepository';
 import { IRolePermissionRepository } from '../../repositories/rolePermission/IRolePermissionRepository';
+import { IRoleRepository } from '../../repositories/role/IRoleRepository';
 
 @injectable()
 export class PermissionService implements IPermissionService {
   private permissionRepository: IPermissionRepository;
   private rolePermissionRepository: IRolePermissionRepository;
+  private roleRepository: IRoleRepository;
 
   constructor(
     @inject('IPermissionRepository')
     permissionRepository: IPermissionRepository,
     @inject('IRolePermissionRepository')
-    rolePermissionRepository: IRolePermissionRepository
+    rolePermissionRepository: IRolePermissionRepository,
+    @inject('IRoleRepository')
+    roleRepository: IRoleRepository
   ) {
     this.permissionRepository = permissionRepository;
     this.rolePermissionRepository = rolePermissionRepository;
+    this.roleRepository = roleRepository;
   }
 
   async createPermission(data: CreatePermissionRequest): Promise<Permission> {
@@ -51,6 +56,10 @@ export class PermissionService implements IPermissionService {
     return this.permissionRepository.delete(id);
   }
 
+  canModifyPermission(isSystemAdmin: boolean): boolean {
+    return isSystemAdmin;
+  }
+
   async createRolePermission(
     data: CreateRolePermissionRequest
   ): Promise<RolePermission> {
@@ -59,6 +68,35 @@ export class PermissionService implements IPermissionService {
       permission: { connect: { id: data.permissionId } },
     };
     return this.rolePermissionRepository.create(prismaData);
+  }
+
+  async canAssignPermissionToRole(
+    roleId: string,
+    permissionId: string,
+    companyId: string,
+    isSystemAdmin: boolean
+  ): Promise<boolean> {
+    const permission = await this.getPermissionById(permissionId);
+    if (!permission) {
+      return false;
+    }
+
+    const role = await this.roleRepository.findRoleWithCompanyValidation(
+      roleId,
+      companyId
+    );
+    if (!role) {
+      return false;
+    }
+
+    if (!isSystemAdmin) {
+      const isSystem = await this.roleRepository.isSystemRole(roleId);
+      if (isSystem) {
+        return false;
+      }
+    }
+
+    return true;
   }
 
   async getRolePermissionById(id: string): Promise<RolePermission | null> {

@@ -1,6 +1,7 @@
 export interface CreateRoleRequest {
   name: string;
   description?: string;
+  companyId?: string;
 }
 
 export interface RoleResponse {

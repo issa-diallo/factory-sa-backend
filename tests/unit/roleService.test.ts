@@ -33,6 +33,7 @@ describe('RoleService', () => {
         id: '1',
         name: 'Admin',
         description: 'Administrator',
+        companyId: null,
         createdAt: now,
         updatedAt: now,
       };
@@ -57,6 +58,7 @@ describe('RoleService', () => {
         id: '1',
         name: 'Admin',
         description: 'Administrator',
+        companyId: null,
         createdAt: now,
         updatedAt: now,
       };
@@ -84,6 +86,7 @@ describe('RoleService', () => {
         id: '1',
         name: 'Admin',
         description: 'Administrator',
+        companyId: null,
         createdAt: now,
         updatedAt: now,
       };
@@ -114,6 +117,7 @@ describe('RoleService', () => {
           id: '1',
           name: 'Admin',
           description: 'Administrator',
+          companyId: null,
           createdAt: now,
           updatedAt: now,
         },
@@ -121,6 +125,7 @@ describe('RoleService', () => {
           id: '2',
           name: 'User',
           description: 'Standard user',
+          companyId: null,
           createdAt: now,
           updatedAt: now,
         },
@@ -149,6 +154,7 @@ describe('RoleService', () => {
         id: '1',
         name: 'SuperAdmin',
         description: 'Super Administrator',
+        companyId: null,
         createdAt: now,
         updatedAt: now,
       };
@@ -214,6 +220,7 @@ describe('RoleService', () => {
         id: '1',
         name: 'Admin',
         description: 'Administrator',
+        companyId: null,
         createdAt: now,
         updatedAt: now,
       };

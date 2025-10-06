@@ -19,6 +19,7 @@ model Company {
   updatedAt   DateTime @updatedAt
 
   companyDomains CompanyDomain[]
+  roles          Role[]
   userRoles      UserRole[]
 }
 
@@ -63,9 +64,11 @@ model Role {
   id          String   @id @default(uuid())
   name        String   @unique
   description String?
+  companyId   String?
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  company         Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   rolePermissions RolePermission[]
   userRoles       UserRole[]
 }

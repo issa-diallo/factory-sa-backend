@@ -157,12 +157,14 @@ describe('DomainController with dependency injection', () => {
   });
 
   describe('getAllDomains', () => {
-    it('should return all domains', async () => {
+    it('should return all domains for System Admin', async () => {
       const domains = generateValidDomain(2).map((d, i) => ({
         id: `domain-id-${i + 1}`,
         ...d,
       })) as Domain[];
-      const req = {} as Request;
+      const req = {
+        user: { companyId: 'admin-company', isSystemAdmin: true },
+      } as unknown as Request;
       mockService.getAllDomains.mockResolvedValueOnce(domains);
 
       await controller.getAllDomains(req, res);
@@ -173,8 +175,32 @@ describe('DomainController with dependency injection', () => {
       expect((res.json as jest.Mock).mock.calls[0][0].length).toBe(2);
     });
 
+    it('should return domains by company for Manager', async () => {
+      const domains = generateValidDomain(1).map(d => ({
+        id: 'domain-id-1',
+        ...d,
+      })) as Domain[];
+      const req = {
+        user: {
+          companyId: 'manager-company',
+          isSystemAdmin: false,
+        },
+      } as unknown as Request;
+      mockService.getDomainsByCompanyId.mockResolvedValueOnce(domains);
+
+      await controller.getAllDomains(req, res);
+
+      expect(mockService.getDomainsByCompanyId).toHaveBeenCalledWith(
+        'manager-company'
+      );
+      expect(res.status).toHaveBeenCalledWith(200);
+      expect(res.json).toHaveBeenCalledWith(domains);
+    });
+
     it('should return empty array if no domains', async () => {
-      const req = {} as Request;
+      const req = {
+        user: { companyId: 'admin-company', isSystemAdmin: true },
+      } as unknown as Request;
       mockService.getAllDomains.mockResolvedValueOnce([]);
 
       await controller.getAllDomains(req, res);
@@ -185,7 +211,9 @@ describe('DomainController with dependency injection', () => {
     });
 
     it('should return 500 if an unexpected error occurs', async () => {
-      const req = {} as Request;
+      const req = {
+        user: { companyId: 'admin-company', isSystemAdmin: true },
+      } as unknown as Request;
       mockService.getAllDomains.mockRejectedValueOnce(
         new Error('Network error')
       );

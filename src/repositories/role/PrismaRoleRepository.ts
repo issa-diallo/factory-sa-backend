@@ -74,15 +74,10 @@ export class PrismaRoleRepository implements IRoleRepository {
             },
           },
           {
-            userRoles: {
-              some: {
-                companyId,
-              },
-            },
+            companyId,
           },
         ],
       },
-      distinct: ['id'],
     });
   }
 
