@@ -19,6 +19,7 @@ export interface IRoleService {
   getAllRolesForCompany(companyId: string): Promise<Role[]>;
   getSystemRoles(): Promise<Role[]>;
   getCustomRolesByCompany(companyId: string): Promise<Role[]>;
+  getAvailableRolesForUser(userId: string): Promise<Role[]>;
   canModifyRole(
     roleId: string,
     companyId: string,

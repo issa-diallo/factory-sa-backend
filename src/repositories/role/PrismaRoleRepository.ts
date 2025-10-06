@@ -87,6 +87,29 @@ export class PrismaRoleRepository implements IRoleRepository {
     return [...systemRoles, ...customRoles];
   }
 
+  async findAvailableRolesForUser(userId: string): Promise<Role[]> {
+    // Find the user's company through UserRole
+    const userRole = await this.prisma.userRole.findFirst({
+      where: { userId },
+      select: { companyId: true },
+    });
+
+    if (!userRole) {
+      // If user has no role assignment, return only system roles
+      return this.findSystemRoles();
+    }
+
+    // Return system roles + roles from user's company
+    return this.prisma.role.findMany({
+      where: {
+        OR: [
+          { companyId: null }, // System roles
+          { companyId: userRole.companyId }, // Company-specific roles
+        ],
+      },
+    });
+  }
+
   async isSystemRole(roleId: string): Promise<boolean> {
     const role = await this.prisma.role.findUnique({
       where: { id: roleId },

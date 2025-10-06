@@ -81,6 +81,10 @@ export class RoleService implements IRoleService {
     return role !== null;
   }
 
+  async getAvailableRolesForUser(userId: string): Promise<Role[]> {
+    return this.roleRepository.findAvailableRolesForUser(userId);
+  }
+
   async validateRoleCreation(
     roleName: string,
     companyId: string | undefined,

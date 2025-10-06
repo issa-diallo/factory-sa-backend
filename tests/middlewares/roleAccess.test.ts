@@ -22,6 +22,7 @@ const mockRoleRepository: jest.Mocked<IRoleRepository> = {
   findSystemRoles: jest.fn(),
   findCustomRolesByCompany: jest.fn(),
   findAllRolesForCompany: jest.fn(),
+  findAvailableRolesForUser: jest.fn(),
   isSystemRole: jest.fn(),
   findRoleWithCompanyValidation: jest.fn(),
 };

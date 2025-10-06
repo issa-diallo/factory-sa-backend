@@ -12,6 +12,9 @@ const mockPrisma: IPrismaService = {
     update: jest.fn() as Mocked<Role>,
     delete: jest.fn() as Mocked<Role>,
   },
+  userRole: {
+    findFirst: jest.fn() as Mocked<any>,
+  },
 } as unknown as IPrismaService;
 
 describe('PrismaRoleRepository', () => {
@@ -92,5 +95,63 @@ describe('PrismaRoleRepository', () => {
 
     expect(mockPrisma.role.delete).toHaveBeenCalledWith({ where: { id: '1' } });
     expect(result).toEqual(expected);
+  });
+
+  describe('findAvailableRolesForUser', () => {
+    it('should return system roles when user has no role assignment', async () => {
+      const systemRoles = [
+        { id: '1', name: 'ADMIN', companyId: null },
+        { id: '2', name: 'MANAGER', companyId: null },
+        { id: '3', name: 'USER', companyId: null },
+      ] as Role[];
+      (mockPrisma.userRole.findFirst as jest.Mock).mockResolvedValue(null);
+      (mockPrisma.role.findMany as jest.Mock).mockResolvedValue(systemRoles);
+
+      const result = await repository.findAvailableRolesForUser('user-1');
+
+      expect(mockPrisma.userRole.findFirst).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        select: { companyId: true },
+      });
+
+      expect(mockPrisma.role.findMany).toHaveBeenCalledWith({
+        where: {
+          name: {
+            in: ['ADMIN', 'MANAGER', 'USER'],
+          },
+        },
+      });
+
+      expect(result).toEqual(systemRoles);
+    });
+
+    it('should return system roles and company roles for user with company assignment', async () => {
+      const expectedRoles = [
+        { id: '1', name: 'ADMIN', companyId: null },
+        { id: '2', name: 'MANAGER', companyId: null },
+        { id: '3', name: 'USER', companyId: null },
+        { id: '4', name: 'COMPANY_MANAGER', companyId: 'company-1' },
+      ] as Role[];
+
+      (mockPrisma.userRole.findFirst as jest.Mock).mockResolvedValue({
+        companyId: 'company-1',
+      });
+      (mockPrisma.role.findMany as jest.Mock).mockResolvedValue(expectedRoles);
+
+      const result = await repository.findAvailableRolesForUser('user-1');
+
+      expect(mockPrisma.userRole.findFirst).toHaveBeenCalledWith({
+        where: { userId: 'user-1' },
+        select: { companyId: true },
+      });
+
+      expect(mockPrisma.role.findMany).toHaveBeenCalledWith({
+        where: {
+          OR: [{ companyId: null }, { companyId: 'company-1' }],
+        },
+      });
+
+      expect(result).toEqual(expectedRoles);
+    });
   });
 });

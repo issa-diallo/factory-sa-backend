@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import { inject, injectable } from 'tsyringe';
 import { PasswordService } from '../services/auth/passwordService';
 import { UserManagementService } from '../services/userManagement/userManagementService';
+import { RoleService } from '../services/role/roleService';
 import {
   createUserRoleSchema,
   createUserSchema,
@@ -16,7 +17,8 @@ export class UserManagementController extends BaseController {
   constructor(
     @inject(UserManagementService)
     private userManagementService: UserManagementService,
-    @inject(PasswordService) private passwordService: PasswordService
+    @inject(PasswordService) private passwordService: PasswordService,
+    @inject(RoleService) private roleService: RoleService
   ) {
     super();
   }
@@ -152,6 +154,26 @@ export class UserManagementController extends BaseController {
 
       await this.userManagementService.deleteUserRole(id);
       return res.status(204).send();
+    } catch (error) {
+      return this.handleError(res, error);
+    }
+  };
+
+  getAvailableRolesForUser = async (
+    req: Request,
+    res: Response
+  ): Promise<Response> => {
+    try {
+      const { id } = req.params;
+
+      // Verify user exists
+      const user = await this.userManagementService.getUserById(id);
+      if (!user) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
+      const roles = await this.roleService.getAvailableRolesForUser(id);
+      return res.status(200).json(roles);
     } catch (error) {
       return this.handleError(res, error);
     }
