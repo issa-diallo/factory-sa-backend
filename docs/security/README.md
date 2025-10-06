@@ -29,9 +29,15 @@ The application implements a 4-layer security model to ensure data isolation bet
 
 ### **Roles and Access**
 
-- **System Admin (ADMIN)** - Global access for administration
-- **Company Manager (MANAGER)** - Management of their company
+- **System Admin (ADMIN)** - Global access for administration (only System Admins can create users with ADMIN role)
+- **Company Manager (MANAGER)** - Management of their company (cannot assign ADMIN role to users)
 - **Standard User (USER)** - Read-only access to their company
+
+### **Role Assignment Security**
+
+- **ADMIN Role Protection**: Only users with `isSystemAdmin: true` can create users with the ADMIN role
+- **Manager Restrictions**: Company Managers cannot elevate privileges to ADMIN level
+- **Permission Escalation Prevention**: Strict validation prevents unauthorized role escalation
 
 ## 🎯 Secured Resources
 

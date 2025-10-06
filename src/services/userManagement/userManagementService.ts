@@ -10,20 +10,25 @@ import { User, UserRole, Prisma } from '../../generated/prisma';
 import { injectable, inject } from 'tsyringe';
 import { IUserRepository } from '../../repositories/user/IUserRepository';
 import { IUserRoleRepository } from '../../repositories/userRole/IUserRoleRepository';
+import { IRoleRepository } from '../../repositories/role/IRoleRepository';
+import { ForbiddenError } from '../../errors/customErrors';
 
 @injectable()
 export class UserManagementService implements IUserManagementService {
   private userRepository: IUserRepository;
   private userRoleRepository: IUserRoleRepository;
+  private roleRepository: IRoleRepository;
   private passwordService: IPasswordService;
 
   constructor(
     @inject('IUserRepository') userRepository: IUserRepository,
     @inject('IUserRoleRepository') userRoleRepository: IUserRoleRepository,
+    @inject('IRoleRepository') roleRepository: IRoleRepository,
     @inject('IPasswordService') passwordService: IPasswordService
   ) {
     this.userRepository = userRepository;
     this.userRoleRepository = userRoleRepository;
+    this.roleRepository = roleRepository;
     this.passwordService = passwordService;
   }
 
@@ -102,5 +107,31 @@ export class UserManagementService implements IUserManagementService {
 
   async deleteUserRole(id: string): Promise<UserRole> {
     return this.userRoleRepository.delete(id);
+  }
+
+  /**
+   * Validates if a user role can be assigned during user creation.
+   * Prevents managers from creating users with ADMIN role.
+   *
+   * @param roleId - The ID of the role to be assigned
+   * @param isSystemAdmin - Whether the user creating the assignment is a system admin
+   * @throws ForbiddenError if a manager tries to assign ADMIN role
+   */
+  async validateUserRoleCreation(
+    roleId: string,
+    isSystemAdmin: boolean
+  ): Promise<void> {
+    const role = await this.roleRepository.findById(roleId);
+    if (!role) {
+      // Role existence is validated elsewhere, so this shouldn't happen
+      return;
+    }
+
+    // Only system admins can assign the ADMIN role
+    if (role.name === 'ADMIN' && !isSystemAdmin) {
+      throw new ForbiddenError(
+        'Only system administrators can create users with ADMIN role'
+      );
+    }
   }
 }
