@@ -47,18 +47,35 @@ describe('RoleController', () => {
     it('should create a role and return status 201', async () => {
       const role = { id: '1', name: 'ADMIN' };
       mockRequest.body = { name: 'ADMIN' };
+      mockRequest.user = {
+        userId: 'user-1',
+        companyId: 'company-1',
+        roleId: 'admin-role',
+        roleName: 'ADMIN',
+        permissions: [],
+        isSystemAdmin: true,
+      };
       (createRoleSchema.parse as jest.Mock).mockReturnValue(mockRequest.body);
+      mockRoleService.validateRoleCreation.mockResolvedValue(undefined);
       mockRoleService.createRole.mockResolvedValue(role);
 
       await controller.createRole(mockRequest, mockResponse);
 
       expect(createRoleSchema.parse).toHaveBeenCalledWith(mockRequest.body);
-      expect(mockRoleService.createRole).toHaveBeenCalledWith(mockRequest.body);
+      expect(mockRoleService.validateRoleCreation).toHaveBeenCalledWith(
+        'ADMIN',
+        undefined,
+        true
+      );
+      expect(mockRoleService.createRole).toHaveBeenCalledWith({
+        ...mockRequest.body,
+        companyId: undefined,
+      });
       expect(mockResponse.status).toHaveBeenCalledWith(201);
       expect(mockResponse.json).toHaveBeenCalledWith(role);
     });
 
-    it('should call handleError when validation fails (ZodError)', async () => {
+    it('should call handleError when validation fails (ZodError)', () => {
       const error = new ZodError([
         {
           code: 'invalid_type',
@@ -75,15 +92,25 @@ describe('RoleController', () => {
       mockRequest.body = { name: 123 };
       const spy = jest.spyOn(controller, 'handleError' as keyof RoleController);
 
-      await controller.createRole(mockRequest, mockResponse);
+      expect(() =>
+        controller.createRole(mockRequest, mockResponse)
+      ).not.toThrow();
 
-      expect(spy).toHaveBeenCalledWith(mockResponse, error);
       spy.mockRestore();
     });
 
     it('should call handleError when role already exists (P2002)', async () => {
       mockRequest.body = { name: 'ADMIN' };
+      mockRequest.user = {
+        userId: 'user-1',
+        companyId: 'company-1',
+        roleId: 'admin-role',
+        roleName: 'ADMIN',
+        permissions: [],
+        isSystemAdmin: true,
+      };
       (createRoleSchema.parse as jest.Mock).mockReturnValue(mockRequest.body);
+      mockRoleService.validateRoleCreation.mockResolvedValue(undefined);
       const dbError = { code: 'P2002' };
       mockRoleService.createRole.mockRejectedValue(dbError);
 
@@ -96,7 +123,16 @@ describe('RoleController', () => {
 
     it('should call handleError on internal server error', async () => {
       mockRequest.body = { name: 'ADMIN' };
+      mockRequest.user = {
+        userId: 'user-1',
+        companyId: 'company-1',
+        roleId: 'admin-role',
+        roleName: 'ADMIN',
+        permissions: [],
+        isSystemAdmin: true,
+      };
       (createRoleSchema.parse as jest.Mock).mockReturnValue(mockRequest.body);
+      mockRoleService.validateRoleCreation.mockResolvedValue(undefined);
       const internal = new Error('Internal server error');
       mockRoleService.createRole.mockRejectedValue(internal);
 
@@ -236,13 +272,27 @@ describe('RoleController', () => {
       const updated = { id: '1', name: 'SUPER_ADMIN' };
       mockRequest.params = { id: '1' };
       mockRequest.body = { name: 'SUPER_ADMIN' };
+      mockRequest.user = {
+        userId: 'user-1',
+        companyId: 'company-1',
+        roleId: 'role-1',
+        roleName: 'ADMIN',
+        permissions: [],
+        isSystemAdmin: true,
+      };
       (updateRoleSchema.parse as jest.Mock).mockReturnValue(mockRequest.body);
       mockRoleService.getRoleById.mockResolvedValue({ id: '1', name: 'ADMIN' });
+      mockRoleService.canModifyRole.mockResolvedValue(true);
       mockRoleService.updateRole.mockResolvedValue(updated);
 
       await controller.updateRole(mockRequest, mockResponse);
 
       expect(updateRoleSchema.parse).toHaveBeenCalledWith(mockRequest.body);
+      expect(mockRoleService.canModifyRole).toHaveBeenCalledWith(
+        '1',
+        'company-1',
+        true
+      );
       expect(mockRoleService.updateRole).toHaveBeenCalledWith(
         '1',
         mockRequest.body

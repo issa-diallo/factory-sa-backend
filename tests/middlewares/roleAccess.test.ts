@@ -111,6 +111,7 @@ describe('Role Access Middleware', () => {
         id: 'custom-role-1',
         name: 'CUSTOM_SUPERVISOR',
         description: 'Custom supervisor role',
+        companyId: 'company-1',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
@@ -259,6 +260,7 @@ describe('Role Access Middleware', () => {
         id: 'custom-role-1',
         name: 'CUSTOM_SUPERVISOR',
         description: 'Custom supervisor role',
+        companyId: 'company-1',
         createdAt: new Date(),
         updatedAt: new Date(),
       });

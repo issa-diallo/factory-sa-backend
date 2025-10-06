@@ -13,7 +13,32 @@ export class RoleController extends BaseController {
   createRole = async (req: Request, res: Response): Promise<Response> => {
     try {
       const data = createRoleSchema.parse(req.body);
-      const role = await this.roleService.createRole(data);
+      const { isSystemAdmin, companyId: userCompanyId } = req.user!;
+
+      // Determine the companyId of the role to create
+      let roleCompanyId: string | undefined;
+
+      if (isSystemAdmin) {
+        // Admin can create system roles (null) or for a company
+        roleCompanyId = data.companyId || undefined;
+      } else {
+        // Manager can only create for his company
+        roleCompanyId = userCompanyId;
+      }
+
+      // Validation
+      await this.roleService.validateRoleCreation(
+        data.name,
+        roleCompanyId,
+        isSystemAdmin
+      );
+
+      // Creation with companyId
+      const role = await this.roleService.createRole({
+        ...data,
+        companyId: roleCompanyId,
+      });
+
       return res.status(201).json(role);
     } catch (error: unknown) {
       return this.handleError(res, error);
@@ -56,10 +81,24 @@ export class RoleController extends BaseController {
     try {
       const { id } = req.params;
       const data = updateRoleSchema.parse(req.body);
+      const { companyId, isSystemAdmin } = req.user!;
 
       const existingRole = await this.roleService.getRoleById(id);
       if (!existingRole) {
         return res.status(404).json({ message: 'Role not found' });
+      }
+
+      // Check that the user can modify this role
+      const canModify = await this.roleService.canModifyRole(
+        id,
+        companyId,
+        isSystemAdmin
+      );
+
+      if (!canModify) {
+        return res.status(403).json({
+          message: 'You do not have permission to modify this role',
+        });
       }
 
       const updatedRole = await this.roleService.updateRole(id, data);
@@ -72,10 +111,24 @@ export class RoleController extends BaseController {
   deleteRole = async (req: Request, res: Response): Promise<Response> => {
     try {
       const { id } = req.params;
+      const { companyId, isSystemAdmin } = req.user!;
 
       const existingRole = await this.roleService.getRoleById(id);
       if (!existingRole) {
         return res.status(404).json({ message: 'Role not found' });
+      }
+
+      // Check that the user can delete this role
+      const canModify = await this.roleService.canModifyRole(
+        id,
+        companyId,
+        isSystemAdmin
+      );
+
+      if (!canModify) {
+        return res.status(403).json({
+          message: 'You do not have permission to delete this role',
+        });
       }
 
       await this.roleService.deleteRole(id);

@@ -36,7 +36,17 @@ export class DomainController extends BaseController {
 
   getAllDomains = async (req: Request, res: Response): Promise<Response> => {
     try {
-      const domains = await this.domainService.getAllDomains();
+      const { companyId, isSystemAdmin } = req.user!;
+
+      let domains;
+      if (isSystemAdmin) {
+        // Admin sees ALL domains
+        domains = await this.domainService.getAllDomains();
+      } else {
+        // Manager sees ONLY domains of his company
+        domains = await this.domainService.getDomainsByCompanyId(companyId);
+      }
+
       return res.status(200).json(domains);
     } catch (error) {
       return this.handleError(res, error, mapDomainError);

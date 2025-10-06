@@ -24,5 +24,9 @@ export interface IRoleService {
     companyId: string,
     isSystemAdmin: boolean
   ): Promise<boolean>;
-  validateRoleCreation(roleName: string, isSystemAdmin: boolean): Promise<void>;
+  validateRoleCreation(
+    roleName: string,
+    companyId: string | undefined,
+    isSystemAdmin: boolean
+  ): Promise<void>;
 }
