@@ -4,6 +4,7 @@ import { Request, Response } from 'express';
 import { ZodError, ZodIssue } from 'zod';
 import { UserManagementService } from '../../src/services/userManagement/userManagementService';
 import { PasswordService } from '../../src/services/auth/passwordService';
+import { RoleService } from '../../src/services/role/roleService';
 import * as userSchemas from '../../src/schemas/userManagementSchema';
 import { UserManagementController } from '../../src/controllers/userManagementController';
 import {
@@ -13,7 +14,7 @@ import {
   UserRoleResponse,
   CreateUserRoleRequest,
 } from '../../src/types/userManagement';
-import { User, UserRole } from '../../src/generated/prisma/client';
+import { User, UserRole, Role } from '../../src/generated/prisma/client';
 
 jest.mock('../../src/schemas/userManagementSchema', () => ({
   createUserSchema: { parse: jest.fn(input => input) },
@@ -38,6 +39,10 @@ type MockPasswordService = {
   hashPassword: jest.Mock<Promise<string>, [string]>;
 };
 
+type MockRoleService = {
+  getAvailableRolesForUser: jest.Mock<Promise<Role[]>, [string]>;
+};
+
 const mockUserService: MockUserManagementService = {
   createUser: jest.fn(),
   getUserById: jest.fn(),
@@ -55,6 +60,10 @@ const mockPasswordService: MockPasswordService = {
   hashPassword: jest.fn(),
 };
 
+const mockRoleService: MockRoleService = {
+  getAvailableRolesForUser: jest.fn(),
+};
+
 const mockRequest = {} as Request;
 const mockResponse = {
   status: jest.fn().mockReturnThis(),
@@ -69,7 +78,8 @@ describe('UserManagementController', () => {
     jest.clearAllMocks();
     controller = new UserManagementController(
       mockUserService as unknown as UserManagementService,
-      mockPasswordService as unknown as PasswordService
+      mockPasswordService as unknown as PasswordService,
+      mockRoleService as unknown as RoleService
     );
   });
 
@@ -593,6 +603,83 @@ describe('UserManagementController', () => {
       mockUserService.deleteUserRole.mockRejectedValue(err);
 
       await controller.deleteUserRole(mockRequest, mockResponse);
+
+      expect(handleErrorSpy).toHaveBeenCalledWith(mockResponse, err);
+      handleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('getAvailableRolesForUser', () => {
+    it('should return 200 and roles array for user modification', async () => {
+      const roles: Role[] = [
+        {
+          id: 'r1',
+          name: 'ADMIN',
+          description: 'Administrator',
+          companyId: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        {
+          id: 'r2',
+          name: 'COMPANY_MANAGER',
+          description: 'Company Manager',
+          companyId: 'company-1',
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+      ];
+      mockRequest.params = { id: '1' };
+      mockUserService.getUserById.mockResolvedValue({
+        id: '1',
+        email: 'justine@pisagen.ch',
+        firstName: 'Justine',
+        lastName: 'Makhlouf',
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockRoleService.getAvailableRolesForUser.mockResolvedValue(roles);
+
+      await controller.getAvailableRolesForUser(mockRequest, mockResponse);
+
+      expect(mockRoleService.getAvailableRolesForUser).toHaveBeenCalledWith(
+        '1'
+      );
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith(roles);
+    });
+
+    it('should return 404 if user not found', async () => {
+      mockRequest.params = { id: '999' };
+      mockUserService.getUserById.mockResolvedValue(null);
+
+      await controller.getAvailableRolesForUser(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'User not found',
+      });
+    });
+
+    it('should call handleError on service failure', async () => {
+      const handleErrorSpy = jest.spyOn(controller as any, 'handleError');
+      const err = new Error('Role fetch failed');
+      mockRequest.params = { id: '1' };
+      mockUserService.getUserById.mockResolvedValue({
+        id: '1',
+        email: 'justine@pisagen.ch',
+        firstName: 'Justine',
+        lastName: 'Makhlouf',
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+      mockRoleService.getAvailableRolesForUser.mockRejectedValue(err);
+
+      await controller.getAvailableRolesForUser(mockRequest, mockResponse);
 
       expect(handleErrorSpy).toHaveBeenCalledWith(mockResponse, err);
       handleErrorSpy.mockRestore();

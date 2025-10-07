@@ -19,6 +19,7 @@ describe('RoleService', () => {
       findSystemRoles: jest.fn(),
       findCustomRolesByCompany: jest.fn(),
       findAllRolesForCompany: jest.fn(),
+      findAvailableRolesForUser: jest.fn(),
       isSystemRole: jest.fn(),
       findRoleWithCompanyValidation: jest.fn(),
     };
@@ -230,6 +231,48 @@ describe('RoleService', () => {
 
       expect(mockRoleRepository.delete).toHaveBeenCalledWith('1');
       expect(result).toEqual(deletedRole);
+    });
+  });
+
+  describe('getAvailableRolesForUser', () => {
+    it('should return available roles for a user', async () => {
+      const mockRoles = [
+        {
+          id: '1',
+          name: 'ADMIN',
+          description: 'Administrator',
+          companyId: null,
+          createdAt: now,
+          updatedAt: now,
+        },
+        {
+          id: '2',
+          name: 'COMPANY_MANAGER',
+          description: 'Company Manager',
+          companyId: 'company-1',
+          createdAt: now,
+          updatedAt: now,
+        },
+      ];
+      mockRoleRepository.findAvailableRolesForUser.mockResolvedValue(mockRoles);
+
+      const result = await roleService.getAvailableRolesForUser('user-1');
+
+      expect(mockRoleRepository.findAvailableRolesForUser).toHaveBeenCalledWith(
+        'user-1'
+      );
+      expect(result).toEqual(mockRoles);
+    });
+
+    it('should return empty array when no roles available', async () => {
+      mockRoleRepository.findAvailableRolesForUser.mockResolvedValue([]);
+
+      const result = await roleService.getAvailableRolesForUser('user-2');
+
+      expect(mockRoleRepository.findAvailableRolesForUser).toHaveBeenCalledWith(
+        'user-2'
+      );
+      expect(result).toEqual([]);
     });
   });
 });

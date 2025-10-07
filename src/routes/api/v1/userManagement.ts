@@ -65,6 +65,15 @@ router.get(
   userManagementController.getUserRoles
 );
 
+// Available roles for user modification - filtered by user's company
+router.get(
+  '/:id/available-roles',
+  authenticate,
+  authorize(['user:read', 'role:read']),
+  validateUserCompanyAccess(),
+  userManagementController.getAvailableRolesForUser
+);
+
 // User by ID - Company validation
 router.get(
   '/:id',

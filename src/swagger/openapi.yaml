@@ -1708,6 +1708,59 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /api/v1/users/{id}/available-roles:
+    get:
+      tags:
+        - User Management
+      summary: Get available roles for user modification
+      description: |
+        Retrieves all roles available for assigning to a specific user during modification.
+        Returns system roles (ADMIN, MANAGER, USER) plus company-specific roles.
+
+        **Permission Filtering**: When modifying a user, this endpoint ensures that:
+        - System administrators see system roles + roles from the user's company only
+        - This prevents exposing roles from other companies during user editing
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: User ID to get available roles for
+      responses:
+        '200':
+          description: Available roles retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleListResponse'
+        '401':
+          description: Authentication required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthErrorResponse'
+        '403':
+          description: Insufficient permissions or access denied
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
   /api/v1/users/user-role:
     post:
       tags:

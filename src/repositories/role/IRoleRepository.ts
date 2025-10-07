@@ -15,6 +15,7 @@ export interface IRoleRepository {
   findSystemRoles(): Promise<Role[]>;
   findCustomRolesByCompany(companyId: string): Promise<Role[]>;
   findAllRolesForCompany(companyId: string): Promise<Role[]>;
+  findAvailableRolesForUser(userId: string): Promise<Role[]>;
   isSystemRole(roleId: string): Promise<boolean>;
   findRoleWithCompanyValidation(
     roleId: string,
