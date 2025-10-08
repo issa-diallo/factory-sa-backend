@@ -12,3 +12,4 @@ docker-compose.override.yml
 *.sh
 .env
 .env.local
+.vercel
