@@ -18,7 +18,7 @@
     "db:reset": "pnpm db:migrate && pnpm db:seed",
     "db:migrate:supabase": "export $(grep -v '^#' .env | xargs) && pnpm prisma migrate deploy",
     "deploy:prod": "pnpm db:migrate:supabase && vercel --prod",
-    "build:vercel": "prisma generate && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/api/index.js --external:@prisma/client --external:reflect-metadata --format=esm --packages=external",
+    "build:vercel": "prisma generate && esbuild src/index.ts --bundle --platform=node --target=node20 --outfile=dist/index.js --external:@prisma/client --external:reflect-metadata --format=esm --packages=external",
     "test:coverage": "NODE_ENV=test jest --coverage",
     "test": "NODE_ENV=test JWT_SECRET_DEVELOPPEMENT=test_secret NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
     "lint": "eslint . --ext .ts,.js --fix",
