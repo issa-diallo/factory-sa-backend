@@ -13,7 +13,7 @@ const mockPrisma: IPrismaService = {
     delete: jest.fn() as Mocked<Role>,
   },
   userRole: {
-    findFirst: jest.fn() as Mocked<any>,
+    findFirst: jest.fn() as Mocked<{ companyId: string | null } | null>,
   },
 } as unknown as IPrismaService;
 

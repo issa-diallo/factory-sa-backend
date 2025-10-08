@@ -20,6 +20,12 @@ describe('PrismaService', () => {
     jest.resetModules();
     jest.clearAllMocks();
     container.clearInstances();
+
+    // Clean global instances
+    const globalForPrisma = globalThis as unknown as { prisma?: unknown };
+    const globalForDI = globalThis as unknown as { prismaService?: unknown };
+    delete globalForPrisma.prisma;
+    delete globalForDI.prismaService;
   });
 
   it('should configure full logging in development', () => {

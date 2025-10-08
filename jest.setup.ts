@@ -1,6 +1,13 @@
 import 'reflect-metadata';
 import dotenv from 'dotenv';
 dotenv.config();
+
+// Clean global instances before requiring container
+const globalForPrisma = globalThis as unknown as { prisma?: unknown };
+const globalForDI = globalThis as unknown as { prismaService?: unknown };
+delete globalForPrisma.prisma;
+delete globalForDI.prismaService;
+
 import './src/container';
 
 // Complete mock for @faker-js/faker v10 (ES modules)

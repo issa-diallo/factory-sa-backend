@@ -12,7 +12,12 @@ import userManagementRouter from './routes/api/v1/userManagement';
 
 const app: Application = express();
 
-app.use(cors());
+app.use(
+  cors({
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
+    credentials: true,
+  })
+);
 app.use(express.json());
 
 setupSwagger(app);
