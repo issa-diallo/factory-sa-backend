@@ -1,3 +1,5 @@
+import 'reflect-metadata';
+import './container';
 import express, { Application } from 'express';
 import cors from 'cors';
 import { setupSwagger } from './swagger/swaggerConfig';
