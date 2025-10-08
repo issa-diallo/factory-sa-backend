@@ -156,7 +156,84 @@ Each domain has an interface (e.g., `ICompanyRepository`) and a concrete impleme
 
 All dependencies are injected using the `@injectable()` and `@inject()` decorators, enabling loose coupling and easy mocking for tests.
 
-### ✅ Service Layer
+### 🟦 Vercel Deployment
+
+The application is configured for deployment on Vercel with optimal bundling for serverless functions.
+
+### Prerequisites
+
+- Vercel CLI installed (`npm install -g vercel`)
+- GitHub repository connected to Vercel
+
+### Build & Deployment Commands
+
+```bash
+# Install dependencies
+pnpm install
+
+# Local build test (creates dist/ directory)
+pnpm build:vercel
+
+# Deploy to preview environment
+vercel --yes
+
+# Deploy to production
+vercel --prod
+
+# One-click deploy script (includes DB migration)
+pnpm deploy:prod
+
+# Check deployment status
+vercel ls
+vercel logs
+```
+
+### Build Configuration
+
+The project uses **esbuild** for fast serverless bundling:
+
+- **Entry point**: `api/index.ts`
+- **Bundle output**: `dist/api/index.js` (~1.9MB)
+- **Platform**: Node.js 20.x
+- **External dependencies**: `@prisma/client` (handled separately)
+
+### Environment Variables
+
+Configure these in your Vercel dashboard (`Project Settings > Environment Variables`):
+
+```bash
+# Database & Prisma
+DATABASE_URL=your_postgresql_connection_string
+
+# JWT Security
+JWT_SECRET=your_jwt_secret
+
+# Authentication
+AUTH_SECRET=your_auth_secret
+
+# CORS Configuration
+ALLOWED_ORIGINS=https://your-frontend-domain.com,https://staging.your-domain.com
+
+# Supabase (if using)
+SUPABASE_URL=your_supabase_url
+SUPABASE_KEY=your_supabase_anon_key
+```
+
+### Troubleshooting
+
+**Function Invocation Failed (`ERR_MODULE_NOT_FOUND`)**:
+
+- This usually indicates a build/bundle issue
+- Run `pnpm build:vercel` locally to test
+- Check Vercel logs: `vercel logs --follow`
+
+**Protection Bypass**:
+
+- Preview deployments require authentication
+- Use bypass token in URL or dashboard settings
+- Production deployments are public once approved
+
+## ✅ Service Layer
 
 Services encapsulate the business logic and orchestrate calls to the repositories. Example: `CompanyService`, `AuthService`.
 
