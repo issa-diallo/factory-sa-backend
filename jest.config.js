@@ -25,6 +25,7 @@ export default {
     '^@config/(.*)$': '<rootDir>/src/config/$1',
     '^@database/(.*)$': '<rootDir>/src/database/$1',
     '^@prisma/(.*)$': '<rootDir>/prisma/$1',
+    '^\\./swagger/swaggerConfig\\.js$': '<rootDir>/src/swagger/swaggerConfig',
   },
   transformIgnorePatterns: ['node_modules/(?!(@faker-js|@jest)/)'],
   testPathIgnorePatterns: [
