@@ -27,6 +27,16 @@ import { IPasswordService, ITokenService } from './services/auth/interfaces';
 import { PasswordService } from './services/auth/passwordService';
 import { TokenService } from './services/auth/tokenService';
 
+// ✅ Prisma Singleton global compatible Vercel
+const globalForDI = globalThis as unknown as { prismaService?: PrismaService };
+if (!globalForDI.prismaService) {
+  globalForDI.prismaService = new PrismaService();
+}
+container.registerInstance<IPrismaService>(
+  'IPrismaService',
+  globalForDI.prismaService
+);
+
 container.registerSingleton<IPackingListService>(
   'PackingListService',
   PackingListService
@@ -37,7 +47,6 @@ container.registerSingleton<ICompanyRepository>(
 );
 container.registerSingleton<IDomainService>('DomainService', DomainService);
 
-container.registerSingleton<IPrismaService>('IPrismaService', PrismaService);
 container.registerSingleton<IUserRepository>(
   'IUserRepository',
   PrismaUserRepository
