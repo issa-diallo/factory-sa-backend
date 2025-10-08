@@ -1,6 +1,6 @@
 import express, { Application } from 'express';
 import cors from 'cors';
-import { setupSwagger } from './swagger/swaggerConfig';
+import { setupSwagger } from './swagger/swaggerConfig.js';
 
 import packingListRouter from './routes/api/v1/packingList';
 import authRouter from './routes/api/v1/auth';
