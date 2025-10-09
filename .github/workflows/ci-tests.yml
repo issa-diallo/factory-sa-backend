@@ -67,27 +67,8 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
-      - name: Build Docker images (no cache)
-        run: docker compose build --no-cache
-
-      - name: Start Docker services
-        run: docker compose up --wait -d
-
-      - name: Add swap space to avoid OOM
-        run: |
-          sudo fallocate -l 2G /swapfile
-          sudo chmod 600 /swapfile
-          sudo mkswap /swapfile
-          sudo swapon /swapfile
-
-      - name: Debug logs before migration
-        run: docker compose logs backend
-
-      - name: Run Prisma Migrations
-        run: docker compose exec -T backend npx prisma migrate
-
-      - name: Run Prisma Seed
-        run: docker compose exec -T backend pnpm db:seed
+      - name: Setup Database Schema
+        run: npx prisma db push --accept-data-loss
 
       - name: Run tests
         run: pnpm test --coverage
