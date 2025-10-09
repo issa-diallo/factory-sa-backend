@@ -19,7 +19,7 @@
     "db:migrate:supabase": "export $(grep -v '^#' .env | xargs) && pnpm prisma migrate deploy",
     "deploy:prod": "pnpm db:migrate:supabase && vercel --prod",
     "test:coverage": "NODE_ENV=test jest --coverage",
-    "test": "NODE_ENV=test JWT_SECRET_DEVELOPPEMENT=test_secret NODE_OPTIONS='--experimental-vm-modules' jest --runInBand --config tsconfig.test.json",
+    "test": "NODE_ENV=test JWT_SECRET_DEVELOPPEMENT=test_secret NODE_OPTIONS='--experimental-vm-modules' jest --runInBand",
     "lint": "eslint . --ext .ts,.js --fix",
     "lint:check": "eslint . --ext .ts,.js",
     "format": "prettier --write .",

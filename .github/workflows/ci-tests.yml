@@ -71,7 +71,7 @@ jobs:
         run: docker compose build --no-cache
 
       - name: Start Docker services
-        run: docker compose up --wait-for-healthy -d
+        run: docker compose up --wait -d
 
       - name: Add swap space to avoid OOM
         run: |

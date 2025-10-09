@@ -15,7 +15,7 @@
     "declarationMap": true,
     "sourceMap": true,
     "typeRoots": ["./node_modules/@types", "./src/types"],
-    "types": ["node", "express"],
+    "types": ["node", "express", "jest"],
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true
   },

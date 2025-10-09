@@ -10,6 +10,8 @@ delete globalForDI.prismaService;
 
 import './src/container';
 
+// ESLint disable for Jest global setup
+
 // Complete mock for @faker-js/faker v10 (ES modules)
 jest.mock('@faker-js/faker', () => ({
   faker: {
