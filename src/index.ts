@@ -16,8 +16,10 @@ const app: Application = express();
 
 app.use(
   cors({
-    // origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
-    // credentials: true,
+    origin: process.env.ALLOWED_ORIGINS?.split(',') || [
+      'https://factory-sa-backend.vercel.app',
+    ],
+    credentials: true,
   })
 );
 app.use(express.json());
@@ -33,7 +35,11 @@ app.use('/api/v1/permissions', permissionRouter);
 app.use('/api/v1/users', userManagementRouter);
 
 app.get('/', (req, res) => {
-  res.status(200).json({ message: 'Factory Backend API' });
+  res.status(200).json({
+    message: 'Factory Backend API is running 🚀',
+    environment: process.env.NODE_ENV,
+    timestamp: new Date().toISOString(),
+  });
 });
 
 export default app;
