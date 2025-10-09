@@ -3,6 +3,5 @@ docker-compose.yml
 node_modules/.cache
 tests/
 coverage/
-dist/
 prisma/dev.db
 .env
