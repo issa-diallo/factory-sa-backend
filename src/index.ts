@@ -16,8 +16,8 @@ const app: Application = express();
 
 app.use(
   cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
-    credentials: true,
+    // origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
+    // credentials: true,
   })
 );
 app.use(express.json());
