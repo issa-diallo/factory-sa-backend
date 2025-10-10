@@ -15,6 +15,7 @@ export default [
       '.vscode/',
       '.git/',
       'src/generated/',
+      '.vercel/',
     ],
   },
   js.configs.recommended,

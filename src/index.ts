@@ -1,4 +1,4 @@
-import "reflect-metadata";
+import 'reflect-metadata';
 import './container';
 
 import express, { Application } from 'express';
