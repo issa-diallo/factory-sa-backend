@@ -1,20 +1,27 @@
 import { Application } from 'express';
+import fs from 'fs';
+import path from 'path';
+import * as YAML from 'js-yaml';
+import swaggerUi from 'swagger-ui-express';
 
 /**
- * Configures Swagger JSON endpoint for the Express application
- * Compatible with serverless environments - uses bundled JSON instead of filesystem
+ * Configures Swagger endpoint for the Express application
+ * Compatible with serverless environments - loads YAML at runtime using bundled file
  * @param app - The instance of the Express application
  */
 export const setupSwagger = (app: Application): void => {
-  app.get('/api/v1/api-docs', async (req, res) => {
-    try {
-      // Load JSON at runtime for serverless compatibility
-      const swaggerDocument = await import('./openapi.json');
-      res.json(swaggerDocument.default);
-    } catch {
-      res.status(500).json({
-        error: 'Swagger documentation not available',
-      });
-    }
-  });
+  try {
+    // Load YAML at startup for Swagger UI setup
+    const yamlPath = path.join(__dirname, 'openapi.yaml');
+    const yamlContent = fs.readFileSync(yamlPath, 'utf8');
+    const swaggerDocument = YAML.load(yamlContent) as object;
+
+    app.use(
+      '/api/v1/api-docs',
+      swaggerUi.serve,
+      swaggerUi.setup(swaggerDocument)
+    );
+  } catch (error) {
+    console.error('Error loading Swagger documentation:', error);
+  }
 };
