@@ -1,5 +1,6 @@
-import 'reflect-metadata';
+import "reflect-metadata";
 import './container';
+
 import express, { Application } from 'express';
 import cors from 'cors';
 import { setupSwagger } from './swagger/swaggerConfig';
@@ -14,12 +15,7 @@ import userManagementRouter from './routes/api/v1/userManagement';
 
 const app: Application = express();
 
-app.use(
-  cors({
-    origin: process.env.ALLOWED_ORIGINS?.split(',') || [],
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 
 setupSwagger(app);
