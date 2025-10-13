@@ -229,17 +229,25 @@ export class UserManagementController extends BaseController {
 
       const data = changePasswordSchema.parse(req.body);
 
-      // Verify the old password
-      const user = await this.userManagementService.getUserByEmail(
+      // Get user data to retrieve email for password verification
+      const user = await this.userManagementService.getUserById(
         req.user.userId
       );
       if (!user) {
         return res.status(404).json({ message: 'User not found' });
       }
 
+      // Fetch user with password for verification
+      const userWithPassword = await this.userManagementService.getUserByEmail(
+        user.email
+      );
+      if (!userWithPassword) {
+        return res.status(404).json({ message: 'User not found' });
+      }
+
       const isOldPasswordValid = await this.passwordService.verify(
         data.oldPassword,
-        user.password
+        userWithPassword.password
       );
       if (!isOldPasswordValid) {
         return res.status(400).json({ message: 'Invalid old password' });
