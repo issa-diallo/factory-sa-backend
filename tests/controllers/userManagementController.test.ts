@@ -20,11 +20,13 @@ jest.mock('../../src/schemas/userManagementSchema', () => ({
   createUserSchema: { parse: jest.fn(input => input) },
   updateUserSchema: { parse: jest.fn(input => input) },
   createUserRoleSchema: { parse: jest.fn(input => input) },
+  changePasswordSchema: { parse: jest.fn(input => input) },
 }));
 
 type MockUserManagementService = {
   createUser: jest.Mock<Promise<UserResponse>, [CreateUserRequest]>;
   getUserById: jest.Mock<Promise<UserResponse | null>, [string]>;
+  getUserByEmail: jest.Mock<Promise<User | null>, [string]>;
   getAllUsers: jest.Mock<Promise<UserResponse[]>>;
   updateUser: jest.Mock<Promise<UserResponse>, [string, UpdateUserRequest]>;
   getUserRolesByUserId: jest.Mock<Promise<UserRoleResponse[]>, [string]>;
@@ -36,7 +38,8 @@ type MockUserManagementService = {
 };
 
 type MockPasswordService = {
-  hashPassword: jest.Mock<Promise<string>, [string]>;
+  hash: jest.Mock<Promise<string>, [string]>;
+  verify: jest.Mock<Promise<boolean>, [string, string]>;
 };
 
 type MockRoleService = {
@@ -46,6 +49,7 @@ type MockRoleService = {
 const mockUserService: MockUserManagementService = {
   createUser: jest.fn(),
   getUserById: jest.fn(),
+  getUserByEmail: jest.fn(),
   getAllUsers: jest.fn(),
   updateUser: jest.fn(),
   getUserRolesByUserId: jest.fn(),
@@ -57,7 +61,8 @@ const mockUserService: MockUserManagementService = {
 };
 
 const mockPasswordService: MockPasswordService = {
-  hashPassword: jest.fn(),
+  hash: jest.fn(),
+  verify: jest.fn(),
 };
 
 const mockRoleService: MockRoleService = {
@@ -606,6 +611,192 @@ describe('UserManagementController', () => {
 
       expect(handleErrorSpy).toHaveBeenCalledWith(mockResponse, err);
       handleErrorSpy.mockRestore();
+    });
+  });
+
+  describe('changeOwnPassword', () => {
+    it('should change password successfully when old password is correct', async () => {
+      const mockHashedPassword = 'hashedPassword123';
+      const body = { oldPassword: 'oldPass123', newPassword: 'newPass456' };
+      const userWithoutPassword = {
+        id: '1',
+        email: 'test@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const userWithPassword = {
+        ...userWithoutPassword,
+        password: mockHashedPassword,
+        lastLoginIp: null,
+      } as User;
+
+      (mockRequest as any).user = {
+        userId: '1',
+        companyId: 'company-1',
+        roleId: 'role-1',
+        roleName: 'ADMIN',
+        permissions: ['user:update'],
+        isSystemAdmin: false,
+      };
+      mockRequest.body = body;
+
+      mockUserService.getUserById.mockResolvedValue(userWithoutPassword);
+      mockUserService.getUserByEmail.mockResolvedValue(userWithPassword);
+      mockUserService.updateUser.mockResolvedValue({
+        ...userWithoutPassword,
+        updatedAt: new Date(),
+      });
+      mockPasswordService.hash.mockResolvedValue('newHashedPassword');
+      mockPasswordService.verify.mockResolvedValue(true); // Old password is correct
+
+      (userSchemas.changePasswordSchema.parse as jest.Mock).mockReturnValue(
+        body
+      );
+
+      await controller.changeOwnPassword(mockRequest, mockResponse);
+
+      expect(mockUserService.getUserById).toHaveBeenCalledWith('1');
+      expect(mockUserService.getUserByEmail).toHaveBeenCalledWith(
+        'test@example.com'
+      );
+      expect(mockUserService.updateUser).toHaveBeenCalledWith('1', {
+        password: 'newPass456',
+      });
+      expect(mockResponse.status).toHaveBeenCalledWith(200);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Password changed successfully',
+      });
+    });
+
+    it('should return 400 when old password is incorrect', async () => {
+      const body = { oldPassword: 'wrongOldPass', newPassword: 'newPass456' };
+      const userWithoutPassword = {
+        id: '1',
+        email: 'test@example.com',
+        firstName: 'Test',
+        lastName: 'User',
+        isActive: true,
+        lastLoginAt: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      const userWithPassword = {
+        ...userWithoutPassword,
+        password: 'hashedPassword123',
+        lastLoginIp: null,
+      } as User;
+
+      (mockRequest as any).user = {
+        userId: '1',
+        companyId: 'company-1',
+        roleId: 'role-1',
+        roleName: 'ADMIN',
+        permissions: ['user:update'],
+        isSystemAdmin: false,
+      };
+      mockRequest.body = body;
+
+      mockUserService.getUserById.mockResolvedValue(userWithoutPassword);
+      mockUserService.getUserByEmail.mockResolvedValue(userWithPassword);
+      mockPasswordService.verify.mockResolvedValue(false); // Old password is incorrect
+
+      (userSchemas.changePasswordSchema.parse as jest.Mock).mockReturnValue(
+        body
+      );
+
+      await controller.changeOwnPassword(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Invalid old password',
+      });
+    });
+
+    it('should return 404 when user does not exist', async () => {
+      const body = { oldPassword: 'oldPass123', newPassword: 'newPass456' };
+
+      (mockRequest as any).user = {
+        userId: '99',
+        companyId: 'company-1',
+        roleId: 'role-1',
+        roleName: 'ADMIN',
+        permissions: ['user:update'],
+        isSystemAdmin: false,
+      };
+      mockRequest.body = body;
+
+      mockUserService.getUserById.mockResolvedValue(null);
+
+      (userSchemas.changePasswordSchema.parse as jest.Mock).mockReturnValue(
+        body
+      );
+
+      await controller.changeOwnPassword(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(404);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'User not found',
+      });
+    });
+
+    it('should return 400 on ZodError for invalid input data', async () => {
+      const zErr = new ZodError([
+        {
+          code: 'invalid_type',
+          expected: 'string',
+          received: 'number',
+          path: ['oldPassword'],
+          message: 'Expected string, received number',
+          input: 123,
+        } as ZodIssue,
+      ]);
+
+      (userSchemas.changePasswordSchema.parse as jest.Mock).mockImplementation(
+        () => {
+          throw zErr;
+        }
+      );
+
+      mockRequest.body = { oldPassword: 123, newPassword: 'newPass' };
+
+      await controller.changeOwnPassword(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(400);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: 'Invalid validation data',
+        errors: zErr.issues,
+      });
+    });
+
+    it('should return 500 on internal error', async () => {
+      const body = { oldPassword: 'oldPass123', newPassword: 'newPass456' };
+      const err = new Error('Internal server error');
+
+      (mockRequest as any).user = {
+        userId: '1',
+        companyId: 'company-1',
+        roleId: 'role-1',
+        roleName: 'ADMIN',
+        permissions: ['user:update'],
+        isSystemAdmin: false,
+      };
+      mockRequest.body = body;
+
+      (userSchemas.changePasswordSchema.parse as jest.Mock).mockReturnValue(
+        body
+      );
+      mockUserService.getUserById.mockRejectedValue(err);
+
+      await controller.changeOwnPassword(mockRequest, mockResponse);
+
+      expect(mockResponse.status).toHaveBeenCalledWith(500);
+      expect(mockResponse.json).toHaveBeenCalledWith({
+        message: err.message,
+      });
     });
   });
 
