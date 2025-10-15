@@ -1,4 +1,5 @@
 import { sortPackingListItems } from '../../src/utils/sortPackingListItems';
+import { calculateNumberOfCtns } from '../../src/utils/calculateNumberOfCtns';
 import { ProcessedItem } from '../../src/types';
 
 describe('sortPackingListItems', () => {
@@ -280,5 +281,64 @@ describe('sortPackingListItems', () => {
 
     expect(originalItems).toEqual(itemsCopy); // Original array not modified
     expect(result).not.toBe(originalItems); // New array returned
+  });
+
+  it('should produce the same sorting order regardless of calculateNumberOfCtns application', () => {
+    const originalItems: ProcessedItem[] = [
+      {
+        description: 'Item A',
+        category: 'Model A',
+        ctns: 5,
+        qty: 1,
+        totalQty: 5,
+      },
+      {
+        description: 'Item B',
+        category: 'Model B',
+        ctns: 2,
+        pal: 3,
+        qty: 2,
+        totalQty: 4,
+      },
+      {
+        description: 'Item C',
+        category: 'Model C',
+        ctns: 3,
+        pal: 1,
+        qty: 3,
+        totalQty: 3,
+      },
+      {
+        description: 'Item D',
+        category: 'Model D',
+        ctns: 2,
+        qty: 4,
+        totalQty: 8,
+      },
+      {
+        description: 'Item E',
+        category: 'Model E',
+        ctns: 4,
+        pal: 2,
+        qty: 5,
+        totalQty: 10,
+      },
+      {
+        description: 'Item F',
+        category: 'Model F',
+        ctns: 1,
+        qty: 6,
+        totalQty: 6,
+      },
+    ];
+    const directlySorted = sortPackingListItems(originalItems);
+    const itemsWithCalculatedCtns = calculateNumberOfCtns(originalItems);
+    const sortedAfterCalc = sortPackingListItems(itemsWithCalculatedCtns);
+    const mapToComparable = (items: ProcessedItem[]) =>
+      items.map(({ numberOfCtns: _numberOfCtns, ...rest }) => rest);
+
+    const directlyComparable = mapToComparable(directlySorted);
+    const afterCalcComparable = mapToComparable(sortedAfterCalc);
+    expect(afterCalcComparable).toEqual(directlyComparable);
   });
 });
