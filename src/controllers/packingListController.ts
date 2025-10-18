@@ -86,12 +86,32 @@ export class PackingListController extends BaseController {
         });
       }
 
+      // Calculate boxes statistics (unique cartons and highest carton number)
+      const uniqueCtns = new Set(
+        processResult.data.data.map(item => item.ctns)
+      );
+      const highestCtn = Math.max(...uniqueCtns);
+
+      // Calculate pallets statistics (unique pallets and highest pallet number, if any)
+      const palletsWithValue = processResult.data.data
+        .map(item => item.pal)
+        .filter((pal): pal is number => pal !== undefined);
+      const uniquePals = new Set(palletsWithValue);
+      const totalPals = uniquePals.size;
+      const highestPal = totalPals > 0 ? Math.max(...uniquePals) : null;
+
       return res.status(200).json({
         success: true,
         data: processResult.data.data.map(transformProcessedItemForAPI),
         summary: {
-          totalRows: cleanedData.length,
-          processedRows: processResult.data.summary.processedRows,
+          boxes: {
+            total: uniqueCtns.size,
+            highest: highestCtn,
+          },
+          pallets: {
+            total: totalPals,
+            highest: highestPal,
+          },
           totalPcs: processResult.data.summary.totalPcs,
         },
       });
