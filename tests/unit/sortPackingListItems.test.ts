@@ -341,4 +341,94 @@ describe('sortPackingListItems', () => {
     const afterCalcComparable = mapToComparable(sortedAfterCalc);
     expect(afterCalcComparable).toEqual(directlyComparable);
   });
+
+  it('should sort by pal first, then by ctns when pal values are the same', () => {
+    const items: ProcessedItem[] = [
+      {
+        pal: 1,
+        ctns: 5,
+        description: 'Item A',
+        category: 'A',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 1,
+        ctns: 2,
+        description: 'Item B',
+        category: 'B',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 2,
+        ctns: 3,
+        description: 'Item C',
+        category: 'C',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 2,
+        ctns: 1,
+        description: 'Item D',
+        category: 'D',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 1,
+        ctns: 3,
+        description: 'Item E',
+        category: 'E',
+        qty: 1,
+        totalQty: 1,
+      },
+    ];
+
+    const sortedItems = sortPackingListItems(items);
+
+    expect(sortedItems).toEqual([
+      {
+        pal: 1,
+        ctns: 2,
+        description: 'Item B',
+        category: 'B',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 1,
+        ctns: 3,
+        description: 'Item E',
+        category: 'E',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 1,
+        ctns: 5,
+        description: 'Item A',
+        category: 'A',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 2,
+        ctns: 1,
+        description: 'Item D',
+        category: 'D',
+        qty: 1,
+        totalQty: 1,
+      },
+      {
+        pal: 2,
+        ctns: 3,
+        description: 'Item C',
+        category: 'C',
+        qty: 1,
+        totalQty: 1,
+      },
+    ]);
+  });
 });
