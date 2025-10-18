@@ -64,8 +64,14 @@ describe('PackingListController', () => {
       success: true,
       data: apiResponseProcessed,
       summary: {
-        totalRows: expect.any(Number),
-        processedRows: fixture.length,
+        boxes: {
+          total: 1,
+          highest: 42,
+        },
+        pallets: {
+          total: 0,
+          highest: null,
+        },
         totalPcs: fixture.reduce((acc, item) => acc + item.QTY, 0),
       },
     });
