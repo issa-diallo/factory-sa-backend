@@ -58,13 +58,30 @@ export function extractCtnBlocksFromRow(
       .map(k => (k.includes('_') ? (k.split('_').pop() ?? '') : ''))
   );
 
+  // Extract main PAL if present
+  let mainPal: number | undefined;
+  if (
+    'PAL' in validatedRow &&
+    validatedRow.PAL !== undefined &&
+    validatedRow.PAL !== null &&
+    String(validatedRow.PAL).trim() !== ''
+  ) {
+    mainPal = parseInt(String(validatedRow.PAL), 10);
+    if (isNaN(mainPal) || mainPal <= 0) {
+      return createError(
+        'Invalid pallet number for PAL: must be a positive integer',
+        'INVALID_PALLET'
+      );
+    }
+  }
+
   for (const suffix of suffixes) {
     const suffixStr = suffix ? `_${suffix}` : '';
     const ctnKey = `CTN${suffixStr}`;
     const qtyKey = `QTY${suffixStr}`;
     const palKey = `PAL${suffixStr}`;
 
-    // A block is valid only if both CTN and QTY are present. PAL is optional.
+    // A block is valid only if both CTN and QTY are present
     if (ctnKey in validatedRow && qtyKey in validatedRow) {
       const ctnRaw = validatedRow[ctnKey];
       const qtyRaw = validatedRow[qtyKey];
@@ -79,7 +96,7 @@ export function extractCtnBlocksFromRow(
         );
       }
 
-      // Validate and parse pallet (optional)
+      // Validate and parse pallet (use specific PAL_x if available, otherwise use main PAL)
       let pal: number | undefined;
       if (
         palRaw !== undefined &&
@@ -93,6 +110,9 @@ export function extractCtnBlocksFromRow(
             'INVALID_PALLET'
           );
         }
+      } else {
+        // Fallback to main PAL
+        pal = mainPal;
       }
 
       // Expand CTN range

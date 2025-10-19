@@ -229,6 +229,72 @@ describe('extractCtnBlocksFromRow', () => {
   });
 
   describe('Edge cases', () => {
+    test('should inherit main PAL for blocks without specific PAL_x', () => {
+      const row = {
+        CTN: '100',
+        QTY: '50',
+        PAL: '7',
+        CTN_1: '200',
+        QTY_1: '30',
+        // No PAL_1, should inherit PAL
+      };
+
+      const result = extractCtnBlocksFromRow(row, validBase);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toHaveLength(2);
+        // First block
+        expect(result.data[0]).toEqual({
+          ...validBase,
+          ctns: 100,
+          qty: 50,
+          totalQty: 50,
+          pal: 7,
+        });
+        // Second block inherits PAL
+        expect(result.data[1]).toEqual({
+          ...validBase,
+          ctns: 200,
+          qty: 30,
+          totalQty: 30,
+          pal: 7,
+        });
+      }
+    });
+
+    test('should use specific PAL_x for blocks that have it, even if main PAL exists', () => {
+      const row = {
+        CTN: '100',
+        QTY: '50',
+        PAL: '7',
+        CTN_1: '200',
+        QTY_1: '30',
+        PAL_1: '8', // Overrides main PAL
+      };
+
+      const result = extractCtnBlocksFromRow(row, validBase);
+      expect(result.success).toBe(true);
+      if (result.success) {
+        expect(result.data).toHaveLength(2);
+        // First block
+        expect(result.data[0]).toEqual({
+          ...validBase,
+          ctns: 100,
+          qty: 50,
+          totalQty: 50,
+          pal: 7,
+        });
+        // Second block uses PAL_1
+        expect(result.data[1]).toEqual({
+          ...validBase,
+          ctns: 200,
+          qty: 30,
+          totalQty: 30,
+          pal: 8,
+        });
+      }
+    });
+
     test('should skip incomplete blocks and process valid ones', () => {
       const row = {
         CTN: '100',
