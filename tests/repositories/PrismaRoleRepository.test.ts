@@ -8,6 +8,7 @@ const mockPrisma: IPrismaService = {
   role: {
     create: jest.fn() as Mocked<Role>,
     findUnique: jest.fn() as Mocked<Role | null>,
+    findFirst: jest.fn() as Mocked<Role | null>,
     findMany: jest.fn() as Mocked<Role[]>,
     update: jest.fn() as Mocked<Role>,
     delete: jest.fn() as Mocked<Role>,
@@ -48,14 +49,32 @@ describe('PrismaRoleRepository', () => {
     expect(result).toEqual(expected);
   });
 
-  it('should find a role by name', async () => {
-    const expected = { id: '1', name: 'ADMIN' } as Role;
+  it('should find a system role by name', async () => {
+    const expected = { id: '1', name: 'ADMIN', companyId: null } as Role;
+    (mockPrisma.role.findFirst as jest.Mock).mockResolvedValue(expected);
+
+    const result = await repository.findByName('ADMIN', null); // Rôle système
+
+    expect(mockPrisma.role.findFirst).toHaveBeenCalledWith({
+      where: { name: 'ADMIN', companyId: null },
+    });
+    expect(result).toEqual(expected);
+  });
+
+  it('should find a company role by name', async () => {
+    const expected = {
+      id: '1',
+      name: 'COMPANY_MANAGER',
+      companyId: 'company-1',
+    } as Role;
     (mockPrisma.role.findUnique as jest.Mock).mockResolvedValue(expected);
 
-    const result = await repository.findByName('ADMIN');
+    const result = await repository.findByName('COMPANY_MANAGER', 'company-1'); // Rôle entreprise
 
     expect(mockPrisma.role.findUnique).toHaveBeenCalledWith({
-      where: { name: 'ADMIN' },
+      where: {
+        name_companyId: { name: 'COMPANY_MANAGER', companyId: 'company-1' },
+      },
     });
     expect(result).toEqual(expected);
   });

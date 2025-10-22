@@ -31,8 +31,11 @@ export class RoleService implements IRoleService {
     return this.roleRepository.findByIdWithPermissions(id);
   }
 
-  async getRoleByName(name: string): Promise<Role | null> {
-    return this.roleRepository.findByName(name);
+  async getRoleByName(
+    name: string,
+    companyId: string | null
+  ): Promise<Role | null> {
+    return this.roleRepository.findByName(name, companyId);
   }
 
   async getAllRoles(): Promise<Role[]> {
@@ -99,7 +102,10 @@ export class RoleService implements IRoleService {
       throw new ForbiddenError('Cannot create system roles');
     }
 
-    const existingRole = await this.roleRepository.findByName(roleName);
+    const existingRole = await this.roleRepository.findByName(
+      roleName,
+      companyId || null
+    );
     if (existingRole) {
       if (!existingRole.companyId) {
         throw new ForbiddenError('A system role with this name already exists');

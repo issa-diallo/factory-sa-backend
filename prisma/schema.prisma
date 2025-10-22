@@ -62,7 +62,7 @@ model Permission {
 
 model Role {
   id          String   @id @default(uuid())
-  name        String   @unique
+  name        String
   description String?
   companyId   String?
   createdAt   DateTime @default(now())
@@ -71,6 +71,8 @@ model Role {
   company         Company? @relation(fields: [companyId], references: [id], onDelete: Cascade)
   rolePermissions RolePermission[]
   userRoles       UserRole[]
+
+  @@unique([name, companyId])
 }
 
 

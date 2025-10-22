@@ -348,32 +348,34 @@ async function seedSystemRoles(): Promise<{
 }> {
   console.log('👥 Creating system roles...');
 
-  const adminRole = await prisma.role.upsert({
-    where: { name: 'ADMIN' },
-    update: {},
-    create: {
-      name: 'ADMIN',
-      description: 'System administrator with full permissions',
-    },
-  });
+  const findOrCreateRole = async (
+    name: 'ADMIN' | 'MANAGER' | 'USER',
+    description: string
+  ) => {
+    let role = await prisma.role.findFirst({
+      where: { name, companyId: null },
+    });
 
-  const managerRole = await prisma.role.upsert({
-    where: { name: 'MANAGER' },
-    update: {},
-    create: {
-      name: 'MANAGER',
-      description: 'Company manager with management permissions',
-    },
-  });
+    if (!role) {
+      role = await prisma.role.create({
+        data: { name, description, companyId: null },
+      });
+    }
+    return role;
+  };
 
-  const userRole = await prisma.role.upsert({
-    where: { name: 'USER' },
-    update: {},
-    create: {
-      name: 'USER',
-      description: 'Standard user with basic permissions',
-    },
-  });
+  const adminRole = await findOrCreateRole(
+    'ADMIN',
+    'System administrator with full permissions'
+  );
+  const managerRole = await findOrCreateRole(
+    'MANAGER',
+    'Company manager with management permissions'
+  );
+  const userRole = await findOrCreateRole(
+    'USER',
+    'Standard user with basic permissions'
+  );
 
   console.log('✅ Created 3 system roles');
   return { adminRole, managerRole, userRole };
@@ -789,6 +791,11 @@ async function seedUserRoles(
 // ============================================================================
 
 async function main() {
+  // Prevent seeding in production environment
+  if (process.env.NODE_ENV === 'production') {
+    console.warn('⚠️ Skipping seed in production environment.');
+    return;
+  }
   console.log('🚀 Starting comprehensive seeding...');
 
   try {
