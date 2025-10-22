@@ -11,7 +11,7 @@ export interface IRoleService {
   getRoleByIdWithPermissions(
     id: string
   ): Promise<RoleWithPermissionsResponse | null>;
-  getRoleByName(name: string): Promise<Role | null>;
+  getRoleByName(name: string, companyId: string | null): Promise<Role | null>;
   getAllRoles(): Promise<Role[]>;
   updateRole(id: string, data: UpdateRoleRequest): Promise<Role>;
   deleteRole(id: string): Promise<Role>;

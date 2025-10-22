@@ -93,19 +93,20 @@ describe('RoleService', () => {
       };
       mockRoleRepository.findByName.mockResolvedValue(mockRole);
 
-      const result = await roleService.getRoleByName('Admin');
+      const result = await roleService.getRoleByName('Admin', null); // Rôle système
 
-      expect(mockRoleRepository.findByName).toHaveBeenCalledWith('Admin');
+      expect(mockRoleRepository.findByName).toHaveBeenCalledWith('Admin', null);
       expect(result).toEqual(mockRole);
     });
 
     it('should return null if role is not found by name', async () => {
       mockRoleRepository.findByName.mockResolvedValue(null);
 
-      const result = await roleService.getRoleByName('NonExistentRole');
+      const result = await roleService.getRoleByName('NonExistentRole', null); // Rôle système
 
       expect(mockRoleRepository.findByName).toHaveBeenCalledWith(
-        'NonExistentRole'
+        'NonExistentRole',
+        null
       );
       expect(result).toBeNull();
     });

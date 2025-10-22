@@ -38,8 +38,29 @@ export class PrismaRoleRepository implements IRoleRepository {
     };
   }
 
-  async findByName(name: string): Promise<Role | null> {
-    return this.prisma.role.findUnique({ where: { name } });
+  async findByName(
+    name: string,
+    companyId: string | null
+  ): Promise<Role | null> {
+    if (companyId === null) {
+      // For system roles with null companyId, use a findFirst with exact match
+      return this.prisma.role.findFirst({
+        where: {
+          name,
+          companyId: null,
+        },
+      });
+    }
+
+    // For company-specific roles, use the composite unique constraint
+    return this.prisma.role.findUnique({
+      where: {
+        name_companyId: {
+          name,
+          companyId,
+        },
+      },
+    });
   }
 
   async findAll(): Promise<Role[]> {
